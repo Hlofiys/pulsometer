@@ -7,6 +7,8 @@
 #include <PubSubClient.h>
 
 #include <ArduinoJson.h>
+
+#include <secrets.h>
 // Using built in LED pin for demo
 #define ledPin 13
 
@@ -23,8 +25,6 @@ float maxVal = 0.0;
 
 /******* MQTT Broker Connection Details *******/
 const char *mqtt_server = "mqtt.hlofiys.xyz";
-const char *mqtt_username = "your_mqtt_client_username";
-const char *mqtt_password = "your_mqtt_client_password";
 const char *mqtt_clientId = "Client" + deviceId;
 const int mqtt_port = 8883;
 
