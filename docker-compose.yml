@@ -20,7 +20,7 @@ services:
       - pulsometer_network
     depends_on:
       - hivemq
-      - db
+      - pulsometer_db
     restart: unless-stopped
   pulsometer_db:
     container_name: pulsometer_db
