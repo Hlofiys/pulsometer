@@ -103,7 +103,7 @@ void handleMqttState()
 void callback(char *topic, byte *payload, unsigned int length)
 {
 	String incommingMessage = "";
-	for (int i = 0; i < length; i++)
+	for (int i = 0; (unsigned int)i < length; i++)
 		incommingMessage += (char)payload[i];
 
 	Serial.println("Message arrived [" + String(topic) + "]" + incommingMessage);
