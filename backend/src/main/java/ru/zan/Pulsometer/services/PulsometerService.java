@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,6 +37,9 @@ public class PulsometerService {
 
     private final String persistenceDir = "src/main/resources/persistence";
 
+    @Value("${hiveMQ.url}")
+    private String hiveMQ;
+
     @Autowired
     public PulsometerService(UserRepository userRepository,
                              DeviceRepository deviceRepository,
@@ -46,7 +50,7 @@ public class PulsometerService {
         this.pulseMeasurementRepository = pulseMeasurementRepository;
         this.objectMapper = objectMapper;
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
-        mqttAsyncClient = new MqttAsyncClient("tcp://localhost:1883", MqttAsyncClient.generateClientId(), persistence);
+        mqttAsyncClient = new MqttAsyncClient(hiveMQ, MqttAsyncClient.generateClientId(), persistence);
         MqttConnectOptions options = new MqttConnectOptions();
         options.setCleanSession(true);
         mqttAsyncClient.connect(options, null, new IMqttActionListener() {
