@@ -15,7 +15,7 @@
 // Pulse meter connected to any Analog pin
 #define sensorPin A0
 
-//device id
+// device id
 const int deviceId = 1;
 
 // Values from provided (eBay) code
@@ -28,7 +28,7 @@ const char *mqtt_server = "mqtt.hlofiys.xyz";
 const char *mqtt_clientId = "Client" + deviceId;
 const int mqtt_port = 8883;
 
-//MQTT topics
+// MQTT topics
 const char *mqtt_topic_device_status = "device/status";
 const char *mqtt_topic_heartbeat_data = "device/data";
 const char *mqtt_topic_device_switch = "device/switch/" + deviceId;
@@ -36,70 +36,86 @@ const char *mqtt_topic_device_switch = "device/switch/" + deviceId;
 // Device status
 bool collecting = false;
 
-//MQTT client
+// MQTT client
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-bool tryConnectToMqttServer() {
-  if(strlen(mqtt_username) == 0) {
-    return client.connect(mqtt_clientId);
-  } else {
-    return client.connect(mqtt_clientId, mqtt_username, mqtt_password);
-  }
+bool tryConnectToMqttServer()
+{
+	if (strlen(mqtt_username) == 0)
+	{
+		return client.connect(mqtt_clientId);
+	}
+	else
+	{
+		return client.connect(mqtt_clientId, mqtt_username, mqtt_password);
+	}
 }
 
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    // If you do not want to use a username and password, change next line to
-    if (tryConnectToMqttServer()) {
-      Serial.println("connected");
-    } else {
-      Serial.print(mqtt_server);
-      Serial.print(" failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
+void reconnect()
+{
+	// Loop until we're reconnected
+	while (!client.connected())
+	{
+		Serial.print("Attempting MQTT connection...");
+		// Attempt to connect
+		// If you do not want to use a username and password, change next line to
+		if (tryConnectToMqttServer())
+		{
+			Serial.println("connected");
+		}
+		else
+		{
+			Serial.print(mqtt_server);
+			Serial.print(" failed, rc=");
+			Serial.print(client.state());
+			Serial.println(" try again in 5 seconds");
+			// Wait 5 seconds before retrying
+			delay(5000);
+		}
+	}
 }
 
 /**** Method for Publishing MQTT Messages **********/
-void publishMessage(const char* topic, String payload , boolean retained){
-  if (client.publish(topic, payload.c_str(), true))
-      Serial.println("Message publised ["+String(topic)+"]: "+payload);
+void publishMessage(const char *topic, String payload, boolean retained)
+{
+	if (client.publish(topic, payload.c_str(), true))
+		Serial.println("Message publised [" + String(topic) + "]: " + payload);
 }
 
-void publishStatusMessage() {
-  Serial.print("Keep Alive");
-  publishMessage(mqtt_topic_device_status, String(deviceId).c_str(), true);
+void publishStatusMessage()
+{
+	Serial.print("Keep Alive");
+	publishMessage(mqtt_topic_device_status, String(deviceId).c_str(), true);
 }
 
-void handleMqttState() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
+void handleMqttState()
+{
+	if (!client.connected())
+	{
+		reconnect();
+	}
+	client.loop();
 }
-
 
 /***** Call back Method for Receiving MQTT messages and Switching Status ****/
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  String incommingMessage = "";
-  for (int i = 0; i < length; i++) incommingMessage+=(char)payload[i];
+void callback(char *topic, byte *payload, unsigned int length)
+{
+	String incommingMessage = "";
+	for (int i = 0; i < length; i++)
+		incommingMessage += (char)payload[i];
 
-  Serial.println("Message arrived ["+String(topic)+"]"+incommingMessage);
+	Serial.println("Message arrived [" + String(topic) + "]" + incommingMessage);
 
-  //--- check the incomming message
-    if( strcmp(topic,mqtt_topic_device_switch) == 0){
-     if (incommingMessage.equals("1")) collecting = true;   // Turn the Collecting on
-     else collecting = false;  // Turn the Collecting off
-  }
-
+	//--- check the incomming message
+	if (strcmp(topic, mqtt_topic_device_switch) == 0)
+	{
+		if (incommingMessage.equals("1"))
+			collecting = true; // Turn the Collecting on
+		else
+			collecting = false; // Turn the Collecting off
+	}
 }
 
 // ------------------------------------------------------------
@@ -108,11 +124,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setup()
 {
 	WiFiManager wifiManager;
-	wifiManager.autoConnect("Pulsemeter 1", "123123");
+	if (!wifiManager.autoConnect("Pulsemeter 1", "123123"))
+	{
+		Serial.println("failed to connect and hit timeout");
+		delay(3000);
+		// reset and try again, or maybe put it to deep sleep
+		ESP.reset();
+		delay(5000);
+	}
+
+	Serial.println("connected...yeey :)");
 
 	Serial.println("local ip");
-  	Serial.println(WiFi.localIP());
-  	client.setServer(mqtt_server, mqtt_port);
+	Serial.println(WiFi.localIP());
+
+	client.setServer(mqtt_server, mqtt_port);
 	client.setCallback(callback);
 
 	// Inbuilt LED
@@ -193,9 +219,9 @@ void loop()
 			JsonDocument doc;
 			doc["deviceId"] = deviceId;
 			doc["bpm"] = bpm * 4;
-			
+
 			char mqtt_message[128];
-  			serializeJson(doc, mqtt_message);
+			serializeJson(doc, mqtt_message);
 
 			publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
 			bpm = 0;
@@ -209,5 +235,5 @@ void loop()
 	{
 		publishStatusMessage();
 	}
-	delay(100);
+	delay(500);
 }
