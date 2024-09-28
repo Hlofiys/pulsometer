@@ -4,6 +4,7 @@ networks:
     driver: bridge
 services:
   hivemq:
+    container_name: pulsometer_hivemq
     image: hivemq/hivemq-ce
     ports:
       - 1883:1883
@@ -11,6 +12,7 @@ services:
       - pulsometer_network
     restart: unless-stopped
   backend:
+    container_name: pulsometer_backend
     image: gitea.hlofiys.xyz/hlofiys/pulsometer-backend:master
     ports:
       - 8080:8080
@@ -21,6 +23,7 @@ services:
       - db
     restart: unless-stopped
   db:
+    container_name: pulsometer_db
     image: postgres:alpine
     environment:
       POSTGRES_USER: postgres
