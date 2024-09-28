@@ -22,7 +22,7 @@ services:
       - hivemq
       - db
     restart: unless-stopped
-  db:
+  pulsometer_db:
     container_name: pulsometer_db
     image: postgres:alpine
     environment:
