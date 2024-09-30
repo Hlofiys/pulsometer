@@ -8,6 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.util.List;
+
 @Table(name = "users")
 @Getter
 @Setter
@@ -16,7 +18,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class User {
 
     @Id
-    private Long id;
+    private Integer id;
 
     private String fio;
 
@@ -24,5 +26,5 @@ public class User {
     private Integer deviceId;
 
     @Column(value = "pulse_measurements")
-    private int [] pulseMeasurements;
+    private List<Integer> pulseMeasurements;
 }

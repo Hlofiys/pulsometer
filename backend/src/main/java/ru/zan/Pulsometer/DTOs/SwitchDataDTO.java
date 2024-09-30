@@ -7,9 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class StatusDataDTO {
+@NoArgsConstructor
+public class SwitchDataDTO {
 
-    private Integer id;
+    private String message;
 }

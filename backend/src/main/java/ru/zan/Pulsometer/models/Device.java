@@ -11,6 +11,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Table("devices")
 @Getter
@@ -20,17 +21,17 @@ import java.time.LocalDateTime;
 public class Device {
 
     @Id
-    private Long id;
+    private Integer id;
 
     @Size(min = 1, max = 50)
     @NotNull
     private String status;
 
     @Column(value = "active_user_id")
-    private Long activeUserId;
+    private Integer activeUserId;
 
     @Column(value = "last_contact")
     private LocalDateTime lastContact;
 
-    private int[] users;
+    private List<Integer> users;
 }

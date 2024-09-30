@@ -1,7 +1,9 @@
 package ru.zan.Pulsometer.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.DTOs.PulseDataDTO;
 import ru.zan.Pulsometer.DTOs.StatusDataDTO;
+import ru.zan.Pulsometer.DTOs.SwitchDataDTO;
 import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
 import ru.zan.Pulsometer.models.Device;
 import ru.zan.Pulsometer.models.PulseMeasurement;
@@ -18,27 +21,21 @@ import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.repositories.DeviceRepository;
 import ru.zan.Pulsometer.repositories.PulseMeasurementRepository;
 import ru.zan.Pulsometer.repositories.UserRepository;
+import ru.zan.Pulsometer.util.DeviceNotFoundException;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
 public class PulsometerService {
-
     private final UserRepository userRepository;
-
     private final DeviceRepository deviceRepository;
-
     private final PulseMeasurementRepository pulseMeasurementRepository;
-
-    private final MqttAsyncClient mqttAsyncClient;
-
     private final ObjectMapper objectMapper;
-
+    private MqttAsyncClient mqttAsyncClient;
     private final String persistenceDir = "src/main/resources/persistence";
-
-    @Value("${hiveMQ.url}")
-    private String hiveMQ;
 
     @Autowired
     public PulsometerService(UserRepository userRepository,
@@ -49,221 +46,146 @@ public class PulsometerService {
         this.deviceRepository = deviceRepository;
         this.pulseMeasurementRepository = pulseMeasurementRepository;
         this.objectMapper = objectMapper;
+
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
-        mqttAsyncClient = new MqttAsyncClient(hiveMQ, MqttAsyncClient.generateClientId(), persistence);
+        mqttAsyncClient = new MqttAsyncClient("tcp://localhost:1883", MqttAsyncClient.generateClientId(), persistence);
+
         MqttConnectOptions options = new MqttConnectOptions();
         options.setCleanSession(true);
+
         mqttAsyncClient.connect(options, null, new IMqttActionListener() {
             @Override
             public void onSuccess(IMqttToken asyncActionToken) {
                 System.out.println("The connection was successful.");
+                subscribeToTopic("device/status");
+                subscribeToTopic("device/data");
             }
+
             @Override
             public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                System.out.println("Connection error:" + exception.getMessage());
+                System.out.println("Connection error: " + exception.getMessage());
+            }
+        });
+
+        mqttAsyncClient.setCallback(new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+                System.out.println("Connection lost: " + cause.getMessage());
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) throws Exception {
+                if(topic.equalsIgnoreCase("device/status")) {
+                    processMessageStatus(topic, message);
+                }else if(topic.equalsIgnoreCase("device/data")) {
+                    processMessageData(topic,message);
+                }
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
             }
         });
     }
 
-    public Mono<Boolean> publish (Long deviceId, Long userId){
-        String topic = "device/status/"+deviceId;
-        String payload = "true";
+    private void subscribeToTopic(String topic) {
+        try {
+            mqttAsyncClient.subscribe(topic, 1);
+            System.out.println("Successfully subscribed to topic: " + topic);
+        } catch (MqttException e) {
+            System.out.println("Failed to subscribe to topic: " + topic + " - " + e.getMessage());
+        }
+    }
+
+    private void processMessageStatus(String topic, MqttMessage mqttMessage) {
+        String payload = new String(mqttMessage.getPayload());
+        System.out.println("Message arrived on topic " + topic + ": " + payload);
+
+        StatusDataDTO statusData;
+        try {
+            statusData = objectMapper.readValue(payload, StatusDataDTO.class);
+        } catch (IOException e) {
+            System.err.println("Failed to parse message payload: " + e.getMessage());
+            return;
+        }
+
+        deviceRepository.upsertDevice(statusData.getId(),
+                        "ready",
+                        LocalDateTime.now())
+                .doOnSuccess(d -> System.out.println("Device upserted: " + statusData.getId()))
+                .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
+                .subscribe();
+    }
+
+    private void processMessageData(String topic, MqttMessage mqttMessage) {
+        String payload = new String(mqttMessage.getPayload());
+        System.out.println("Message arrived on topic " + topic + ": " + payload);
+        PulseMeasurement pulseMeasurement = new PulseMeasurement();
+        PulseDataDTO pulseDataDTO;
+        try {
+            pulseDataDTO = objectMapper.readValue(payload, PulseDataDTO.class);
+        } catch (JsonProcessingException e) {
+            System.err.println("Failed to parse message payload: " + e.getMessage());
+            return;
+        }
+        deviceRepository.findById(pulseDataDTO.getId())
+                .flatMap(device -> {
+                    device.setStatus("ready");
+                    device.setLastContact(LocalDateTime.now());
+                    pulseMeasurement.setUserId(device.getActiveUserId());
+                    return deviceRepository.save(device);
+                }).flatMap(savedDevice ->{
+                    pulseMeasurement.setBpm(pulseDataDTO.getBpm());
+                    pulseMeasurement.setDate(LocalDateTime.now());
+                    return pulseMeasurementRepository.save(pulseMeasurement);
+                }).subscribe();
+
+    }
+
+    public Mono<Boolean> publish (Integer deviceId, Integer userId,String action) throws Exception {
+        String topic = "device/switch/"+deviceId;
+        SwitchDataDTO switchDataDTO = new SwitchDataDTO();
+        if (action.equalsIgnoreCase("start")) {
+            switchDataDTO.setMessage("1");
+        } else if (action.equalsIgnoreCase("stop")) {
+            switchDataDTO.setMessage("0");
+        } else {
+            return Mono.error(new IllegalArgumentException("Invalid status. Use 'start' or 'stop'."));
+        }
+        String payload = objectMapper.writeValueAsString(switchDataDTO);
         MqttMessage message = new MqttMessage(payload.getBytes());
         return Mono.create(sink -> {
             try {
                 mqttAsyncClient.publish(topic, message, null, new IMqttActionListener() {
                     @Override
                     public void onSuccess(IMqttToken iMqttToken) {
-                        deviceRepository.findById(deviceId)
-                                .flatMap(device -> {
-                                    device.setStatus("measuring");
-                                    device.setActiveUserId(userId);
-                                    return deviceRepository.save(device)
-                                            .then(Mono.just(true));
-                                })
-                                .subscribe(sink::success, sink::error);
+                        if(action.equalsIgnoreCase("start")){
+                            deviceRepository.findById(deviceId)
+                                    .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
+                                    .flatMap(device -> {
+                                        device.setStatus("measuring");
+                                        device.setActiveUserId(userId);
+                                        return deviceRepository.save(device)
+                                                .then(Mono.just(true));
+                                    })
+                                    .subscribe(sink::success, sink::error);
+                        }else if(action.equalsIgnoreCase("stop")){
+                            deviceRepository.findById(deviceId)
+                                    .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
+                                    .flatMap(device -> {
+                                        device.setStatus("ready");
+                                        device.setActiveUserId(null);
+                                        return deviceRepository.save(device)
+                                                .then(Mono.just(true));
+                                    })
+                                    .subscribe(sink::success, sink::error);
+                        }
+
                     }
                     @Override
                     public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
                         System.out.println("Error when posting: " + throwable.getMessage());
                         sink.error(throwable);
-                        reconnect();
-                    }
-                });
-            } catch (MqttException e) {
-                sink.error(e);
-            }
-        });
-    }
-
-    @PostConstruct
-    public Mono<Void> subscribeToDate() {
-        String topic = "device/data";
-        return Mono.create(sink -> {
-            try {
-                mqttAsyncClient.subscribe(topic, 1, null, new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken asyncActionToken) {
-                        System.out.println("Subscribed to pulse data topic.");
-                        sink.success();
-                    }
-
-                    @Override
-                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                        System.out.println("Error subscribing to pulse data topic: " + exception.getMessage());
-                        sink.error(exception);
-                    }
-                });
-
-                mqttAsyncClient.setCallback(new MqttCallback() {
-                    @Override
-                    public void connectionLost(Throwable throwable) {
-                        System.out.println("Connection lost: " + throwable.getMessage());
-                        reconnect();
-                    }
-
-                    @Override
-                    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-                        String payload = new String(mqttMessage.getPayload());
-                        PulseDataDTO pulseData = objectMapper.readValue(payload, PulseDataDTO.class);
-                        PulseMeasurement pulseMeasurement = new PulseMeasurement();
-                        deviceRepository.findById(pulseData.getId())
-                                .flatMap(device -> {
-                                    device.setStatus("ready");
-                                    device.setLastContact(pulseData.getDate());
-                                    pulseMeasurement.setUserId(device.getActiveUserId());
-                                    return deviceRepository.save(device);
-                                }).flatMap(savedDevice ->{
-                                    pulseMeasurement.setBpm(pulseData.getBpm());
-                                    pulseMeasurement.setDate(pulseData.getDate());
-                                    return pulseMeasurementRepository.save(pulseMeasurement);
-                                }).subscribe();
-                    }
-
-                    @Override
-                    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-                    }
-                });
-
-            } catch (MqttException e) {
-                sink.error(e);
-            }
-        });
-    }
-
-    @PostConstruct
-    public Mono<Void> subscribeToDeviceStatus() {
-        String topic = "device/status";
-        return Mono.create(sink -> {
-            try {
-                mqttAsyncClient.subscribe(topic, 1, null, new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken asyncActionToken) {
-                        System.out.println("Subscribed to device status topic.");
-                        sink.success();
-                    }
-
-                    @Override
-                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                        System.out.println("Error subscribing to device status topic: " + exception.getMessage());
-                        sink.error(exception);
-                    }
-                });
-
-                mqttAsyncClient.setCallback(new MqttCallback() {
-                    @Override
-                    public void connectionLost(Throwable throwable) {
-                        System.out.println("Connection lost: " + throwable.getMessage());
-                        reconnect();
-                    }
-
-                    @Override
-                    public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-                        String payload = new String(mqttMessage.getPayload());
-                        StatusDataDTO statusData = objectMapper.readValue(payload, StatusDataDTO.class);
-                        deviceRepository.existsById(statusData.getId())
-                                .flatMap(exists -> {
-                                    if (exists) {
-                                        return deviceRepository.findById(statusData.getId())
-                                                .flatMap(device -> {
-                                                    device.setStatus("ready");
-                                                    device.setLastContact(LocalDateTime.now());
-                                                    return deviceRepository.save(device);
-                                                });
-                                    } else {
-                                        Device device = new Device();
-                                        device.setId(statusData.getId());
-                                        device.setStatus("ready");
-                                        device.setLastContact(LocalDateTime.now());
-                                        return deviceRepository.save(device);
-                                    }
-                                })
-                                .subscribe();
-                    }
-
-                    @Override
-                    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-                    }
-                });
-
-            } catch (MqttException e) {
-                sink.error(e);
-            }
-        });
-    }
-
-
-    private void reconnect() {
-        Mono<Void> reconnectMono = Mono.create(sink -> {
-            try {
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setCleanSession(true);
-                mqttAsyncClient.connect(options, null, new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken asyncActionToken) {
-                        System.out.println("Reconnection completed successfully.");
-                        sink.success();
-                    }
-
-                    @Override
-                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                        System.out.println("Error when reconnecting:" + exception.getMessage());
-                        sink.error(exception);
-                    }
-                });
-            } catch (MqttException e) {
-                sink.error(e);
-            }
-        });
-        reconnectMono
-                .doOnError(error -> System.out.println("Reconnection failed:" + error.getMessage()))
-                .thenMany(
-                        Flux.interval(Duration.ofSeconds(5))
-                                .take(3)
-                                .flatMap(tick -> {
-                                    System.out.println("Trying to reconnect again...");
-                                    return attemptReconnect();
-                                })
-                )
-                .subscribe();
-    }
-
-    private Mono<Void> attemptReconnect() {
-        return Mono.create(sink -> {
-            try {
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setCleanSession(true);
-                mqttAsyncClient.connect(options, null, new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken asyncActionToken) {
-                        System.out.println("Reconnection completed successfully");
-                        sink.success();
-                    }
-
-                    @Override
-                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                        System.out.println("Error when reconnecting:" + exception.getMessage());
-                        sink.error(exception);
                     }
                 });
             } catch (MqttException e) {
@@ -306,6 +228,22 @@ public class PulsometerService {
 
     public Flux<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @PreDestroy
+    public void clearPersistenceFiles() throws MqttException {
+        if (mqttAsyncClient != null && mqttAsyncClient.isConnected()) {
+            mqttAsyncClient.disconnect();
+        }
+
+        File folder = new File(persistenceDir);
+        if (folder.exists() && folder.isDirectory()) {
+            for (File file : folder.listFiles()) {
+                if (file.isFile()) {
+                    file.delete();
+                }
+            }
+        }
     }
 
 }

@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 public class PulseMeasurement {
 
     @Id
-    private Long id;
+    private Integer id;
 
     private Integer bpm;
 
     @Column(value = "user_id")
-    private Long userId;
+    private Integer userId;
 
     private LocalDateTime date;
 }

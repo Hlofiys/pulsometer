@@ -13,9 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PulseDataDTO {
 
-    private Long id;
-
-    private LocalDateTime date;
+    private Integer id;
 
     private Integer bpm;
 }
