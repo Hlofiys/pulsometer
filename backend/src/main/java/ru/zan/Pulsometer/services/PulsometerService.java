@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class PulsometerService {
@@ -142,15 +143,13 @@ public class PulsometerService {
 
     }
 
-    public Mono<Boolean> publish (Integer deviceId, Integer userId,String action) throws Exception {
+    public Mono<Boolean> publish (Integer deviceId, Integer userId) throws Exception {
         String topic = "device/switch/"+deviceId;
         SwitchDataDTO switchDataDTO = new SwitchDataDTO();
-        if (action.equalsIgnoreCase("start")) {
+        if (userId != null) {
             switchDataDTO.setMessage("1");
-        } else if (action.equalsIgnoreCase("stop")) {
-            switchDataDTO.setMessage("0");
         } else {
-            return Mono.error(new IllegalArgumentException("Invalid status. Use 'start' or 'stop'."));
+            switchDataDTO.setMessage("0");
         }
         String payload = objectMapper.writeValueAsString(switchDataDTO);
         MqttMessage message = new MqttMessage(payload.getBytes());
@@ -159,7 +158,7 @@ public class PulsometerService {
                 mqttAsyncClient.publish(topic, message, null, new IMqttActionListener() {
                     @Override
                     public void onSuccess(IMqttToken iMqttToken) {
-                        if(action.equalsIgnoreCase("start")){
+                        if(userId != null){
                             deviceRepository.findById(deviceId)
                                     .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
                                     .flatMap(device -> {
@@ -169,12 +168,11 @@ public class PulsometerService {
                                                 .then(Mono.just(true));
                                     })
                                     .subscribe(sink::success, sink::error);
-                        }else if(action.equalsIgnoreCase("stop")){
+                        }else {
                             deviceRepository.findById(deviceId)
                                     .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
                                     .flatMap(device -> {
                                         device.setStatus("ready");
-                                        device.setActiveUserId(null);
                                         return deviceRepository.save(device)
                                                 .then(Mono.just(true));
                                     })
@@ -199,36 +197,86 @@ public class PulsometerService {
         return userRepository.save(user).hasElement();
     }
 
-    public Mono<Boolean> deleteUser (long userId) {
+    public Mono<Boolean> deleteUser(Integer userId) {
         return userRepository.existsById(userId)
                 .flatMap(exists -> {
                     if (exists) {
-                        return userRepository.deleteById(userId).thenReturn(true);
+                        return userRepository.findById(userId)
+                                .flatMap(user -> {
+                                    return clearUsers(user.getDeviceId(), userId)
+                                            .then(userRepository.deleteById(userId));
+                                }).thenReturn(true);
                     } else {
                         return Mono.just(false);
                     }
                 });
     }
 
-    public Mono<Boolean> updateUser (long userId , UpdatedUserDTO updatedUserDTO) {
-        return userRepository.findById(userId)
-                .flatMap(user ->{
-                    if(updatedUserDTO.getFio() != null) {
-                        user.setFio(updatedUserDTO.getFio());
-                    }
-                    return userRepository.save(user);
-                })
-                .map(savedUser -> true)
-                .defaultIfEmpty(false);
+    public Mono<Boolean> clearUsers (Integer deviceId,Integer userId) {
+        return deviceRepository.findById(deviceId)
+                .flatMap(device -> {
+                    List<Integer> list = device.getUsers();
+                    list.remove(userId);
+                    device.setUsers(list);
+                    return deviceRepository.save(device).thenReturn(true);
+                });
     }
 
-    public Mono<User> getUser(long userId) {
+    public Mono<Boolean> updateUser(Integer userId, UpdatedUserDTO updatedUserDTO) {
+        return userRepository.findById(userId)
+                .flatMap(user -> {
+                    Integer oldDeviceId = user.getDeviceId();
+
+                    if (updatedUserDTO.getFio() != null) {
+                        user.setFio(updatedUserDTO.getFio());
+                    }
+                    if (updatedUserDTO.getDeviceId() != null) {
+                        user.setDeviceId(updatedUserDTO.getDeviceId());
+                    }
+
+                    return userRepository.save(user)
+                            .flatMap(savedUser -> {
+                                return deviceRepository.findById(oldDeviceId)
+                                        .flatMap(oldDevice -> {
+                                            List<Integer> list = oldDevice.getUsers();
+                                            list.remove(userId);
+                                            oldDevice.setUsers(list);
+                                            return deviceRepository.save(oldDevice);
+                                        }).thenReturn(savedUser);
+                            })
+                            .flatMap(savedUser -> {
+                                return deviceRepository.findById(savedUser.getDeviceId())
+                                        .flatMap(newDevice -> {
+                                            List<Integer> list = newDevice.getUsers();
+                                            if (!list.contains(userId)) {  // Проверка на наличие пользователя
+                                                list.add(userId);  // Добавляем ID пользователя
+                                            }
+                                            newDevice.setUsers(list);
+                                            return deviceRepository.save(newDevice);
+                                        }).thenReturn(savedUser);
+                            })
+                            .map(savedUser -> true)
+                            .defaultIfEmpty(false);
+                });
+    }
+
+    public Mono<User> getUser(Integer userId) {
         return userRepository.findById(userId);
     }
 
     public Flux<User> getAllUsers() {
         return userRepository.findAll();
     }
+
+    public Flux<Device> getAllDevices() {
+        return deviceRepository.findAll();
+    }
+
+    public Mono<Boolean> checkDeviceExists(Integer deviceId) {
+        return deviceRepository.findById(deviceId)
+                .hasElement();
+    }
+
 
     @PreDestroy
     public void clearPersistenceFiles() throws MqttException {
