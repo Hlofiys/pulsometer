@@ -4,9 +4,11 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.models.Device;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Repository
@@ -19,4 +21,5 @@ public interface DeviceRepository extends R2dbcRepository<Device, Integer> {
     Mono<Void> upsertDevice(@Param("id") Integer id,
                             @Param("status") String status,
                             @Param("lastContact") LocalDateTime lastContact);
+    Flux<Device> findByLastContactBefore(Instant timestamp);
 }

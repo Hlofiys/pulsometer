@@ -8,6 +8,7 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,7 +27,9 @@ import ru.zan.Pulsometer.util.DeviceNotFoundException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -275,6 +278,40 @@ public class PulsometerService {
     public Mono<Boolean> checkDeviceExists(Integer deviceId) {
         return deviceRepository.findById(deviceId)
                 .hasElement();
+    }
+
+    public Flux<User> getDeviceUsers(Integer deviceId) {
+        return deviceRepository.findById(deviceId)
+                .flatMapMany(device -> {
+                    List<Integer> users = device.getUsers();
+                    return Flux.fromIterable(users)
+                            .flatMap(userRepository::findById);
+                });
+    }
+
+    public Flux<PulseMeasurement> getAllUserPulseMeasurements(Integer userId) {
+        return userRepository.findById(userId)
+                .flatMapMany(user -> {
+                    List<Integer> pulseMeasurementIds = user.getPulseMeasurements();
+                    if (pulseMeasurementIds == null || pulseMeasurementIds.isEmpty()) {
+                        return Flux.empty();
+                    }
+                    return Flux.fromIterable(pulseMeasurementIds)
+                            .flatMap(pulseMeasurementRepository::findById);
+                })
+                .switchIfEmpty(Flux.empty());
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void updateDeviceStatus() {
+        Instant twoMinutesAgo = Instant.now().minus(2, ChronoUnit.MINUTES);
+        Flux<Device> devicesToUpdate = deviceRepository.findByLastContactBefore(twoMinutesAgo);
+        devicesToUpdate
+                .flatMap(device -> {
+                    device.setStatus("off");
+                    return deviceRepository.save(device);
+                })
+                .subscribe();
     }
 
 

@@ -5,6 +5,6 @@ import org.springframework.stereotype.Repository;
 import ru.zan.Pulsometer.models.PulseMeasurement;
 
 @Repository
-public interface PulseMeasurementRepository extends R2dbcRepository<PulseMeasurement, Long> {
+public interface PulseMeasurementRepository extends R2dbcRepository<PulseMeasurement, Integer> {
 }
 

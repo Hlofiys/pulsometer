@@ -13,25 +13,25 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
 import ru.zan.Pulsometer.DTOs.UserDTO;
-import ru.zan.Pulsometer.models.Device;
+import ru.zan.Pulsometer.models.PulseMeasurement;
 import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.services.PulsometerService;
-import ru.zan.Pulsometer.util.DeviceNotFoundException;
-import ru.zan.Pulsometer.util.ErrorResponse;
 
-@Tag(name = "Pulsometer")
+@Tag(name = "User")
 @RestController
-@RequestMapping("/api/devices")
-public class PulsometerController {
+@RequestMapping("/api/users")
+public class UserController {
 
     private final PulsometerService pulsometerService;
+
     private final ModelMapper modelMapper;
 
     @Autowired
-    public PulsometerController(PulsometerService pulsometerService, ModelMapper modelMapper) {
+    public UserController(PulsometerService pulsometerService, ModelMapper modelMapper) {
         this.pulsometerService = pulsometerService;
         this.modelMapper = modelMapper;
     }
+
 
     @Operation(summary = "Creating a user")
     @ApiResponses(value = {
@@ -63,14 +63,12 @@ public class PulsometerController {
                 });
     }
 
-
-
     @Operation(summary = "Retrieve all users")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of received users"),
             @ApiResponse(responseCode = "204", description = "No users found")
     })
-    @GetMapping("/users")
+    @GetMapping("")
     public Mono<ResponseEntity<Flux<User>>> getUsers (){
         return pulsometerService.getAllUsers()
                 .collectList()
@@ -82,20 +80,18 @@ public class PulsometerController {
                     }
                 });
     }
-    @Operation(summary = "Retrieve all devices")
+
+    @Operation(summary = "Retrieve all measurements user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "List of received devices"),
-            @ApiResponse(responseCode = "204", description = "No devices found")
+            @ApiResponse(responseCode = "200", description = "List of received measurements"),
+            @ApiResponse(responseCode = "204", description = "No measurements found")
     })
-    @GetMapping("")
-    public Mono<ResponseEntity<Flux<Device>>> getDevices (){
-        return pulsometerService.getAllDevices()
+    @GetMapping("/{userId}/measurements")
+    public Mono<ResponseEntity<Flux<PulseMeasurement>>> getAllUserMeasurements(@PathVariable("userId") Integer userId) {
+        return pulsometerService.getAllUserPulseMeasurements(userId)
                 .collectList()
-                .flatMap(devices -> {
-                    if (devices.isEmpty()) {
-                        return Mono.just(ResponseEntity.noContent().build());
-                    }else
-                        return Mono.just(ResponseEntity.ok(Flux.fromIterable(devices)));
+                .flatMap(pulseMeasurements -> {
+                    return Mono.just(ResponseEntity.ok(Flux.fromIterable(pulseMeasurements)));
                 });
     }
 
@@ -111,13 +107,14 @@ public class PulsometerController {
                 .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+
     @Operation(summary = "Update user by its ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User updated"),
             @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
-    @PatchMapping(value = "/update/{userId}")
+    @PatchMapping(value = "/{userId}")
     public Mono<ResponseEntity<Boolean>> updateUser (@PathVariable("userId") Integer userId ,
                                                      @RequestBody() UpdatedUserDTO updatedUserDTO){
         return pulsometerService.updateUser(userId,updatedUserDTO).map(isUpdated ->{
@@ -145,45 +142,8 @@ public class PulsometerController {
             }
         });
     }
-    @Operation(summary = "Switching the device status and setting the active user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Status changed"),
-            @ApiResponse(responseCode = "400", description = "Invalid data"),
-            @ApiResponse(responseCode = "404", description = "Device not found")
-    })
-    @PatchMapping("/{deviceId}")
-    public Mono<ResponseEntity<?>> createData (@PathVariable("deviceId") Integer deviceId,
-                                               @RequestParam(value = "activeUserId",required = false) Integer activeUserId
-    ) throws Exception{
-        if (deviceId == null || deviceId <= 0) {
-            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Invalid or missing deviceId", HttpStatus.BAD_REQUEST.value())));
-        }
-
-        return pulsometerService.publish(deviceId, activeUserId)
-                .map(isPublish -> {
-                    if (isPublish) {
-                        return ResponseEntity.ok(true);
-                    } else {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ErrorResponse("Failed to process the request", HttpStatus.BAD_REQUEST.value()));
-                    }
-                })
-                .onErrorResume(e -> {
-                    if (e instanceof DeviceNotFoundException) {
-                        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(new ErrorResponse("Device not found with ID: " + deviceId, HttpStatus.NOT_FOUND.value())));
-                    } else if (e instanceof IllegalArgumentException) {
-                        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value())));
-                    }
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ErrorResponse("An internal error occurred", HttpStatus.INTERNAL_SERVER_ERROR.value())));
-                });
-    }
 
     private User convertToUser(UserDTO userDTO) {
         return modelMapper.map(userDTO, User.class);
     }
-
 }
