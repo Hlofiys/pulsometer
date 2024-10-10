@@ -52,7 +52,7 @@ public class PulsometerService {
         this.objectMapper = objectMapper;
 
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
-        mqttAsyncClient = new MqttAsyncClient("tcp://localhost:1883", MqttAsyncClient.generateClientId(), persistence);
+        mqttAsyncClient = new MqttAsyncClient("tcp://home.hlofiys.xyz:1883", MqttAsyncClient.generateClientId(), persistence);
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setCleanSession(true);
