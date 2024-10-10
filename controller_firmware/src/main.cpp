@@ -1,5 +1,3 @@
-// http://forum.arduino.cc/index.php?topic=209140.30
-
 #include "Arduino.h"
 
 #include "WiFiManager.h"
@@ -9,29 +7,39 @@
 #include <ArduinoJson.h>
 
 #include <secrets.h>
+
+#include "MAX30105.h"
+
+#include "heartRate.h"
+
+#include <Wire.h>
 // Using built in LED pin for demo
-#define ledPin 13
+#define ledPin 2
 
 // Pulse meter connected to any Analog pin
 #define sensorPin A0
+const byte RATE_SIZE = 4; // Increase this for more averaging. 4 is good.
+byte rates[RATE_SIZE];	  // Array of heart rates
+byte rateSpot = 0;
+long lastBeat = 0; // Time at which the last beat occurred
+
+float beatsPerMinute;
+int beatAvg;
 
 // device id
 const int deviceId = 1;
 
-// Values from provided (eBay) code
-float alpha = 0.75;
-int period = 50;
-float maxVal = 0.0;
+int period = 20;
 
 /******* MQTT Broker Connection Details *******/
-const char *mqtt_server = "mqtt.hlofiys.xyz";
+const char *mqtt_server = "192.168.1.32";
 const char *mqtt_clientId = "Client" + deviceId;
-const int mqtt_port = 8883;
+const int mqtt_port = 1883;
 
 // MQTT topics
 const char *mqtt_topic_device_status = "device/status";
 const char *mqtt_topic_heartbeat_data = "device/data";
-const char *mqtt_topic_device_switch = "device/switch/" + deviceId;
+const char *mqtt_topic_device_switch = "device/switch/1";
 
 // Device status
 bool collecting = false;
@@ -39,6 +47,8 @@ bool collecting = false;
 // MQTT client
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+MAX30105 particleSensor;
 
 bool tryConnectToMqttServer()
 {
@@ -63,6 +73,7 @@ void reconnect()
 		if (tryConnectToMqttServer())
 		{
 			Serial.println("connected");
+			client.subscribe(mqtt_topic_device_switch);
 		}
 		else
 		{
@@ -118,13 +129,40 @@ void callback(char *topic, byte *payload, unsigned int length)
 	}
 }
 
+void Heart_Beat()
+{
+	long irValue = particleSensor.getIR();
+	if (checkForBeat(irValue) == true)
+	{
+		long delta = millis() - lastBeat;
+		lastBeat = millis();
+		beatsPerMinute = 60 / (delta / 1000.0);
+		if (beatsPerMinute < 255 && beatsPerMinute > 20)
+		{
+			rates[rateSpot++] = (byte)beatsPerMinute;
+			rateSpot %= RATE_SIZE;
+			beatAvg = 0;
+			for (byte x = 0; x < RATE_SIZE; x++)
+				beatAvg += rates[x];
+			beatAvg /= RATE_SIZE;
+		}
+	}
+
+	if (irValue < 50000)
+	{
+		beatsPerMinute = 0;
+		beatAvg = 0;
+	}
+}
+
 // ------------------------------------------------------------
 // SETUP      SETUP      SETUP      SETUP      SETUP      SETUP
 // ------------------------------------------------------------
 void setup()
 {
+	Serial.begin(9600);
 	WiFiManager wifiManager;
-	if (!wifiManager.autoConnect("Pulsemeter 1", "123123"))
+	if (!wifiManager.autoConnect("Pulsemeter 1", "12345678"))
 	{
 		Serial.println("failed to connect and hit timeout");
 		delay(3000);
@@ -143,10 +181,19 @@ void setup()
 
 	// Inbuilt LED
 	pinMode(ledPin, OUTPUT);
+	// Initialize sensor
 
-	// Debugging window (easy to write data to LCD 16x2)
-	Serial.begin(9600);
-	Serial.println("Pulse rate detection started.");
+	if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) // Use default I2C port, 400kHz speed
+	{
+		Serial.println("MAX30102 was not found. Please check wiring/power. ");
+		while (1)
+			;
+	}
+	Serial.println("Place your index finger on the sensor with steady pressure.");
+
+	particleSensor.setup();					   // Configure sensor with default settings
+	particleSensor.setPulseAmplitudeRed(0x0A); // Turn Red LED to low to indicate sensor is running
+	particleSensor.setPulseAmplitudeGreen(0);  // Turn off Green LED
 }
 
 // ------------------------------------------------------------
@@ -157,83 +204,24 @@ void loop()
 	handleMqttState();
 	if (collecting)
 	{
+		for (int i = 0; i < 500; i++)
+			Heart_Beat();
+		Serial.print(", BPM=");
+		Serial.print(beatsPerMinute);
+		Serial.print(", Avg BPM=");
+		Serial.print(beatAvg);
 
-		// Arbitrary initial value for the sensor value (0 - 1023)
-		// too large and it takes a few seconds to 'lock on' to pulse
-		static float oldValue = 500;
-
-		// Time recording for BPM (beats per minute)
-		static unsigned long bpmMills = millis();
-		static int bpm = 0;
-
-		// Keep track of when we had the the last pulse - ignore
-		// further pulses if too soon (probably false reading)
-		static unsigned long timeBetweenBeats = millis();
-		int minDelayBetweenBeats = 400;
-
-		// This is generic code provided with the board:
-		// Read the sensor value (0 - 1023)
-		int rawValue = analogRead((unsigned char)sensorPin);
-
-		// Some maths (USA: math) to determine whether we are detected a peak (pulse)
-		float value = alpha * oldValue + (1 - alpha) * rawValue;
-		float change = value - oldValue;
-		oldValue = value;
-
-		// Forum suggested improvement (works very well)
-		// Display data on the LED via a blip:
-		// Empirically, if we detect a peak as being X% from
-		// absolute max, we find the pulse even when amplitude
-		// varies on the low side.
-
-		// if we find a new maximum value AND we haven't had a pulse lately
-		if ((change >= maxVal) && (millis() > timeBetweenBeats + minDelayBetweenBeats))
-		{
-
-			// Reset max every time we find a new peak
-			maxVal = change;
-
-			// Flash LED and beep the buzzer
-			digitalWrite(ledPin, 1);
-
-			// Reset the heart beat time values
-			timeBetweenBeats = millis();
-			bpm++;
-		}
-		else
-		{
-			// No pulse detected, ensure LED is off (may be off already)
-			digitalWrite(ledPin, 0);
-		}
-		// Slowly decay max for when sensor is moved around
-		// but decay must be slower than time needed to hit
-		// next pulse peak. Originally: 0.98
-		maxVal = maxVal * 0.97;
-
-		// Every 15 seconds extrapolate the pulse rate. Improvement would
-		// be to average out BPM over last 60 seconds
-		if (millis() >= bpmMills + 15000)
-		{
-			Serial.print("BPM (approx): ");
-			Serial.println(bpm * 4);
-			JsonDocument doc;
-			doc["deviceId"] = deviceId;
-			doc["bpm"] = bpm * 4;
-
-			char mqtt_message[128];
-			serializeJson(doc, mqtt_message);
-
-			publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
-			bpm = 0;
-			bpmMills = millis();
-		}
-
-		// Must delay here to give the value a chance to decay
-		delay(period);
+		JsonDocument doc;
+		doc["deviceId"] = deviceId;
+		doc["bpm"] = beatAvg;
+		char mqtt_message[128];
+		serializeJson(doc, mqtt_message);
+		publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
+		delay(5000);
 	}
 	else
 	{
 		publishStatusMessage();
+		delay(5000);
 	}
-	delay(500);
 }
