@@ -8,6 +8,7 @@ services:
     image: hivemq/hivemq-ce
     ports:
       - 1883:1883
+      - 1884:8080
     networks:
       - pulsometer_network
     restart: unless-stopped
