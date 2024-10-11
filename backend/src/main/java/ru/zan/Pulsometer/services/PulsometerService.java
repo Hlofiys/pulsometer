@@ -192,8 +192,8 @@ public class PulsometerService {
     }
 
     public Mono<Boolean> createUser (User user) {
-        user.setId(null);
-        return userRepository.save(user).hasElement();
+        return userRepository.save(user)
+                .map(savedUser -> savedUser != null && savedUser.getId() != null);
     }
 
     public Mono<Boolean> deleteUser(Integer userId) {
