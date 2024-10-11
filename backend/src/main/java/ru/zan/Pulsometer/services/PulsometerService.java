@@ -14,7 +14,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.DTOs.PulseDataDTO;
 import ru.zan.Pulsometer.DTOs.StatusDataDTO;
-import ru.zan.Pulsometer.DTOs.SwitchDataDTO;
 import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
 import ru.zan.Pulsometer.models.Device;
 import ru.zan.Pulsometer.models.PulseMeasurement;
@@ -151,13 +150,7 @@ public class PulsometerService {
 
     public Mono<Boolean> publish (Integer deviceId, Integer userId) throws Exception {
         String topic = "device/switch/"+deviceId;
-        SwitchDataDTO switchDataDTO = new SwitchDataDTO();
-        if (userId != null) {
-            switchDataDTO.setMessage("1");
-        } else {
-            switchDataDTO.setMessage("0");
-        }
-        String payload = objectMapper.writeValueAsString(switchDataDTO);
+        String payload = (userId != null) ? "1" : "0";
         MqttMessage message = new MqttMessage(payload.getBytes());
         return Mono.create(sink -> {
             try {
