@@ -59,11 +59,13 @@ public class DeviceController {
                 .collectList()
                 .flatMap(users -> {
                     if (users.isEmpty()) {
-                        return Mono.just(ResponseEntity.noContent().build());
+                        return Mono.just(ResponseEntity.ok(Flux.empty()));
                     }else {
                         return Mono.just(ResponseEntity.ok(Flux.fromIterable(users)));
                     }
-                });
+                })
+                .map(response -> (ResponseEntity<Flux<User>>) response)
+                .defaultIfEmpty(ResponseEntity.ok(Flux.empty()));
     }
 
     @Operation(summary = "Switching the device status and setting the active user")

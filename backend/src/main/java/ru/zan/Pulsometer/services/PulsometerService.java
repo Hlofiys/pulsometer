@@ -280,6 +280,9 @@ public class PulsometerService {
         return deviceRepository.findById(deviceId)
                 .flatMapMany(device -> {
                     List<Integer> users = device.getUsers();
+                    if (users == null || users.isEmpty()) {
+                        return Flux.empty();
+                    }
                     return Flux.fromIterable(users)
                             .flatMap(userRepository::findById);
                 });
