@@ -32,7 +32,7 @@ const int deviceId = 1;
 int period = 20;
 
 /******* MQTT Broker Connection Details *******/
-const char *mqtt_server = "192.168.1.32";
+const char *mqtt_server = "home.hlofiys.xyz";
 const char *mqtt_clientId = "Client" + deviceId;
 const int mqtt_port = 1883;
 
@@ -91,13 +91,17 @@ void reconnect()
 void publishMessage(const char *topic, String payload, boolean retained)
 {
 	if (client.publish(topic, payload.c_str(), true))
-		Serial.println("Message publised [" + String(topic) + "]: " + payload);
+		Serial.println("Message published [" + String(topic) + "]: " + payload);
 }
 
 void publishStatusMessage()
 {
 	Serial.print("Keep Alive");
-	publishMessage(mqtt_topic_device_status, String(deviceId).c_str(), true);
+	JsonDocument doc;
+	doc["id"] = deviceId;
+	char mqtt_message[128];
+	serializeJson(doc, mqtt_message);
+	publishMessage(mqtt_topic_device_status, mqtt_message, true);
 }
 
 void handleMqttState()
@@ -201,27 +205,32 @@ void setup()
 // ------------------------------------------------------------
 void loop()
 {
-	handleMqttState();
+	if (!client.connected())
+	{
+		reconnect();
+	}
+	delay(30);
+	client.loop();
 	if (collecting)
 	{
 		for (int i = 0; i < 500; i++)
 			Heart_Beat();
-		Serial.print(", BPM=");
+		Serial.print("BPM=");
 		Serial.print(beatsPerMinute);
 		Serial.print(", Avg BPM=");
-		Serial.print(beatAvg);
+		Serial.println(beatAvg);
 
 		JsonDocument doc;
-		doc["deviceId"] = deviceId;
-		doc["bpm"] = beatAvg;
+		doc["id"] = deviceId;
+		doc["bpm"] = beatsPerMinute;
 		char mqtt_message[128];
 		serializeJson(doc, mqtt_message);
 		publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
-		delay(5000);
+		delay(2500);
 	}
 	else
 	{
 		publishStatusMessage();
-		delay(5000);
+		delay(2500);
 	}
 }
