@@ -56,6 +56,8 @@ public class PulsometerService {
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setCleanSession(true);
+        options.setAutomaticReconnect(true);
+        options.setConnectionTimeout(10);
 
         mqttAsyncClient.connect(options, null, new IMqttActionListener() {
             @Override
@@ -75,6 +77,7 @@ public class PulsometerService {
             @Override
             public void connectionLost(Throwable cause) {
                 System.out.println("Connection lost: " + cause.getMessage());
+                cause.printStackTrace();
             }
 
             @Override
