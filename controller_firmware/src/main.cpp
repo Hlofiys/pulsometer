@@ -8,38 +8,24 @@
 
 #include <secrets.h>
 
-#include "MAX30105.h"
+#include <MAX3010x.h>
 
-#include "heartRate.h"
-
-#include <Wire.h>
+#include "filters.h"
 // Using built in LED pin for demo
 #define ledPin 2
 
-// Pulse meter connected to any Analog pin
-#define sensorPin A0
-const byte RATE_SIZE = 4; // Increase this for more averaging. 4 is good.
-byte rates[RATE_SIZE];	  // Array of heart rates
-byte rateSpot = 0;
-long lastBeat = 0; // Time at which the last beat occurred
-
-float beatsPerMinute;
-int beatAvg;
-
 // device id
-const int deviceId = 1;
-
-int period = 20;
+const int deviceId = 2;
 
 /******* MQTT Broker Connection Details *******/
 const char *mqtt_server = "home.hlofiys.xyz";
-const char *mqtt_clientId = "Client" + deviceId;
+const char *mqtt_clientId = "Client 2";
 const int mqtt_port = 1883;
 
 // MQTT topics
 const char *mqtt_topic_device_status = "device/status";
 const char *mqtt_topic_heartbeat_data = "device/data";
-const char *mqtt_topic_device_switch = "device/switch/1";
+const char *mqtt_topic_device_switch = "device/switch/2";
 
 // Device status
 bool collecting = false;
@@ -48,7 +34,26 @@ bool collecting = false;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-MAX30105 particleSensor;
+// Sensor (adjust to your sensor type)
+MAX30105 sensor;
+const auto kSamplingRate = sensor.SAMPLING_RATE_400SPS;
+const float kSamplingFrequency = 400.0;
+
+// Finger Detection Threshold and Cooldown
+const unsigned long kFingerThreshold = 10000;
+const unsigned int kFingerCooldownMs = 500;
+
+// Edge Detection Threshold (decrease for MAX30100)
+const float kEdgeThreshold = -2000.0;
+
+// Filters
+const float kLowPassCutoff = 5.0;
+const float kHighPassCutoff = 0.5;
+
+// Averaging
+const bool kEnableAveraging = true;
+const int kAveragingSamples = 50;
+const int kSampleThreshold = 5;
 
 bool tryConnectToMqttServer()
 {
@@ -133,32 +138,6 @@ void callback(char *topic, byte *payload, unsigned int length)
 	}
 }
 
-void Heart_Beat()
-{
-	long irValue = particleSensor.getIR();
-	if (checkForBeat(irValue) == true)
-	{
-		long delta = millis() - lastBeat;
-		lastBeat = millis();
-		beatsPerMinute = 60 / (delta / 1000.0);
-		if (beatsPerMinute < 255 && beatsPerMinute > 20)
-		{
-			rates[rateSpot++] = (byte)beatsPerMinute;
-			rateSpot %= RATE_SIZE;
-			beatAvg = 0;
-			for (byte x = 0; x < RATE_SIZE; x++)
-				beatAvg += rates[x];
-			beatAvg /= RATE_SIZE;
-		}
-	}
-
-	if (irValue < 50000)
-	{
-		beatsPerMinute = 0;
-		beatAvg = 0;
-	}
-}
-
 // ------------------------------------------------------------
 // SETUP      SETUP      SETUP      SETUP      SETUP      SETUP
 // ------------------------------------------------------------
@@ -166,7 +145,7 @@ void setup()
 {
 	Serial.begin(9600);
 	WiFiManager wifiManager;
-	if (!wifiManager.autoConnect("Pulsemeter 1", "12345678"))
+	if (!wifiManager.autoConnect("Pulsemeter 2", "12345678"))
 	{
 		Serial.println("failed to connect and hit timeout");
 		delay(3000);
@@ -187,18 +166,38 @@ void setup()
 	pinMode(ledPin, OUTPUT);
 	// Initialize sensor
 
-	if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) // Use default I2C port, 400kHz speed
+	if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
 	{
-		Serial.println("MAX30102 was not found. Please check wiring/power. ");
-		while (1)
-			;
+		Serial.println("Sensor initialized");
 	}
-	Serial.println("Place your index finger on the sensor with steady pressure.");
-
-	particleSensor.setup();					   // Configure sensor with default settings
-	particleSensor.setPulseAmplitudeRed(0x0A); // Turn Red LED to low to indicate sensor is running
-	particleSensor.setPulseAmplitudeGreen(0);  // Turn off Green LED
+	else
+	{
+		Serial.println("Sensor not found");
+		ESP.restart();
+	}
 }
+
+// Filter Instances
+HighPassFilter high_pass_filter(kHighPassCutoff, kSamplingFrequency);
+LowPassFilter low_pass_filter(kLowPassCutoff, kSamplingFrequency);
+Differentiator differentiator(kSamplingFrequency);
+MovingAverageFilter<kAveragingSamples> averager;
+
+// Timestamp of the last heartbeat
+long last_heartbeat = 0;
+
+// Timestamp for finger detection
+long finger_timestamp = 0;
+bool finger_detected = false;
+
+// Last diff to detect zero crossing
+float last_diff = NAN;
+bool crossed = false;
+long crossed_time = 0;
+
+//Cooldown
+long latestBpmPublish = 0;
+long latestKeepAlivePublish = 0;
 
 // ------------------------------------------------------------
 // LOOP     LOOP     LOOP     LOOP     LOOP     LOOP     LOOP
@@ -209,28 +208,107 @@ void loop()
 	{
 		reconnect();
 	}
-	delay(30);
 	client.loop();
-	if (collecting)
+	if (collecting && millis() - latestBpmPublish > 50000)
 	{
-		for (int i = 0; i < 500; i++)
-			Heart_Beat();
-		Serial.print("BPM=");
-		Serial.print(beatsPerMinute);
-		Serial.print(", Avg BPM=");
-		Serial.println(beatAvg);
+		auto sample = sensor.readSample(1000);
+		float current_value = sample.red;
 
-		JsonDocument doc;
-		doc["id"] = deviceId;
-		doc["bpm"] = beatsPerMinute;
-		char mqtt_message[128];
-		serializeJson(doc, mqtt_message);
-		publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
-		delay(2500);
+		// Detect Finger using raw sensor value
+		if (sample.red > kFingerThreshold)
+		{
+			if (millis() - finger_timestamp > kFingerCooldownMs)
+			{
+				finger_detected = true;
+			}
+		}
+		else
+		{
+			// Reset values if the finger is removed
+			differentiator.reset();
+			averager.reset();
+			low_pass_filter.reset();
+			high_pass_filter.reset();
+
+			finger_detected = false;
+			finger_timestamp = millis();
+		}
+
+		if (finger_detected)
+		{
+			current_value = low_pass_filter.process(current_value);
+			current_value = high_pass_filter.process(current_value);
+			float current_diff = differentiator.process(current_value);
+
+			// Valid values?
+			if (!isnan(current_diff) && !isnan(last_diff))
+			{
+
+				// Detect Heartbeat - Zero-Crossing
+				if (last_diff > 0 && current_diff < 0)
+				{
+					crossed = true;
+					crossed_time = millis();
+				}
+
+				if (current_diff > 0)
+				{
+					crossed = false;
+				}
+
+				// Detect Heartbeat - Falling Edge Threshold
+				if (crossed && current_diff < kEdgeThreshold)
+				{
+					digitalWrite(ledPin, LOW);
+					if (last_heartbeat != 0 && crossed_time - last_heartbeat > 300)
+					{
+						// Show Results
+						int bpm = 60000 / (crossed_time - last_heartbeat);
+						if (bpm > 50 && bpm < 250)
+						{
+							// Average?
+							if (kEnableAveraging)
+							{
+								int average_bpm = averager.process(bpm);
+
+
+								// Show if enough samples have been collected
+								if (averager.count() > kSampleThreshold)
+								{
+									latestBpmPublish = millis();
+									Serial.print("Heart Rate (avg, bpm): ");
+									Serial.println(average_bpm);
+									JsonDocument doc;
+									doc["id"] = deviceId;
+									doc["bpm"] = average_bpm;
+									char mqtt_message[128];
+									serializeJson(doc, mqtt_message);
+									publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
+								}
+							}
+							else
+							{
+								Serial.print("Heart Rate (current, bpm): ");
+								Serial.println(bpm);
+							}
+						}
+					}
+					digitalWrite(ledPin, HIGH);
+					crossed = false;
+					last_heartbeat = crossed_time;
+				}
+			}
+
+			last_diff = current_diff;
+		}
 	}
 	else
 	{
-		publishStatusMessage();
+		if(millis() - latestKeepAlivePublish > 15000)
+		{
+			publishStatusMessage();
+			latestKeepAlivePublish = millis();
+		}
 		delay(2500);
 	}
 }
