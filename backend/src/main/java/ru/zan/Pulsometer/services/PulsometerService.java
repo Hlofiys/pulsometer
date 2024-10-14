@@ -297,7 +297,7 @@ public class PulsometerService {
                         return Flux.empty();
                     }
                     return Flux.fromIterable(pulseMeasurementIds)
-                            .flatMap(pulseMeasurementRepository::findById);
+                            .flatMap(pulseMeasurementRepository::findByIdOrderByDateAsc);
                 })
                 .switchIfEmpty(Flux.empty());
     }
