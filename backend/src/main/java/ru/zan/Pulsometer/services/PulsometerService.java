@@ -212,7 +212,7 @@ public class PulsometerService {
                 });
     }
 
-    public Mono<Boolean> clearUsers (Integer deviceId,Integer userId) {
+    private Mono<Boolean> clearUsers (Integer deviceId,Integer userId) {
         return deviceRepository.findById(deviceId)
                 .flatMap(device -> {
                     List<Integer> list = device.getUsers();
@@ -248,8 +248,8 @@ public class PulsometerService {
                                 return deviceRepository.findById(savedUser.getDeviceId())
                                         .flatMap(newDevice -> {
                                             List<Integer> list = newDevice.getUsers();
-                                            if (!list.contains(userId)) {  // Проверка на наличие пользователя
-                                                list.add(userId);  // Добавляем ID пользователя
+                                            if (!list.contains(userId)) {
+                                                list.add(userId);
                                             }
                                             newDevice.setUsers(list);
                                             return deviceRepository.save(newDevice);
