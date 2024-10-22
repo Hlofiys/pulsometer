@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -296,8 +297,8 @@ public class PulsometerService {
                     if (pulseMeasurementIds == null || pulseMeasurementIds.isEmpty()) {
                         return Flux.empty();
                     }
-                    return Flux.fromIterable(pulseMeasurementIds)
-                            .flatMap(pulseMeasurementRepository::findByIdOrderByDateAsc);
+                    return pulseMeasurementRepository.findAllById(pulseMeasurementIds)
+                            .sort(Comparator.comparing(PulseMeasurement::getDate).reversed());
                 })
                 .switchIfEmpty(Flux.empty());
     }

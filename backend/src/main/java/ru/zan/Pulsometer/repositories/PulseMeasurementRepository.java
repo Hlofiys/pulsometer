@@ -8,6 +8,5 @@ import ru.zan.Pulsometer.models.PulseMeasurement;
 @Repository
 public interface PulseMeasurementRepository extends R2dbcRepository<PulseMeasurement, Integer> {
 
-    Flux<PulseMeasurement> findByIdOrderByDateAsc(Integer id);
 }
 
