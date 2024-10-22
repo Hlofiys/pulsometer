@@ -132,9 +132,23 @@ void callback(char *topic, byte *payload, unsigned int length)
 	if (strcmp(topic, mqtt_topic_device_switch) == 0)
 	{
 		if (incommingMessage.equals("1"))
+{
 			collecting = true; // Turn the Collecting on
+if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
+			{
+				Serial.println("Sensor initialized");
+			}
+			else
+			{
+				Serial.println("Sensor not found");
+				ESP.restart();
+			}
+		}
 		else
+{
 			collecting = false; // Turn the Collecting off
+sensor.shutdown();
+		}
 	}
 }
 
@@ -169,6 +183,7 @@ void setup()
 	if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
 	{
 		Serial.println("Sensor initialized");
+sensor.shutdown();
 	}
 	else
 	{
@@ -195,7 +210,7 @@ float last_diff = NAN;
 bool crossed = false;
 long crossed_time = 0;
 
-//Cooldown
+// Cooldown
 long latestBpmPublish = 0;
 long latestKeepAlivePublish = 0;
 
@@ -259,11 +274,11 @@ void loop()
 				// Detect Heartbeat - Falling Edge Threshold
 				if (crossed && current_diff < kEdgeThreshold)
 				{
-					digitalWrite(ledPin, LOW);
 					if (last_heartbeat != 0 && crossed_time - last_heartbeat > 300)
 					{
 						// Show Results
 						int bpm = 60000 / (crossed_time - last_heartbeat);
+						digitalWrite(ledPin, LOW);
 						if (bpm > 50 && bpm < 250)
 						{
 							// Average?
@@ -304,7 +319,7 @@ void loop()
 	}
 	else
 	{
-		if(millis() - latestKeepAlivePublish > 15000)
+		if (millis() - latestKeepAlivePublish > 15000)
 		{
 			publishStatusMessage();
 			latestKeepAlivePublish = millis();
