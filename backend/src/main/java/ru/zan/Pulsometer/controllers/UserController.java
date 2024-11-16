@@ -57,10 +57,8 @@ public class UserController {
                                 }
                             });
                 })
-                .onErrorResume(e -> {
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(false));
-                });
+                .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(false)));
     }
 
     @Operation(summary = "Retrieve all users")
@@ -90,9 +88,7 @@ public class UserController {
     public Mono<ResponseEntity<Flux<PulseMeasurement>>> getAllUserMeasurements(@PathVariable("userId") Integer userId) {
         return pulsometerService.getAllUserPulseMeasurements(userId)
                 .collectList()
-                .flatMap(pulseMeasurements -> {
-                    return Mono.just(ResponseEntity.ok(Flux.fromIterable(pulseMeasurements)));
-                });
+                .flatMap(pulseMeasurements -> Mono.just(ResponseEntity.ok(Flux.fromIterable(pulseMeasurements))));
     }
 
     @Operation(summary = "Return a user by its ID")
