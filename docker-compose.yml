@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
   backend:
     container_name: pulsometer_backend
-    image: gitea.hlofiys.xyz/hlofiys/pulsometer-backend:master
+    image: hlofiys/pulsometer-backend:master
     ports:
       - 8080:8080
     networks:
@@ -36,5 +36,4 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 volumes:
-  postgres-data:  
-    
+  postgres-data:
