@@ -6,7 +6,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <!-- Подключение SQL миграций -->
     <include file="/db/changelog/V1__Creating_New_Tables.sql"/>
 
 </databaseChangeLog>

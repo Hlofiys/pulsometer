@@ -71,16 +71,21 @@ public class DeviceController {
             @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "404", description = "Device not found")
     })
-    @PatchMapping("/{deviceId}")
-    public Mono<ResponseEntity<?>> createData (@PathVariable("deviceId") Integer deviceId,
-                                               @RequestParam(value = "activeUserId",required = false) Integer activeUserId
-    ) throws Exception{
+    @PostMapping("/{deviceId}")
+    public Mono<ResponseEntity<?>> manageStatus (@PathVariable("deviceId") Integer deviceId,
+                                                 @RequestParam(value = "activeUserId") Integer activeUserId,
+                                                 @RequestParam(value = "status") String status){
         if (deviceId == null || deviceId <= 0) {
             return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("Invalid or missing deviceId", HttpStatus.BAD_REQUEST.value())));
         }
+        if (!status.equalsIgnoreCase("activate") && !status.equalsIgnoreCase("deactivate")) {
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Invalid status. Use 'activate' or 'deactivate'.", HttpStatus.BAD_REQUEST.value())));
+        }
+        boolean isActivate = status.equalsIgnoreCase("activate");
 
-        return pulsometerService.publish(deviceId, activeUserId)
+        return pulsometerService.publish(deviceId, activeUserId,isActivate)
                 .map(isPublish -> {
                     if (isPublish) {
                         return ResponseEntity.ok(true);
