@@ -1,0 +1,29 @@
+.footerContainer {
+  flex: 1;
+  padding: 40px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  justify-content: space-between;
+  border-top: 1px solid #5B5D63;
+
+  article {
+    font-family: 'Lora-Regular';
+    font-size: 12px;
+    font-weight: 400;
+    color: #fbfaf8;
+    line-height: 14.4px;
+
+    p {
+      font-family: "Lora-SemiBold";
+      margin: 0;
+      padding: 0 0 10px;
+    }
+
+    ul{
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+  }
+}

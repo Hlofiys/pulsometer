@@ -1,5 +1,5 @@
 import { instance } from "../../axios";
-import { IDevice, IUser } from "../interfaces/Interfaces";
+import { IDevice, IUser, TSwitchDeviceStatus } from "../interfaces/Interfaces";
 
 class DeviceServices {
   async getAll() {
@@ -10,13 +10,13 @@ class DeviceServices {
     return instance.get<IUser[]>(`/devices/${deviceId}/users`);
   }
 
-  async switchActiveUser(deviceId: number, userId?: number) {
-    /* 
-        поле deviceId - обязательное, поле userId - необязательное 
-        (с ним устройство меняет активного пользователя, 
-        без него - меняет свой статус (вкл/выкл))
-    */
-    return instance.patch(`/device/${deviceId}`, { data: { userId } });
+  async switchActiveUser(props: TSwitchDeviceStatus) {
+    const { id: deviceId, activeUserId, status } = props;
+    return instance.patch(`/device`, {
+      deviceId,
+      activeUserId,
+      status,
+    });
   }
 }
 
