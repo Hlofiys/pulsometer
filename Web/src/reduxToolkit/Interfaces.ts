@@ -1,6 +1,6 @@
-import { IDevice, IUser } from "../services/interfaces/Interfaces";
+import { IUser } from "../services/interfaces/Interfaces";
 
 export interface IInitialState{
     users: IUser[],
-    devices: IDevice[]
+    // devices: IDevice[]
 }

@@ -1,10 +1,16 @@
 import { ButtonHTMLAttributes, FC } from "react";
 import styles from "./Button.module.scss";
+import { Spin } from "antd";
 
-const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = (props) => {
+interface IPrimaryButton extends ButtonHTMLAttributes<HTMLButtonElement> {
+  isLoading?: boolean;
+}
+const Button: FC<IPrimaryButton> = (props) => {
+  const { isLoading, ...buttonProps } = props;
+  
   return (
-    <button className={styles.primaryContainer} {...props}>
-      {props.children}
+    <button className={styles.primaryContainer} {...buttonProps}>
+      {isLoading ? <Spin /> : props.children}
     </button>
   );
 };

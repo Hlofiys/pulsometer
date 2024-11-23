@@ -21,7 +21,7 @@ function App() {
     <div
       style={{
         width: "100%",
-        minWidth: 1200,
+        minWidth: 1250,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

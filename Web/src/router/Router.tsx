@@ -4,6 +4,9 @@ import Main from "../pages/main/Main";
 import GeneralRoute from "./route/GeneralRoute";
 import CreateUser from "../pages/users/create.page/CreateUser";
 import ViewUsers from "../pages/users/view.page/ViewUsers";
+import StartMeasurements from "../pages/measurements/start/StartMeasurements";
+import ReviewMeasurements from "../pages/measurements/review/ReviewMeasurements";
+import ProcessMeasurements from "../pages/measurements/process/ProcessMeasurements";
 
 const Router: FC = () => {
   return (
@@ -19,6 +22,9 @@ const Router: FC = () => {
           <Route path="/" element={<Main />} />
           <Route path="/create" element={<CreateUser />} />
           <Route path="/view" element={<ViewUsers />} />
+          <Route path="/start-measurements" element={<StartMeasurements />} />
+          <Route path="/review-measurements/:id" element={<ReviewMeasurements />} />
+          <Route path="/process-measurements/:id" element={<ProcessMeasurements/>} />
         </Route>
       </Routes>
     </BrowserRouter>

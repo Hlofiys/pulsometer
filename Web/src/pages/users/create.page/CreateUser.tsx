@@ -1,61 +1,142 @@
-import { FC, useMemo } from "react";
+import { ChangeEvent, FC, useCallback, useMemo } from "react";
 import styles from "./CreateUser.module.scss";
 import ScopeInput from "../../../ui/input/scopeInput/ScopeInput";
 import Button from "../../../ui/buttons/primary/Button";
-import { Controller, useForm } from "react-hook-form";
-import { hasAllValuesForKeys } from "../../../utils/functions/functions";
+import {
+  Controller,
+  ControllerRenderProps,
+  SubmitHandler,
+  useForm,
+} from "react-hook-form";
+import {
+  capitalizeFirstLetter,
+  hasAllValuesForKeys,
+} from "../../../utils/functions/functions";
 import Link from "../../../ui/buttons/link/Link";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 import { useNavigate } from "react-router-dom";
+import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
+import { TCreateUser } from "../../../services/interfaces/Interfaces";
+import { useCreateUser } from "../../../api/hooks/user/useCreateUser";
 
 interface INewUser {
   surname: string;
   name: string;
   middleName: string;
+  deviceId: number;
 }
 const CreateUser: FC = () => {
   const nav = useNavigate();
-  const { watch, control } = useForm<INewUser>({
+  const { watch, control, handleSubmit, reset } = useForm<INewUser>({
     mode: "onChange",
     defaultValues: {
       surname: "",
       name: "",
       middleName: "",
+      deviceId: 0,
     },
   });
   const newUser = watch();
+
+  const { data: devices, isLoading } = useGetDevices();
+  const { mutateAsync: create_user, isLoading: isLoadingCreate } =
+    useCreateUser();
 
   const isDisabled = useMemo(
     () => !hasAllValuesForKeys(newUser, ["surname", "name", "middleName"]),
     [newUser]
   );
+
+  const devicesOptions = useMemo(() => {
+    return (
+      devices?.data.map((device) => ({
+        label: `Пульсометр #${device.id}`,
+        value: device.id,
+      })) || []
+    );
+  }, [devices]);
+
+  const useEnterFio = useCallback(
+    (
+      event: ChangeEvent<HTMLInputElement>,
+      field: ControllerRenderProps<INewUser, keyof INewUser>
+    ) => field.onChange(capitalizeFirstLetter(event.target.value)),
+    [capitalizeFirstLetter]
+  );
+
+  const onSubmit: SubmitHandler<INewUser> = (data) => {
+    const formData: TCreateUser = {
+      fio: `${data.surname} ${data.name} ${data.middleName}`,
+      deviceId: data.deviceId,
+    };
+
+    create_user(formData, { onSuccess: () => reset() });
+  };
   return (
     <main className={styles.createuserContainer}>
-      <form>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <h1>Для добавления пользователя введите данные*: </h1>
         <Controller
           name="surname"
           control={control}
           render={({ field }) => (
-            <ScopeInput {...field} aria-description="Фамилия" />
+            <ScopeInput
+              inputProps={{
+                ...field,
+                onChange: (event) => useEnterFio(event, field),
+              }}
+              ariaDescription={"Фамилия"}
+            />
           )}
         />
         <Controller
           name="name"
           control={control}
           render={({ field }) => (
-            <ScopeInput {...field} aria-description="Имя" />
+            <ScopeInput
+              inputProps={{
+                ...field,
+                onChange: (event) => useEnterFio(event, field),
+              }}
+              ariaDescription={"Имя"}
+            />
           )}
         />
         <Controller
           name="middleName"
           control={control}
           render={({ field }) => (
-            <ScopeInput {...field} aria-description="Отчество" />
+            <ScopeInput
+              inputProps={{
+                ...field,
+                onChange: (event) => useEnterFio(event, field),
+              }}
+              ariaDescription={"Отчество"}
+            />
           )}
         />
 
-        <Button style={{ marginTop: 20, height: 45 }} disabled={isDisabled}>
+        <Controller
+          name="deviceId"
+          control={control}
+          render={({ field }) => (
+            <ScopeInput
+              dropdownProps={{
+                isLoading: isLoading,
+                isDropDown: true,
+                options: devicesOptions,
+                onSelect: (device) => field.onChange(device.value),
+              }}
+              ariaDescription={"Отчество"}
+            />
+          )}
+        />
+
+        <Button
+          style={{ marginTop: 20, height: 45 }}
+          disabled={isDisabled || isLoadingCreate}
+          isLoading={isLoadingCreate}
+        >
           Добавить пользователя
         </Button>
         <Link onClick={() => nav("/view")}>

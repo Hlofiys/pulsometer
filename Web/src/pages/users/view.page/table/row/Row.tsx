@@ -5,43 +5,79 @@ import Basket from "../../../../../ui/icons/Basket";
 import Edit from "../../../../../ui/icons/Edit";
 import Input from "../../../../../ui/input/primary/PrimaryInput";
 import Save from "../../../../../ui/icons/Save";
+import { useDeleteUser } from "../../../../../api/hooks/user/useDeleteUser";
+import { useUpdateUser } from "../../../../../api/hooks/user/useUpdateUser";
+import { TUpdateUser } from "../../../../../services/interfaces/Interfaces";
+import { Spin } from "antd";
 
 interface TableRowProps {
   index: number;
-  rowData: {
-    lastName: string;
-    firstName: string;
-    middleName: string;
-    age: number;
-    date: string;
-    device: string;
-  };
+  rowData: TableRowFormValues;
+  onClick?: (value: string | number) => void;
   onSave?: (data: TableRowFormValues) => void; // Функция сохранения изменений
 }
 
-interface TableRowFormValues {
+export interface TableRowFormValues {
   lastName: string;
   firstName: string;
   middleName: string;
-  age: number;
-  date: string;
-  device: string;
+  deviceId: number;
+  userId: number;
 }
 
-const TableRow: FC<TableRowProps> = ({ index, rowData, onSave }) => {
+const TableRow: FC<TableRowProps> = (props) => {
+  const { index, rowData, onSave, onClick } = props;
+
   const [isEditing, setIsEditing] = useState(false);
   const { control, handleSubmit } = useForm<TableRowFormValues>({
     defaultValues: rowData,
   });
 
+  const { mutateAsync: delete_user, isLoading: isDeleteLoading } =
+    useDeleteUser();
+  const { mutateAsync: update_user, isLoading: isUpdateLoading } =
+    useUpdateUser();
+
   // Сохранение изменений
   const handleSave = (data: TableRowFormValues) => {
-    setIsEditing(false); // Отключить режим редактирования
-    onSave && onSave(data); // Передать данные в родительский компонент
+    const { lastName, firstName, middleName, userId, deviceId } = data;
+    const updateUserData: TUpdateUser = {
+      fio: `${lastName} ${firstName} ${middleName}`,
+      deviceId,
+      id: userId,
+    };
+    update_user(updateUserData, {
+      onSuccess: () => {
+        setIsEditing(false); // Отключить режим редактирования
+        onSave && onSave(data); // Передать данные в родительский компонент
+      },
+    });
+  };
+
+  const handleDelete = (data: TableRowFormValues) => {
+    delete_user(data.userId);
+  };
+
+  // Обработчик клика по строке
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Проверим, не кликнули ли мы по кнопке редактирования или удаления
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("." + styles.icon) ||
+      target.closest("." + styles.deviceButton)
+    ) {
+      // Не выполняем действие, если кликнули по кнопке
+      return;
+    }
+    // Если не кликнули по кнопке, вызываем onClick
+    onClick && onClick(rowData.userId);
   };
 
   return (
-    <tr className={styles.tableRow}>
+    <tr
+      className={styles.tableRow}
+      onClick={handleRowClick} // Обработчик клика по строке
+    >
       <td>
         <div className={styles.tableIndex}>{index}</div>
       </td>
@@ -51,7 +87,7 @@ const TableRow: FC<TableRowProps> = ({ index, rowData, onSave }) => {
             name="lastName"
             control={control}
             render={({ field }) => (
-              <Input {...field} style={{minHeight: 20}} />
+              <Input {...field} style={{ minHeight: 20 }} />
             )}
           />
         ) : (
@@ -64,7 +100,7 @@ const TableRow: FC<TableRowProps> = ({ index, rowData, onSave }) => {
             name="firstName"
             control={control}
             render={({ field }) => (
-              <Input {...field} style={{minHeight: 20}} />
+              <Input {...field} style={{ minHeight: 20 }} />
             )}
           />
         ) : (
@@ -77,7 +113,7 @@ const TableRow: FC<TableRowProps> = ({ index, rowData, onSave }) => {
             name="middleName"
             control={control}
             render={({ field }) => (
-              <Input {...field} style={{minHeight: 20}} />
+              <Input {...field} style={{ minHeight: 20 }} />
             )}
           />
         ) : (
@@ -85,45 +121,46 @@ const TableRow: FC<TableRowProps> = ({ index, rowData, onSave }) => {
         )}
       </td>
       <td>
-        {isEditing ? (
-          <Controller
-            name="date"
-            control={control}
-            render={({ field }) => (
-              <Input type="date" {...field} style={{minHeight: 20}} />
-            )}
-          />
-        ) : (
-          rowData.date
-        )}
-      </td>
-      <td>
-        {/* {isEditing ? (
-          <Controller
-            name="device"
-            control={control}
-            render={({ field }) => (
-              <input {...field} style={{minHeight: 20}} />
-            )}
-          />
-        ) : ( */}
-        <div className={styles.deviceButton}>{rowData.device}</div>{" "}
-        {/* смена устройства */}
-        {/* )}  */}
+        <div className={styles.deviceButton}>
+          Пульсометр #{rowData.deviceId}
+        </div>
       </td>
       <td className={styles.icon}>
         {isEditing ? (
-          <Save onClick={handleSubmit(handleSave)} stroke="#23E70A"/>
+          isUpdateLoading ? (
+            <Spin />
+          ) : (
+            <Save
+              onClick={(e) => {
+                e.stopPropagation(); // Останавливаем всплытие события
+                handleSubmit(handleSave)(e);
+              }}
+              stroke="#23E70A"
+            />
+          )
         ) : (
           <Edit
             stroke="#23E70A"
-            onClick={() => setIsEditing(true)} // Включить режим редактирования
+            onClick={(e) => {
+              e.stopPropagation(); // Останавливаем всплытие события
+              setIsEditing(true); // Включить режим редактирования
+            }}
             style={{ cursor: "pointer" }}
           />
         )}
       </td>
       <td className={styles.icon}>
-        <Basket stroke="#FF1A43" />
+        {isDeleteLoading ? (
+          <Spin />
+        ) : (
+          <Basket
+            stroke="#FF1A43"
+            onClick={(e) => {
+              e.stopPropagation(); // Останавливаем всплытие события
+              handleSubmit(handleDelete)(e);
+            }}
+          />
+        )}
       </td>
     </tr>
   );

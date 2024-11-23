@@ -4,9 +4,14 @@ import Button from "../../ui/buttons/primary/Button";
 import AdditionalButton from "../../ui/buttons/additional/Button";
 import DevicesList from "../../ui/devices/list/DevicesList";
 import { useNavigate } from "react-router-dom";
+import { useGetDevices } from "../../api/hooks/device/useGetDevices";
+import { Spin } from "antd";
 
 const Main: FC = () => {
+
+  const { data: devices, isLoading } = useGetDevices();
   const nav = useNavigate();
+
   return (
     <main className={styles.mainContainer}>
       <h1>Cистема мониторинга физиологических показателей обучающихся</h1>
@@ -31,7 +36,11 @@ const Main: FC = () => {
         </AdditionalButton>
       </section>
 
-      <DevicesList style={{ marginTop: 50 }} />
+      {isLoading ? (
+        <Spin />
+      ) : (
+        <DevicesList devices={devices?.data || []} style={{ marginTop: 50 }} />
+      )}
     </main>
   );
 };

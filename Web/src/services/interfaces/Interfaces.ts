@@ -7,6 +7,8 @@ export interface IUser {
 
 export type TCreateUser = Pick<IUser, "fio" | "deviceId">;
 export type TUpdateUser = Pick<IUser, "id" | "fio" | "deviceId">;
+export type TTableUserRow = Pick<IUser, "fio" | "id" | "deviceId">;
+export type TTableMeasurementRow = IMeasurements & Pick<IUser, 'id'|'fio'|'deviceId'>;
 
 export interface IDevice {
   id: number;

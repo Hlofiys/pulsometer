@@ -6,15 +6,27 @@ import { IDevice } from "../../../../services/interfaces/Interfaces";
 
 interface IDeviceCard {
   device: IDevice;
+  isShowCard?: boolean;
 }
 
-export const DeviceCard: FC<IDeviceCard> = ({ device }) => {
+export const DeviceCard: FC<IDeviceCard> = ({ device, isShowCard }) => {
   return (
-    <li className={styles.deviceCardContainer}>
+    <li
+      className={styles.deviceCardContainer}
+      style={isShowCard ? { flexDirection: "column-reverse" } : undefined}
+    >
       <img src={pulsometerDefault} alt="фото устройства" />
-      <label>
+      <label
+        style={
+          isShowCard
+            ? {
+                justifyContent: "center",
+              }
+            : undefined
+        }
+      >
         Устройство-{device.id}
-        <TopArrow />
+        {!isShowCard && <TopArrow />}
       </label>
     </li>
   );

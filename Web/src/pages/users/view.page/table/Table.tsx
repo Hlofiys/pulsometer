@@ -1,22 +1,13 @@
-import { FC } from 'react';
-import styles from './Table.module.scss';
-import TableRow from './row/Row';
-
-export interface ITableRow {
-  id: number;
-  lastName: string;
-  firstName: string;
-  middleName: string;
-  age: number;
-  date: string;
-  device: string;
-}
+import { FC } from "react";
+import styles from "./Table.module.scss";
+import TableRow, { TableRowFormValues } from "./row/Row";
 
 interface TableProps {
-  data: ITableRow[];
+  data: TableRowFormValues[];
+  onClick?:(value: string|number)=>void
 }
 
-const Table: FC<TableProps> = ({ data }) => {
+const Table: FC<TableProps> = ({ data, onClick }) => {
   return (
     <table className={styles.customTable}>
       <thead>
@@ -26,13 +17,19 @@ const Table: FC<TableProps> = ({ data }) => {
           <th>Имя</th>
           <th>Отчество</th>
           {/* <th>Возраст</th> */}
-          <th>Дата измерений</th>
+          {/* <th>Дата измерений</th> */}
           <th>Устройство</th>
         </tr>
       </thead>
       <tbody>
         {data.map((row, index) => (
-          <TableRow rowData={row} index={row.id} key={index} onSave={(data)=>console.log(data)}/>
+          <TableRow
+            rowData={row}
+            index={row.userId}
+            onClick={onClick}
+            key={index}
+            onSave={(data) => console.log(data)}
+          />
         ))}
       </tbody>
     </table>
