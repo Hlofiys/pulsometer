@@ -3,15 +3,6 @@ networks:
   pulsometer_network:
     driver: bridge
 services:
-  hivemq:
-    container_name: pulsometer_hivemq
-    image: hivemq/hivemq-ce
-    ports:
-      - 1883:1883
-      - 1884:8080
-    networks:
-      - pulsometer_network
-    restart: unless-stopped
   backend:
     container_name: pulsometer_backend
     image: hlofiys/pulsometer-backend:master
@@ -20,7 +11,6 @@ services:
     networks:
       - pulsometer_network
     depends_on:
-      - hivemq
       - pulsometer_db
     restart: unless-stopped
     labels:
@@ -34,6 +24,12 @@ services:
       - pulsometer_network
     depends_on:
       - backend
+    healthcheck:
+      test: curl --fail http://localhost/ || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"

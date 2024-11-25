@@ -2,7 +2,9 @@
 
 #include "WiFiManager.h"
 
-#include <PubSubClient.h>
+#include <PicoMQTT.h>
+
+#include <PicoWebsocket.h>
 
 #include <ArduinoJson.h>
 
@@ -15,24 +17,21 @@
 #define ledPin 2
 
 // device id
-const int deviceId = 2;
+const int deviceId = 1;
 
 /******* MQTT Broker Connection Details *******/
-const char *mqtt_server = "home.hlofiys.xyz";
-const char *mqtt_clientId = "Client 2";
-const int mqtt_port = 1883;
+const char *mqtt_server = "mqtt.hlofiys.xyz";
 
 // MQTT topics
 const char *mqtt_topic_device_status = "device/status";
 const char *mqtt_topic_heartbeat_data = "device/data";
-const char *mqtt_topic_device_switch = "device/switch/2";
+const char *mqtt_topic_device_switch = "device/switch/1";
 
 // Device status
 bool collecting = false;
 
 // MQTT client
-WiFiClient espClient;
-PubSubClient client(espClient);
+PicoMQTT::Client mqtt("broker.hivemq.com");
 
 // Sensor (adjust to your sensor type)
 MAX30105 sensor;
@@ -55,101 +54,16 @@ const bool kEnableAveraging = true;
 const int kAveragingSamples = 50;
 const int kSampleThreshold = 5;
 
-bool tryConnectToMqttServer()
-{
-	if (strlen(mqtt_username) == 0)
-	{
-		return client.connect(mqtt_clientId);
-	}
-	else
-	{
-		return client.connect(mqtt_clientId, mqtt_username, mqtt_password);
-	}
-}
-
-void reconnect()
-{
-	// Loop until we're reconnected
-	while (!client.connected())
-	{
-		Serial.print("Attempting MQTT connection...");
-		// Attempt to connect
-		// If you do not want to use a username and password, change next line to
-		if (tryConnectToMqttServer())
-		{
-			Serial.println("connected");
-			client.subscribe(mqtt_topic_device_switch);
-		}
-		else
-		{
-			Serial.print(mqtt_server);
-			Serial.print(" failed, rc=");
-			Serial.print(client.state());
-			Serial.println(" try again in 5 seconds");
-			// Wait 5 seconds before retrying
-			delay(5000);
-		}
-	}
-}
-
 /**** Method for Publishing MQTT Messages **********/
-void publishMessage(const char *topic, String payload, boolean retained)
-{
-	if (client.publish(topic, payload.c_str(), true))
-		Serial.println("Message published [" + String(topic) + "]: " + payload);
-}
 
 void publishStatusMessage()
 {
-	Serial.print("Keep Alive");
+	Serial.print("Keep Alive ");
 	JsonDocument doc;
 	doc["id"] = deviceId;
-	char mqtt_message[128];
-	serializeJson(doc, mqtt_message);
-	publishMessage(mqtt_topic_device_status, mqtt_message, true);
-}
-
-void handleMqttState()
-{
-	if (!client.connected())
-	{
-		reconnect();
-	}
-	client.loop();
-}
-
-/***** Call back Method for Receiving MQTT messages and Switching Status ****/
-
-void callback(char *topic, byte *payload, unsigned int length)
-{
-	String incommingMessage = "";
-	for (int i = 0; (unsigned int)i < length; i++)
-		incommingMessage += (char)payload[i];
-
-	Serial.println("Message arrived [" + String(topic) + "]" + incommingMessage);
-
-	//--- check the incomming message
-	if (strcmp(topic, mqtt_topic_device_switch) == 0)
-	{
-		if (incommingMessage.equals("1"))
-{
-			collecting = true; // Turn the Collecting on
-if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
-			{
-				Serial.println("Sensor initialized");
-			}
-			else
-			{
-				Serial.println("Sensor not found");
-				ESP.restart();
-			}
-		}
-		else
-{
-			collecting = false; // Turn the Collecting off
-sensor.shutdown();
-		}
-	}
+	auto publish = mqtt.begin_publish(mqtt_topic_device_status, measureJson(doc), 1 ,true);
+	serializeJson(doc, publish);
+	publish.send();
 }
 
 // ------------------------------------------------------------
@@ -159,7 +73,7 @@ void setup()
 {
 	Serial.begin(9600);
 	WiFiManager wifiManager;
-	if (!wifiManager.autoConnect("Pulsemeter 2", "12345678"))
+	if (!wifiManager.autoConnect("Pulsemeter 1", "12345678"))
 	{
 		Serial.println("failed to connect and hit timeout");
 		delay(3000);
@@ -173,8 +87,31 @@ void setup()
 	Serial.println("local ip");
 	Serial.println(WiFi.localIP());
 
-	client.setServer(mqtt_server, mqtt_port);
-	client.setCallback(callback);
+	mqtt.subscribe(mqtt_topic_device_switch, [](const char *topic, const char *payload)
+				   {
+		// payload might be binary, but PicoMQTT guarantees that it's zero-terminated
+		Serial.printf("Received message in topic '%s': %s\n", topic, payload);
+		if (strcmp(payload, "1") == 0)
+		{
+			Serial.println("start measure");
+			collecting = true; // Turn the Collecting on
+			if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
+			{
+				Serial.println("Sensor initialized");
+			}
+			else
+			{
+				Serial.println("Sensor not found");
+				ESP.restart();
+			}
+		}
+		else
+		{
+			Serial.println("stop measure");
+			collecting = false; // Turn the Collecting off
+			sensor.shutdown();
+	} });
+	mqtt.begin();
 
 	// Inbuilt LED
 	pinMode(ledPin, OUTPUT);
@@ -183,7 +120,7 @@ void setup()
 	if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
 	{
 		Serial.println("Sensor initialized");
-sensor.shutdown();
+		sensor.shutdown();
 	}
 	else
 	{
@@ -219,11 +156,7 @@ long latestKeepAlivePublish = 0;
 // ------------------------------------------------------------
 void loop()
 {
-	if (!client.connected())
-	{
-		reconnect();
-	}
-	client.loop();
+	mqtt.loop();
 	if (collecting && millis() - latestBpmPublish > 50000)
 	{
 		auto sample = sensor.readSample(1000);
@@ -286,7 +219,6 @@ void loop()
 							{
 								int average_bpm = averager.process(bpm);
 
-
 								// Show if enough samples have been collected
 								if (averager.count() > kSampleThreshold)
 								{
@@ -296,9 +228,9 @@ void loop()
 									JsonDocument doc;
 									doc["id"] = deviceId;
 									doc["bpm"] = average_bpm;
-									char mqtt_message[128];
-									serializeJson(doc, mqtt_message);
-									publishMessage(mqtt_topic_heartbeat_data, mqtt_message, true);
+									auto publish = mqtt.begin_publish(mqtt_topic_heartbeat_data, measureJson(doc), 1, true);
+									serializeJson(doc, publish);
+									publish.send();
 								}
 							}
 							else
