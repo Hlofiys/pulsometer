@@ -1,14 +1,14 @@
-name: Build and push backend
+name: Build and push frontend
 on:
   push:
     branches:
       - develop
       - master
     paths:
-      - "backend/**/*"
+      - "frontend/**/*"
 
 jobs:
-  backend:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,7 +24,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: hlofiys/pulsometer-backend
+          images: hlofiys/pulsometer-frontend
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -34,8 +34,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          file: ./backend/Dockerfile
-          context: ./backend
+          file: ./frontend/Dockerfile
+          context: ./frontend
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
