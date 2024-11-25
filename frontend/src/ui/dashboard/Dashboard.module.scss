@@ -1,0 +1,64 @@
+.dashboard {
+  // width: 800px;
+  min-height: 410px;
+  background-color: #212227;
+  border-radius: 20px;
+  padding: 20px;
+  color: #fbfaf8;
+  user-select: none;
+  font-family: "Lora-Regular";
+  font-size: 12.91px;
+  font-weight: 400;
+  line-height: 20.28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .chartContainer {
+    width: 100%;
+    width: 800px;
+    flex: 1;
+    position: relative;
+  }
+
+  .tooltip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 21px;
+    padding: 10px;
+    margin: 0 15px;
+    border-radius: 10px;
+    border: 2px;
+    position: absolute;
+    background: #fbfaf8;
+    border: 2px solid #23e70a;
+    color: #1a1c21;
+    box-shadow: 0px 20px 45px 0px #21222740;
+
+    p {
+      margin: 0;
+      padding: 0;
+      font-family: "Lora-SemiBold";
+      font-size: 12.91px;
+      line-height: 20.28px;
+      color: #1a1c21;
+
+      span {
+        font-family: "Lora-Regular";
+        margin-left: 5px;
+      }
+      &.warning {
+        color: #ff1a43 !important;
+      }
+    }
+  }
+  .redDot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border: 2px solid #ff3b30;
+    border-radius: 50%;
+  }
+}

@@ -1,0 +1,22 @@
+.primaryInput {
+  min-height: 32px;
+  padding: 10px 15px;
+  gap: 10px;
+  border-radius: 10px;
+  outline: 1px solid #fbfaf8;
+  background: transparent;
+  color: #fbfaf8;
+  border: none;
+  font-family: "Lora-Regular";
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 16.8px;
+
+  &::-webkit-calendar-picker-indicator{
+    filter: invert(1);
+  }
+
+  &:focus {
+    outline: 2px solid #23e70a;
+  }
+}
