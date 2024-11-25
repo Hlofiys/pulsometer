@@ -3,15 +3,6 @@ networks:
   pulsometer_network:
     driver: bridge
 services:
-  hivemq:
-    container_name: pulsometer_hivemq
-    image: hivemq/hivemq-ce
-    ports:
-      - 1883:1883
-      - 1884:8000
-    networks:
-      - pulsometer_network
-    restart: unless-stopped
   backend:
     container_name: pulsometer_backend
     image: hlofiys/pulsometer-backend:master
