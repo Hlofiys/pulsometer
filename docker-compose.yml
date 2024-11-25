@@ -16,12 +16,22 @@ services:
     container_name: pulsometer_backend
     image: hlofiys/pulsometer-backend:master
     ports:
-      - 8080:8080
+      - 8081:8081
     networks:
       - pulsometer_network
     depends_on:
       - hivemq
       - pulsometer_db
+    restart: unless-stopped
+  frontend:
+    container_name: pulsometer_frontend
+    image: hlofiys/pulsometer-frontend:master
+    ports:
+      - 8080:80
+    networks:
+      - pulsometer_network
+    depends_on:
+      - pulsometer_backend
     restart: unless-stopped
   pulsometer_db:
     container_name: pulsometer_db
