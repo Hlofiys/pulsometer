@@ -7,13 +7,18 @@ import { IDevice } from "../../../../services/interfaces/Interfaces";
 interface IDeviceCard {
   device: IDevice;
   isShowCard?: boolean;
+  onClick?:(deviceId: number)=>void;
 }
 
-export const DeviceCard: FC<IDeviceCard> = ({ device, isShowCard }) => {
+export const DeviceCard: FC<IDeviceCard> = (props) => {
+
+  const { device, isShowCard, onClick } = props;
+
   return (
     <li
       className={styles.deviceCardContainer}
       style={isShowCard ? { flexDirection: "column-reverse" } : undefined}
+      onClick={()=>onClick && onClick(device.id)}
     >
       <img src={pulsometerDefault} alt="фото устройства" />
       <label

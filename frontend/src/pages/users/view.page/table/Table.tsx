@@ -4,7 +4,7 @@ import TableRow, { TableRowFormValues } from "./row/Row";
 
 interface TableProps {
   data: TableRowFormValues[];
-  onClick?:(value: string|number)=>void
+  onClick?: (value: string | number) => void;
 }
 
 const Table: FC<TableProps> = ({ data, onClick }) => {
@@ -22,12 +22,12 @@ const Table: FC<TableProps> = ({ data, onClick }) => {
         </tr>
       </thead>
       <tbody>
-        {data.map((row, index) => (
+        {data.map(row => (
           <TableRow
+            key={row.userId}
             rowData={row}
             index={row.userId}
             onClick={onClick}
-            key={index}
             onSave={(data) => console.log(data)}
           />
         ))}

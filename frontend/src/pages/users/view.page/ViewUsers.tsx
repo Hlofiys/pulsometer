@@ -3,32 +3,36 @@ import styles from "./ViewUsers.module.scss";
 import Table from "./table/Table";
 import { SearchInput } from "../../../ui/input/search/SearchInput";
 import Link from "../../../ui/buttons/link/Link";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 import Pagination from "../../../ui/pagination/Pagination";
 import { useGetUsers } from "../../../api/hooks/user/useGetUsers";
 import { Spin } from "antd";
 import { TTableUserRow } from "../../../services/interfaces/Interfaces";
 import { TableRowFormValues } from "./table/row/Row";
+import { useGetUsersByDeviceId } from "../../../api/hooks/device/useGetUsersByDeviceId";
 
 const ROWS_PER_PAGE = 5; // Максимальное количество строк на одной странице
 
 const ViewUsers: FC = () => {
   const nav = useNavigate();
+  const { deviceId } = useParams();
   const [searchValue, setSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const { data: users, isLoading: isLoadingGetUsers } = useGetUsers();
+  const { data: fetchedUsers, isLoading } = !!deviceId
+  ? useGetUsersByDeviceId(+deviceId)
+  : useGetUsers();
 
   // Отфильтрованные данные на основе поиска
   const filteredData: TTableUserRow[] = useMemo(() => {
     return (
-      users?.data.filter((user) => {
+      fetchedUsers?.data.filter((user) => {
         const fio = user.fio.toLowerCase();
         return fio.includes(searchValue.toLowerCase());
       }) || []
     );
-  }, [searchValue, users]);
+  }, [searchValue, fetchedUsers, deviceId]);
 
   // Общий подсчет страниц на основе количества строк
   const totalPages = useMemo(() => {
@@ -74,7 +78,7 @@ const ViewUsers: FC = () => {
         searchValueState={[searchValue, setSearchValue]}
         inputProps={{ onChange: onSearch }}
       />
-      {isLoadingGetUsers ? <Spin /> : <Table onClick={(value: string|number)=>nav(`/review-measurements/${value}`)} data={paginatedData} />}
+      {isLoading ? <Spin /> : <Table onClick={(value: string|number)=>nav(`/review-measurements/${value}`)} data={paginatedData} />}
       <Link onClick={() => nav("/create")}>
         Добавить пользователя <ArrowRight stroke="#23E70A" />
       </Link>

@@ -3,7 +3,7 @@ import UserService from "../../../services/user/User.service";
 import { useDispatch } from "react-redux";
 import { setUsers } from "../../../reduxToolkit/Slices";
 
-export const useGetUsers = () => {
+export const useGetUsers = (enabled?:boolean) => {
   const dispatch = useDispatch();
 
   return useQuery({
@@ -14,5 +14,6 @@ export const useGetUsers = () => {
       dispatch(setUsers(data.data));
     },
     staleTime: 1000 * 60 * 5,
+    enabled
   });
 };

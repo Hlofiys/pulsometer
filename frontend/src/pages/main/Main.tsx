@@ -39,7 +39,7 @@ const Main: FC = () => {
       {isLoading ? (
         <Spin />
       ) : (
-        <DevicesList devices={devices?.data || []} style={{ marginTop: 50 }} />
+        <DevicesList onCardClick={(deviceId)=>nav(`/view/${deviceId}`)} devices={devices?.data || []} style={{ marginTop: 50 }} />
       )}
     </main>
   );

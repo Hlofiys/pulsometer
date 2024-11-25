@@ -1,5 +1,4 @@
 .dropdownContainer {
-  // width: 300px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -27,9 +26,23 @@
     background-color: transparent;
     border: none;
     outline: none;
+    // text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
 
     &::placeholder {
       color: #888;
+    }
+
+    &.transitioning {
+      transform: translateX(-30px);
+      opacity: 0;
+    }
+
+    &:not(.transitioning) {
+      transform: translateX(0); // Возврат к нормальному состоянию
+      opacity: 1;
     }
   }
 
@@ -93,5 +106,12 @@
 
   .hidden {
     display: none;
+  }
+
+  .horizontalWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }

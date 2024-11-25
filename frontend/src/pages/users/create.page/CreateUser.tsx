@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useCallback, useMemo } from "react";
+import { ChangeEvent, FC, useCallback, useEffect, useMemo } from "react";
 import styles from "./CreateUser.module.scss";
 import ScopeInput from "../../../ui/input/scopeInput/ScopeInput";
 import Button from "../../../ui/buttons/primary/Button";
@@ -72,6 +72,8 @@ const CreateUser: FC = () => {
 
     create_user(formData, { onSuccess: () => reset() });
   };
+
+  useEffect(() => console.log(newUser.deviceId), [newUser.deviceId]);
   return (
     <main className={styles.createuserContainer}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -119,17 +121,22 @@ const CreateUser: FC = () => {
         <Controller
           name="deviceId"
           control={control}
-          render={({ field }) => (
-            <ScopeInput
-              dropdownProps={{
-                isLoading: isLoading,
-                isDropDown: true,
-                options: devicesOptions,
-                onSelect: (device) => field.onChange(device.value),
-              }}
-              ariaDescription={"Отчество"}
-            />
-          )}
+          render={({ field }) => {
+            const { ref, onChange, ...dropdownField } = field;
+            return (
+              <ScopeInput
+                dropdownProps={{
+                  ...dropdownField,
+                  value: field.value,
+                  isLoading: isLoading,
+                  isDropDown: true,
+                  options: devicesOptions,
+                  onChange: (device) => onChange(device.value),
+                }}
+                ariaDescription={"Устройство"}
+              />
+            );
+          }}
         />
 
         <Button

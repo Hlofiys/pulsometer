@@ -7,5 +7,6 @@ export const useGetUsersByDeviceId = (deviceId?: number) => {
     queryFn: () => DeviceService.getUsers(deviceId!),
     onSuccess: (data) => console.log(data.data),
     enabled: !!deviceId,
+    staleTime: 1000*60*5
   });
 };

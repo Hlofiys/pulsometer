@@ -16,7 +16,7 @@ const Footer: FC = () => {
           <li>Board management controller, Арсений Рябчинский</li>
           <li>Frontend developer, Константин Кирик</li>
           <li>Backend developer, Тимофей Заневский</li>
-          <li>UX/UI Designer, Анжелика Кореева</li>
+          <li>UX/UI Designer, Анжелика Корнеева</li>
         </ul>
       </article>
     </footer>

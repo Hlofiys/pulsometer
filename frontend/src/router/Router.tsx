@@ -22,6 +22,7 @@ const Router: FC = () => {
           <Route path="/" element={<Main />} />
           <Route path="/create" element={<CreateUser />} />
           <Route path="/view" element={<ViewUsers />} />
+          <Route path="/view/:deviceId" element={<ViewUsers />} />
           <Route path="/start-measurements" element={<StartMeasurements />} />
           <Route path="/review-measurements/:id" element={<ReviewMeasurements />} />
           <Route path="/process-measurements/:id" element={<ProcessMeasurements/>} />

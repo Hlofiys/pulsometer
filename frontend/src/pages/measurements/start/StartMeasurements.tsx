@@ -41,7 +41,6 @@ const StartMeasurements: FC = () => {
               isLoading: isLoadingUsers,
               containersStyles: { width: "50%" },
               isDropDown: true,
-              onSelect: (event) => console.log(event),
               options:
                 users?.data.map((user) => ({
                   label: user.fio,
@@ -55,7 +54,6 @@ const StartMeasurements: FC = () => {
             dropdownProps={{
               containersStyles: { width: "50%" },
               isDropDown: true,
-              onSelect: (event) => console.log(event),
               options: options,
             }}
             ariaDescription={"Вид активности"}

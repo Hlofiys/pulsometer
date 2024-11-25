@@ -1,6 +1,7 @@
 .tableRow {
   border-bottom: 1px solid #444; // Нижняя граница строки
   transition: .5s all ease;
+  z-index: 0;
 
   &:last-child {
     border-bottom: none; // Убираем последнюю границу
