@@ -31,7 +31,7 @@ services:
     networks:
       - pulsometer_network
     depends_on:
-      - pulsometer_backend
+      - backend
     restart: unless-stopped
   pulsometer_db:
     container_name: pulsometer_db
