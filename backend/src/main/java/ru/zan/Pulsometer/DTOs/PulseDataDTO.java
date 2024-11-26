@@ -16,4 +16,9 @@ public class PulseDataDTO {
     private Integer id;
 
     private Integer bpm;
+
+    private Integer oxygen;
+
+    private Integer sessionId;
 }
+

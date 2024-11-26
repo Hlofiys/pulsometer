@@ -1,6 +1,6 @@
 package ru.zan.Pulsometer.models;
 
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,24 +11,24 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
-@Table("pulse_measurements")
+@Table("sessions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PulseMeasurement {
+public class Session {
 
     @Id
-    @Column(value = "measurement_id")
-    private Integer measurementId;
-
-    private Integer bpm;
-
-    @Size(min = 1,max = 50)
-    private Integer oxygen;
-
-    private LocalDateTime date;
-
     @Column(value = "session_id")
     private Integer sessionId;
+
+    @Column(value = "user_id")
+    private Integer userId;
+
+    @NotNull
+    @Column(value = "time")
+    private LocalDateTime time;
+
+    @Column(value = "passed")
+    private Double passed;
 }

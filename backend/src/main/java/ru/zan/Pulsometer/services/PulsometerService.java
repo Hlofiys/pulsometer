@@ -10,23 +10,28 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.zan.Pulsometer.DTOs.MqttPayload;
 import ru.zan.Pulsometer.DTOs.PulseDataDTO;
 import ru.zan.Pulsometer.DTOs.StatusDataDTO;
 import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
 import ru.zan.Pulsometer.models.Device;
 import ru.zan.Pulsometer.models.PulseMeasurement;
+import ru.zan.Pulsometer.models.Session;
 import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.repositories.DeviceRepository;
 import ru.zan.Pulsometer.repositories.PulseMeasurementRepository;
+import ru.zan.Pulsometer.repositories.SessionRepository;
 import ru.zan.Pulsometer.repositories.UserRepository;
 import ru.zan.Pulsometer.util.DeviceNotFoundException;
+import ru.zan.Pulsometer.util.InvalidDeviceUserMappingException;
+import ru.zan.Pulsometer.util.UserNotFoundException;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -34,18 +39,21 @@ public class PulsometerService {
     private final UserRepository userRepository;
     private final DeviceRepository deviceRepository;
     private final PulseMeasurementRepository pulseMeasurementRepository;
+    private final SessionRepository sessionRepository;
     private final ObjectMapper objectMapper;
     private final MqttAsyncClient mqttAsyncClient;
     private final String persistenceDir = "src/main/resources/persistence";
 
+
     @Autowired
     public PulsometerService(UserRepository userRepository,
                              DeviceRepository deviceRepository,
-                             PulseMeasurementRepository pulseMeasurementRepository,
+                             PulseMeasurementRepository pulseMeasurementRepository, SessionRepository sessionRepository,
                              ObjectMapper objectMapper) throws MqttException {
         this.userRepository = userRepository;
         this.deviceRepository = deviceRepository;
         this.pulseMeasurementRepository = pulseMeasurementRepository;
+        this.sessionRepository = sessionRepository;
         this.objectMapper = objectMapper;
 
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
@@ -53,8 +61,6 @@ public class PulsometerService {
 
         MqttConnectOptions options = new MqttConnectOptions();
         options.setCleanSession(true);
-        options.setAutomaticReconnect(true);
-        options.setConnectionTimeout(10);
 
         mqttAsyncClient.connect(options, null, new IMqttActionListener() {
             @Override
@@ -90,7 +96,6 @@ public class PulsometerService {
             }
         });
     }
-
 
     private void subscribeToTopic(String topic) {
         try {
@@ -136,50 +141,84 @@ public class PulsometerService {
                 .flatMap(device -> {
                     device.setStatus("ready");
                     device.setLastContact(LocalDateTime.now());
-                    pulseMeasurement.setUserId(device.getActiveUserId());
                     return deviceRepository.save(device);
                 }).flatMap(savedDevice ->{
                     pulseMeasurement.setBpm(pulseDataDTO.getBpm());
                     pulseMeasurement.setDate(LocalDateTime.now());
-                    return pulseMeasurementRepository.save(pulseMeasurement);
-                }).subscribe();
-
+                    pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
+                    pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
+                    return sessionRepository.findById(pulseDataDTO.getSessionId())
+                            .flatMap(receivedSession ->{
+                                LocalDateTime now = LocalDateTime.now();
+                                double timeDifferent = Duration.between(receivedSession.getTime(), now).toMillis()/60000.0;
+                                receivedSession.setPassed(receivedSession.getPassed() + timeDifferent);
+                                receivedSession.setTime(now);
+                                return sessionRepository.save(receivedSession);
+                            }).then(Mono.just(pulseMeasurement));
+                })
+                .flatMap(pulseMeasurementRepository::save)
+                .subscribe();
     }
 
-    public Mono<Boolean> publish (Integer deviceId, Integer userId, boolean isActivate){
-        String topic = "device/switch/"+deviceId;
-        String payload = isActivate ? "1" : "0";
-        MqttMessage message = new MqttMessage(payload.getBytes());
-        return Mono.create(sink -> {
-            try {
-                mqttAsyncClient.publish(topic, message, null, new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken iMqttToken) {
-                        if(isActivate){
-                            deviceRepository.findById(deviceId)
-                                    .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
-                                    .flatMap(device -> {
+    private Mono<String> createActivateMessage(Integer userId) {
+        Session session = new Session();
+        session.setUserId(userId);
+        session.setTime(LocalDateTime.now());
+
+        return sessionRepository.save(session)
+                .flatMap(savedSession -> {
+                    String isActivateValue ="1";
+                    MqttPayload payloadObject = createMqttPayload(isActivateValue,savedSession.getSessionId());
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    try {
+                        String payload = objectMapper.writeValueAsString(payloadObject);
+                        return Mono.just(payload);
+                    } catch (JsonProcessingException e) {
+                        return Mono.error(new RuntimeException("Error serializing payload", e));
+                    }
+                });
+    }
+
+    private MqttPayload createMqttPayload(String isActivateValue, Integer sessionId) {
+        return new MqttPayload(isActivateValue, sessionId);
+    }
+
+    public Mono<Boolean> publishActivate(Integer deviceId, Integer userId) {
+        String topic = "device/switch/" + deviceId;
+
+        return deviceRepository.findById(deviceId)
+                .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
+                .flatMap(device -> userRepository.findById(userId)
+                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
+                        .flatMap(user -> {
+
+                            if (!device.getUsers().contains(user.getUserId())) {
+                                return Mono.error(new InvalidDeviceUserMappingException(
+                                        "User with ID: " + userId + " does not have access to device with ID: " + deviceId));
+                            }
+
+                            return createActivateMessage(userId)
+                                    .flatMap(payload -> publishMqttMessage(topic, payload))
+                                    .flatMap(success -> {
                                         device.setStatus("measuring");
                                         device.setActiveUserId(userId);
-                                        return deviceRepository.save(device)
-                                                .then(Mono.just(true));
-                                    })
-                                    .subscribe(sink::success, sink::error);
-                        }else {
-                            deviceRepository.findById(deviceId)
-                                    .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
-                                    .flatMap(device -> {
-                                        device.setStatus("ready");
-                                        return deviceRepository.save(device)
-                                                .then(Mono.just(true));
-                                    })
-                                    .subscribe(sink::success, sink::error);
-                        }
-                    }
+                                        return deviceRepository.save(device).thenReturn(true);
+                                    });
+                        }));
+    }
+
+    private Mono<Boolean> publishMqttMessage(String topic, String payload) {
+        return Mono.create(sink -> {
+            try {
+                mqttAsyncClient.publish(topic, new MqttMessage(payload.getBytes()), null, new IMqttActionListener() {
                     @Override
-                    public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
-                        System.out.println("Error when posting: " + throwable.getMessage());
-                        sink.error(throwable);
+                    public void onSuccess(IMqttToken asyncActionToken) {
+                        sink.success(true);
+                    }
+
+                    @Override
+                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                        sink.error(exception);
                     }
                 });
             } catch (MqttException e) {
@@ -188,10 +227,43 @@ public class PulsometerService {
         });
     }
 
+
+    private Mono<String> createDeactivateMessage(Integer userId) {
+        return sessionRepository.findFirstByUserIdOrderByTimeDesc(userId)
+                .flatMap(session -> {
+                    String isActivateValue ="0";
+                    MqttPayload payloadObject = createMqttPayload(isActivateValue,session.getSessionId());
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    try {
+                        String payload = objectMapper.writeValueAsString(payloadObject);
+                        System.out.println("Деактивация создание сообщения:"+payload);
+                        return Mono.just(payload);
+                    } catch (JsonProcessingException e) {
+                        return Mono.error(new RuntimeException("Error serializing payload", e));
+                    }
+                });
+    }
+
+    public Mono<Boolean> publishDeactivate(Integer userId) {
+        return deviceRepository.findByActiveUserId(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
+                .flatMap(device -> {
+                    String topic = "device/switch/" + device.getDeviceId();
+                    device.setStatus("ready");
+
+                    return createDeactivateMessage(userId)
+                            .flatMap(payload -> publishMqttMessage(topic, payload))
+                            .flatMap(success -> {
+                                return deviceRepository.save(device).thenReturn(true);
+                            });
+                });
+    }
+
+
     public Mono<Boolean> createUser (User user) {
-        user.setId(null);
+        user.setUserId(null);
         return userRepository.save(user)
-                .map(savedUser -> savedUser != null && savedUser.getId() != null);
+                .map(savedUser -> savedUser != null && savedUser.getUserId() != null);
     }
 
     public Mono<Boolean> deleteUser(Integer userId) {
@@ -240,8 +312,8 @@ public class PulsometerService {
                             .flatMap(savedUser -> deviceRepository.findById(savedUser.getDeviceId())
                                     .flatMap(newDevice -> {
                                         List<Integer> list = newDevice.getUsers();
-                                        if (!list.contains(userId)) {  // Проверка на наличие пользователя
-                                            list.add(userId);  // Добавляем ID пользователя
+                                        if (!list.contains(userId)) {
+                                            list.add(userId);
                                         }
                                         newDevice.setUsers(list);
                                         return deviceRepository.save(newDevice);
@@ -279,18 +351,12 @@ public class PulsometerService {
                             .flatMap(userRepository::findById);
                 });
     }
+    public Flux<Session> getSessionsUser (Integer userId) {
+        return sessionRepository.findAllByUserId(userId);
+    }
 
-    public Flux<PulseMeasurement> getAllUserPulseMeasurements(Integer userId) {
-        return userRepository.findById(userId)
-                .flatMapMany(user -> {
-                    List<Integer> pulseMeasurementIds = user.getPulseMeasurements();
-                    if (pulseMeasurementIds == null || pulseMeasurementIds.isEmpty()) {
-                        return Flux.empty();
-                    }
-                    return pulseMeasurementRepository.findAllById(pulseMeasurementIds)
-                            .sort(Comparator.comparing(PulseMeasurement::getDate).reversed());
-                })
-                .switchIfEmpty(Flux.empty());
+    public Flux<PulseMeasurement> getMeasurementsBySessionId (Integer sessionId) {
+        return pulseMeasurementRepository.findAllBySessionId(sessionId);
     }
 
 

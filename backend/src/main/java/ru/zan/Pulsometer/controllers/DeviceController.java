@@ -15,6 +15,8 @@ import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.services.PulsometerService;
 import ru.zan.Pulsometer.util.DeviceNotFoundException;
 import ru.zan.Pulsometer.util.ErrorResponse;
+import ru.zan.Pulsometer.util.InvalidDeviceUserMappingException;
+import ru.zan.Pulsometer.util.UserNotFoundException;
 
 @Tag(name = "Device")
 @RestController
@@ -65,45 +67,65 @@ public class DeviceController {
                 .defaultIfEmpty(ResponseEntity.ok(Flux.empty()));
     }
 
-    @Operation(summary = "Switching the device status and setting the active user")
+    @Operation(summary = "Activate a device and assign it to a user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Status changed"),
-            @ApiResponse(responseCode = "400", description = "Invalid data"),
-            @ApiResponse(responseCode = "404", description = "Device not found")
+            @ApiResponse(responseCode = "200", description = "Device successfully activated and assigned to the user"),
+            @ApiResponse(responseCode = "400", description = "Invalid device ID or user ID provided"),
+            @ApiResponse(responseCode = "404", description = "Device not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
-    @PostMapping("/{deviceId}")
-    public Mono<ResponseEntity<?>> manageStatus (@PathVariable("deviceId") Integer deviceId,
-                                                 @RequestParam(value = "activeUserId") Integer activeUserId,
-                                                 @RequestParam(value = "status") String status){
+    @PostMapping("/activate/{deviceId}")
+    public Mono<ResponseEntity<?>> manageStatusActivate (@PathVariable("deviceId") Integer deviceId,
+                                                         @RequestParam(value = "activeUserId") Integer activeUserId){
         if (deviceId == null || deviceId <= 0) {
             return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("Invalid or missing deviceId", HttpStatus.BAD_REQUEST.value())));
         }
-        if (!status.equalsIgnoreCase("activate") && !status.equalsIgnoreCase("deactivate")) {
-            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Invalid status. Use 'activate' or 'deactivate'.", HttpStatus.BAD_REQUEST.value())));
-        }
-        boolean isActivate = status.equalsIgnoreCase("activate");
 
-        return pulsometerService.publish(deviceId, activeUserId,isActivate)
-                .map(isPublish -> {
-                    if (isPublish) {
-                        return ResponseEntity.ok(true);
-                    } else {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ErrorResponse("Failed to process the request", HttpStatus.BAD_REQUEST.value()));
-                    }
-                })
-                .onErrorResume(e -> {
-                    if (e instanceof DeviceNotFoundException) {
-                        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(new ErrorResponse("Device not found with ID: " + deviceId, HttpStatus.NOT_FOUND.value())));
-                    } else if (e instanceof IllegalArgumentException) {
-                        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value())));
-                    }
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ErrorResponse("An internal error occurred", HttpStatus.INTERNAL_SERVER_ERROR.value())));
-                });
+        return pulsometerService.publishActivate(deviceId, activeUserId)
+                .map(isPublish -> isPublish
+                        ? ResponseEntity.ok(true)
+                        : ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ErrorResponse("Failed to process the request", HttpStatus.BAD_REQUEST.value())))
+                .onErrorResume(this::handleError);
+    }
+
+    @Operation(summary = "Deactivate a device and remove the active user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Device successfully deactivated"),
+            @ApiResponse(responseCode = "400", description = "Invalid or missing user ID"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
+    })
+    @PostMapping("/deactivate")
+    public Mono<ResponseEntity<?>> manageStatusDeactivate (@RequestParam(value = "activeUserId") Integer activeUserId){
+        if (activeUserId == null || activeUserId <= 0) {
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Invalid or missing activeUserId", HttpStatus.BAD_REQUEST.value())));
+        }
+
+        return pulsometerService.publishDeactivate(activeUserId)
+                .map(isPublish -> isPublish
+                        ? ResponseEntity.ok(true)
+                        : ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ErrorResponse("Failed to process the request", HttpStatus.BAD_REQUEST.value())))
+                .onErrorResume(this::handleError);
+    }
+
+    private Mono<ResponseEntity<ErrorResponse>> handleError(Throwable e) {
+        if (e instanceof IllegalArgumentException) {
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value())));
+        } else if (e instanceof DeviceNotFoundException) {
+            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value())));
+        } else if (e instanceof UserNotFoundException) {
+            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value())));
+        } else if (e instanceof InvalidDeviceUserMappingException) {
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value())));
+        }
+        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("Unexpected error occurred: " + e.getMessage(), HttpStatus.BAD_REQUEST.value())));
     }
 }

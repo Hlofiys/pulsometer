@@ -21,7 +21,8 @@ import java.util.List;
 public class Device {
 
     @Id
-    private Integer id;
+    @Column(value = "device_id")
+    private Integer deviceId;
 
     @Size(min = 1, max = 50)
     @NotNull

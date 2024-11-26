@@ -7,5 +7,7 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <include file="/db/changelog/V1__Creating_New_Tables.sql"/>
+    <include file="/db/changelog/V2__Delete_Old_Table_Create_New_Tables.sql"/>
+    <include file="/db/changelog/V3__Add_Cascade.sql"/>
 
 </databaseChangeLog>

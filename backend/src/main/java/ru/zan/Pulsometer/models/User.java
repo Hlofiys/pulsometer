@@ -18,13 +18,12 @@ import java.util.List;
 public class User {
 
     @Id
-    private Integer id;
+    @Column(value = "user_id")
+    private Integer userId;
 
     private String fio;
 
     @Column(value = "device_id")
     private Integer deviceId;
 
-    @Column(value = "pulse_measurements")
-    private List<Integer> pulseMeasurements;
 }
