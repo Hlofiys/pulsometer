@@ -15,6 +15,8 @@ import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.services.PulsometerService;
 import ru.zan.Pulsometer.util.DeviceNotFoundException;
 import ru.zan.Pulsometer.util.ErrorResponse;
+import ru.zan.Pulsometer.util.InvalidDeviceUserMappingException;
+import ru.zan.Pulsometer.util.UserNotFoundException;
 
 @Tag(name = "Device")
 @RestController
@@ -115,9 +117,15 @@ public class DeviceController {
                     .body(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value())));
         } else if (e instanceof DeviceNotFoundException) {
             return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorResponse("Device not found", HttpStatus.NOT_FOUND.value())));
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value())));
+        } else if (e instanceof UserNotFoundException) {
+            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND.value())));
+        } else if (e instanceof InvalidDeviceUserMappingException) {
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST.value())));
         }
-        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("An internal error occurred", HttpStatus.INTERNAL_SERVER_ERROR.value())));
+        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("Unexpected error occurred: " + e.getMessage(), HttpStatus.BAD_REQUEST.value())));
     }
 }

@@ -23,6 +23,8 @@ import ru.zan.Pulsometer.repositories.PulseMeasurementRepository;
 import ru.zan.Pulsometer.repositories.SessionRepository;
 import ru.zan.Pulsometer.repositories.UserRepository;
 import ru.zan.Pulsometer.util.DeviceNotFoundException;
+import ru.zan.Pulsometer.util.InvalidDeviceUserMappingException;
+import ru.zan.Pulsometer.util.UserNotFoundException;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +32,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -171,7 +172,6 @@ public class PulsometerService {
                     ObjectMapper objectMapper = new ObjectMapper();
                     try {
                         String payload = objectMapper.writeValueAsString(payloadObject);
-                        System.out.println("Активация создание сообщения:"+payload);
                         return Mono.just(payload);
                     } catch (JsonProcessingException e) {
                         return Mono.error(new RuntimeException("Error serializing payload", e));
@@ -183,38 +183,50 @@ public class PulsometerService {
         return new MqttPayload(isActivateValue, sessionId);
     }
 
-    public Mono<Boolean> publishActivate (Integer deviceId, Integer userId){
+    public Mono<Boolean> publishActivate(Integer deviceId, Integer userId) {
         String topic = "device/switch/" + deviceId;
-        return createActivateMessage(userId)
-                .flatMap(payload->{
-                    MqttMessage message = new MqttMessage(payload.getBytes());
-                    return Mono.create(sink -> {
-                        try {
-                            mqttAsyncClient.publish(topic, message, null, new IMqttActionListener() {
-                                @Override
-                                public void onSuccess(IMqttToken iMqttToken) {
-                                    deviceRepository.findById(deviceId)
-                                            .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
-                                            .flatMap(device -> {
-                                                device.setStatus("measuring");
-                                                device.setActiveUserId(userId);
-                                                return deviceRepository.save(device)
-                                                        .then(Mono.just(true));
-                                            })
-                                            .subscribe(sink::success, sink::error);
-                                }
-                                @Override
-                                public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
-                                    System.out.println("Error when posting: " + throwable.getMessage());
-                                    sink.error(throwable);
-                                }
-                            });
-                        } catch (MqttException e) {
-                            sink.error(e);
-                        }
-                    });
-                });
+
+        return deviceRepository.findById(deviceId)
+                .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
+                .flatMap(device -> userRepository.findById(userId)
+                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
+                        .flatMap(user -> {
+
+                            if (!device.getUsers().contains(user.getUserId())) {
+                                return Mono.error(new InvalidDeviceUserMappingException(
+                                        "User with ID: " + userId + " does not have access to device with ID: " + deviceId));
+                            }
+
+                            return createActivateMessage(userId)
+                                    .flatMap(payload -> publishMqttMessage(topic, payload))
+                                    .flatMap(success -> {
+                                        device.setStatus("measuring");
+                                        device.setActiveUserId(userId);
+                                        return deviceRepository.save(device).thenReturn(true);
+                                    });
+                        }));
     }
+
+    private Mono<Boolean> publishMqttMessage(String topic, String payload) {
+        return Mono.create(sink -> {
+            try {
+                mqttAsyncClient.publish(topic, new MqttMessage(payload.getBytes()), null, new IMqttActionListener() {
+                    @Override
+                    public void onSuccess(IMqttToken asyncActionToken) {
+                        sink.success(true);
+                    }
+
+                    @Override
+                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                        sink.error(exception);
+                    }
+                });
+            } catch (MqttException e) {
+                sink.error(e);
+            }
+        });
+    }
+
 
     private Mono<String> createDeactivateMessage(Integer userId) {
         return sessionRepository.findFirstByUserIdOrderByTimeDesc(userId)
@@ -232,41 +244,21 @@ public class PulsometerService {
                 });
     }
 
-    public Mono<Boolean> publishDeactivate (Integer userId){
+    public Mono<Boolean> publishDeactivate(Integer userId) {
         return deviceRepository.findByActiveUserId(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
                 .flatMap(device -> {
                     String topic = "device/switch/" + device.getDeviceId();
-                    System.out.println("Отправка деактивация:"+topic);
+                    device.setStatus("ready");
+
                     return createDeactivateMessage(userId)
-                            .flatMap(payload->{
-                                MqttMessage message = new MqttMessage(payload.getBytes());
-                                return Mono.create(sink -> {
-                                    try {
-                                        mqttAsyncClient.publish(topic, message, null, new IMqttActionListener() {
-                                            @Override
-                                            public void onSuccess(IMqttToken iMqttToken) {
-                                                deviceRepository.findById(device.getDeviceId())
-                                                        .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + device.getDeviceId())))
-                                                        .flatMap(device -> {
-                                                            device.setStatus("ready");
-                                                            return deviceRepository.save(device)
-                                                                    .then(Mono.just(true));
-                                                        })
-                                                        .subscribe(sink::success, sink::error);
-                                            }
-                                            @Override
-                                            public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
-                                                System.out.println("Error when posting: " + throwable.getMessage());
-                                                sink.error(throwable);
-                                            }
-                                        });
-                                    } catch (MqttException e) {
-                                        sink.error(e);
-                                    }
-                                });
+                            .flatMap(payload -> publishMqttMessage(topic, payload))
+                            .flatMap(success -> {
+                                return deviceRepository.save(device).thenReturn(true);
                             });
                 });
     }
+
 
     public Mono<Boolean> createUser (User user) {
         user.setUserId(null);

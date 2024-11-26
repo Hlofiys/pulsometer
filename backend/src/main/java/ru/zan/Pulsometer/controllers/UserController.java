@@ -146,10 +146,10 @@ public class UserController {
         });
     }
 
-    @Operation(summary = "Retrieve all users")
+    @Operation(summary = "Retrieve session")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "List of received users"),
-            @ApiResponse(responseCode = "204", description = "No users found")
+            @ApiResponse(responseCode = "200", description = "List of received session"),
+            @ApiResponse(responseCode = "204", description = "No session found")
     })
     @GetMapping("/{userId}/sessions")
     public Mono<ResponseEntity<Flux<Session>>> getSessionsUser (@PathVariable("userId") Integer userId){
