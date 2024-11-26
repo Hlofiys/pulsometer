@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
 import ru.zan.Pulsometer.DTOs.UserDTO;
 import ru.zan.Pulsometer.models.PulseMeasurement;
+import ru.zan.Pulsometer.models.Session;
 import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.services.PulsometerService;
 
@@ -40,7 +41,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Device not found")
     })
     @PostMapping("")
-    public Mono<ResponseEntity<?>> saveUser(UserDTO userDTO) {
+    public Mono<ResponseEntity<?>> saveUser(@RequestBody UserDTO userDTO) {
         User user = convertToUser(userDTO);
         return pulsometerService.checkDeviceExists(user.getDeviceId())
                 .flatMap(deviceExists -> {
@@ -79,16 +80,22 @@ public class UserController {
                 });
     }
 
-    @Operation(summary = "Retrieve all measurements user")
+    @Operation(summary = "Get measurements by sessionId")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of received measurements"),
             @ApiResponse(responseCode = "204", description = "No measurements found")
     })
-    @GetMapping("/{userId}/measurements")
-    public Mono<ResponseEntity<Flux<PulseMeasurement>>> getAllUserMeasurements(@PathVariable("userId") Integer userId) {
-        return pulsometerService.getAllUserPulseMeasurements(userId)
+    @GetMapping("/{sessionId}/measurements")
+    public Mono<ResponseEntity<Flux<PulseMeasurement>>> getMeasurementsBySessionId(@PathVariable("sessionId") Integer sessionId) {
+        return pulsometerService.getMeasurementsBySessionId(sessionId)
                 .collectList()
-                .flatMap(pulseMeasurements -> Mono.just(ResponseEntity.ok(Flux.fromIterable(pulseMeasurements))));
+                .flatMap(pulseMeasurements ->{
+                    if (pulseMeasurements.isEmpty()) {
+                        return Mono.just(ResponseEntity.noContent().build());
+                    }else {
+                        return Mono.just(ResponseEntity.ok(Flux.fromIterable(pulseMeasurements)));
+                    }
+                });
     }
 
     @Operation(summary = "Return a user by its ID")
@@ -137,6 +144,25 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
         });
+    }
+
+    @Operation(summary = "Retrieve all users")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of received users"),
+            @ApiResponse(responseCode = "204", description = "No users found")
+    })
+    @GetMapping("/{userId}/sessions")
+    public Mono<ResponseEntity<Flux<Session>>> getSessionsUser (@PathVariable("userId") Integer userId){
+        return pulsometerService.getSessionsUser(userId)
+                .collectList()
+                .flatMap(sessions -> {
+                    if (sessions.isEmpty()) {
+                        return Mono.just(ResponseEntity.noContent().build());
+                    }else {
+                        return Mono.just(ResponseEntity.ok(Flux.fromIterable(sessions)));
+                    }
+                });
+
     }
 
     private User convertToUser(UserDTO userDTO) {

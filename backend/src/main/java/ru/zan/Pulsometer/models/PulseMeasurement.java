@@ -1,5 +1,6 @@
 package ru.zan.Pulsometer.models;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,12 +19,16 @@ import java.time.LocalDateTime;
 public class PulseMeasurement {
 
     @Id
-    private Integer id;
+    @Column(value = "measurement_id")
+    private Integer measurementId;
 
     private Integer bpm;
 
-    @Column(value = "user_id")
-    private Integer userId;
+    @Size(min = 1,max = 50)
+    private Integer oxygen;
 
     private LocalDateTime date;
+
+    @Column(value = "session_id")
+    private Integer sessionId;
 }
