@@ -94,6 +94,7 @@ export const parseDate = (time: string /*2024-05-22*/): string => {
 
 export const parseDateAndTime = (dateAndTime: string) => {
   //2024-05-22T11:50:00
+  console.log(dateAndTime)
   const [date, time] = dateAndTime.split("T");
   const [hours, minutes] = time.split(":");
 

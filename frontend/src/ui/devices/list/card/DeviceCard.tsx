@@ -18,7 +18,10 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
     <li
       className={styles.deviceCardContainer}
       style={isShowCard ? { flexDirection: "column-reverse" } : undefined}
-      onClick={()=>onClick && onClick(device.id)}
+      onClick={()=>{
+        // console.log(device)
+        onClick && onClick(device.deviceId)
+      }}
     >
       <img src={pulsometerDefault} alt="фото устройства" />
       <label
@@ -30,7 +33,7 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
             : undefined
         }
       >
-        Устройство-{device.id}
+        Устройство-{device.deviceId}
         {!isShowCard && <TopArrow />}
       </label>
     </li>

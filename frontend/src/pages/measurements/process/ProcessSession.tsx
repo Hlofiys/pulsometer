@@ -1,12 +1,12 @@
 import { FC } from "react";
-import styles from "./ProcessMeasurements.module.scss";
+import styles from "./ProcessSession.module.scss";
 import Params from "./userParams/Params";
 import Statistic from "./statistic/Statistic";
 import Button from "../../../ui/buttons/primary/Button";
 import Link from "../../../ui/buttons/link/Link";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 
-const ProcessMeasurements: FC = () => {
+const ProcessSession: FC = () => {
   return (
     <div className={styles.mainProcessContainer}>
       <div className={styles.processMeasurementsContainer}>
@@ -34,4 +34,4 @@ const ProcessMeasurements: FC = () => {
   );
 };
 
-export default ProcessMeasurements;
+export default ProcessSession;

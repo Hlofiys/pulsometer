@@ -21,7 +21,7 @@ export interface IDropdownProps<T> {
 const Dropdown = <T,>({
   containersStyles,
   options,
-  placeholder = "Выберите...",
+  placeholder,
   isLoading,
   value,
   defaultValue,
@@ -160,7 +160,7 @@ const Dropdown = <T,>({
         {!!filteredOptions.length ? (
           filteredOptions.map((option, index) => (
             <div
-              key={(option.value as string | number).toString()}
+              key={(option.value as string | number)}
               ref={(el) => (optionRefs.current[index] = el)} // Сохраняем ссылки на элементы
               className={`${styles.option} ${
                 index === selectedIndex ? styles.optionActive : ""

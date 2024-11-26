@@ -6,9 +6,9 @@ import DevicesList from "../../ui/devices/list/DevicesList";
 import { useNavigate } from "react-router-dom";
 import { useGetDevices } from "../../api/hooks/device/useGetDevices";
 import { Spin } from "antd";
+import { RouterPath } from "../../router/Router";
 
 const Main: FC = () => {
-
   const { data: devices, isLoading } = useGetDevices();
   const nav = useNavigate();
 
@@ -24,13 +24,13 @@ const Main: FC = () => {
       <section>
         <Button
           style={{ width: 304, height: 52 }}
-          onClick={() => nav("/create")}
+          onClick={() => nav(RouterPath.CREATE)}
         >
           Добавить пользователя
         </Button>
         <AdditionalButton
           style={{ width: 304, height: 52 }}
-          onClick={() => nav("/view")}
+          onClick={() => nav(RouterPath.VIEW)}
         >
           Все пользователи
         </AdditionalButton>
@@ -39,7 +39,13 @@ const Main: FC = () => {
       {isLoading ? (
         <Spin />
       ) : (
-        <DevicesList onCardClick={(deviceId)=>nav(`/view/${deviceId}`)} devices={devices?.data || []} style={{ marginTop: 50 }} />
+        <DevicesList
+          onCardClick={(deviceId) => {
+            nav(`${RouterPath.VIEW}/${deviceId}`);
+          }}
+          devices={devices?.data || []}
+          style={{ marginTop: 50 }}
+        />
       )}
     </main>
   );

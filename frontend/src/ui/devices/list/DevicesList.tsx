@@ -12,7 +12,7 @@ const DevicesList: FC<IDevicesList> = (props) => {
   return (
     <ul className={styles.listContainer} {...ulProps}>
       {devices.map((device) => (
-        <DeviceCard onClick={onCardClick} key={device.id} device={device} />
+        <DeviceCard onClick={onCardClick} key={device.deviceId} device={device} />
       ))}
     </ul>
   );

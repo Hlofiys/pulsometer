@@ -1,6 +1,7 @@
 .tableRow {
   border-bottom: 1px solid #444; // Нижняя граница строки
   transition: .5s all ease;
+  cursor: pointer;
   z-index: 0;
 
   &:last-child {
@@ -31,18 +32,5 @@
       border: 1px solid #fbfaf8;
       color: #fbfaf8;
     }
-
-    .deviceButton {
-      border: 1px solid #fbfaf8;
-      text-align: center;
-      padding: 8px;
-      border-radius: 10px;
-      color: #fbfaf8;
-      cursor: pointer;
-    }
-  }
-  .icon {
-    padding: 0 !important;
-    text-align: center;
   }
 }

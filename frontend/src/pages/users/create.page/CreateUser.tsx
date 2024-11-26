@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
 import { TCreateUser } from "../../../services/interfaces/Interfaces";
 import { useCreateUser } from "../../../api/hooks/user/useCreateUser";
+import { RouterPath } from "../../../router/Router";
 
 interface INewUser {
   surname: string;
@@ -50,8 +51,8 @@ const CreateUser: FC = () => {
   const devicesOptions = useMemo(() => {
     return (
       devices?.data.map((device) => ({
-        label: `Пульсометр #${device.id}`,
-        value: device.id,
+        label: `Пульсометр #${device.deviceId}`,
+        value: device.deviceId,
       })) || []
     );
   }, [devices]);
@@ -146,7 +147,7 @@ const CreateUser: FC = () => {
         >
           Добавить пользователя
         </Button>
-        <Link onClick={() => nav("/view")}>
+        <Link onClick={() => nav(RouterPath.VIEW)}>
           Все пользователи <ArrowRight stroke="#23E70A" />
         </Link>
       </form>

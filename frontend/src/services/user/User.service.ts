@@ -1,6 +1,5 @@
 import { instance } from "../../axios";
 import {
-  IMeasurements,
   IUser,
   TCreateUser,
   TUpdateUser,
@@ -16,7 +15,7 @@ class UserService {
   }
 
   async create(data: TCreateUser) {
-    return await instance.post("/users", {}, { params: data });
+    return await instance.post("/users", data);
   }
 
   async delete(userId: number) {
@@ -24,15 +23,11 @@ class UserService {
   }
 
   async update(data: TUpdateUser) {
-    const { id: userId, deviceId, fio } = data;
+    const { userId, deviceId, fio } = data;
     return await instance.patch(`/users/${userId}`, {
       deviceId,
       fio,
     });
-  }
-
-  async getMeasurementsById(userId: number) {
-    return await instance.get<IMeasurements[]>(`/users/${userId}/measurements`);
   }
 }
 

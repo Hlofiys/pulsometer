@@ -1,0 +1,37 @@
+.reviewContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 21px 0 110px;
+  gap: 40px;
+
+  h1 {
+    font-family: "Lora-SemiBold";
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 26.4px;
+    color: #fbfaf8;
+    margin: 0;
+    padding: 0;
+  }
+
+  .search {
+    p {
+      font-family: "Lora-Regular";
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 26.4px;
+      color: #fbfaf8;
+      margin: 0 0 15px;
+      padding: 0;
+    }
+  }
+
+  .deviceButton {
+    border: 1px solid #fbfaf8;
+    text-align: center;
+    padding: 8px;
+    border-radius: 10px;
+    color: #fbfaf8;
+    cursor: pointer;
+  }
+}

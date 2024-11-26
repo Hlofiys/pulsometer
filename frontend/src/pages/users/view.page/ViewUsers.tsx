@@ -7,12 +7,67 @@ import { useNavigate, useParams } from "react-router-dom";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 import Pagination from "../../../ui/pagination/Pagination";
 import { useGetUsers } from "../../../api/hooks/user/useGetUsers";
-import { Spin } from "antd";
+import { Empty, Spin } from "antd";
 import { TTableUserRow } from "../../../services/interfaces/Interfaces";
-import { TableRowFormValues } from "./table/row/Row";
+// import { TableRowFormValues } from "./table/row/Row";
 import { useGetUsersByDeviceId } from "../../../api/hooks/device/useGetUsersByDeviceId";
+import { FieldConfig } from "./table/row/Row";
+// import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
+import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
+import Basket from "../../../ui/icons/Basket";
+import Edit from "../../../ui/icons/Edit";
+import Save from "../../../ui/icons/Save";
+import { RouterPath } from "../../../router/Router";
 
 const ROWS_PER_PAGE = 5; // Максимальное количество строк на одной странице
+
+export interface IAllUsersTableRow {
+  lastName: string;
+  middleName: string;
+  firstName: string;
+  userId: number;
+  deviceId: number;
+}
+
+/*
+const [isEditing, setIsEditing] = useState(false);
+const { mutateAsync: delete_user, isLoading: isDeleteLoading } =
+useDeleteUser();
+const { mutateAsync: update_user, isLoading: isUpdateLoading } =
+  useUpdateUser();
+
+// Сохранение изменений
+const handleSave = (data: any) => {
+  const { lastName, firstName, middleName, userId, deviceId } = data;
+
+  const isChanged =
+    lastName !== initialData.lastName ||
+    firstName !== initialData.firstName ||
+    middleName !== initialData.middleName ||
+    deviceId !== initialData.deviceId;
+
+  if (isChanged) {
+    const updateUserData: TUpdateUser = {
+      fio: `${lastName} ${firstName} ${middleName}`,
+      deviceId,
+      userId,
+    };
+    update_user(updateUserData, {
+      onSuccess: () => {
+        setInitialData(data); // Обновляем исходные данные
+        setIsEditing(false); // Отключить режим редактирования
+        onSave && onSave(data); // Передать данные в родительский компонент
+      },
+    });
+  } else {
+    setIsEditing(false); // Выходим из режима редактирования без сохранения
+  }
+};
+
+const handleDelete = (data: any) => {
+  delete_user(data.userId);
+};
+*/
 
 const ViewUsers: FC = () => {
   const nav = useNavigate();
@@ -20,14 +75,31 @@ const ViewUsers: FC = () => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const { data: fetchedUsers, isLoading } = !!deviceId
-  ? useGetUsersByDeviceId(+deviceId)
-  : useGetUsers();
+    ? useGetUsersByDeviceId(+deviceId)
+    : useGetUsers();
+  const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
+
+  const fields: FieldConfig<IAllUsersTableRow>[] = [
+    { key: "lastName", label: "Фамилия", type: "text" },
+    { key: "firstName", label: "Имя", type: "text" },
+    { key: "middleName", label: "Отчество", type: "text" },
+    {
+      key: "deviceId",
+      label: "Устройство",
+      type: "dropdown",
+      dropdownOptions: devicesOptions,
+      dropdownLoading: isLoadingDevices,
+      renderStatic: (value: any) => <div>Пульсометр #{value}</div>,
+    },
+  ];
 
   // Отфильтрованные данные на основе поиска
   const filteredData: TTableUserRow[] = useMemo(() => {
     return (
-      fetchedUsers?.data.filter((user) => {
+      (fetchedUsers?.data || []).filter((user) => {
         const fio = user.fio.toLowerCase();
         return fio.includes(searchValue.toLowerCase());
       }) || []
@@ -40,23 +112,25 @@ const ViewUsers: FC = () => {
   }, [filteredData]);
 
   // Данные для отображения на текущей странице
-  const paginatedData: TableRowFormValues[] = useMemo(() => {
+  const paginatedData: IAllUsersTableRow[] = useMemo(() => {
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-    return filteredData
-      .sort((userPrev, userNext) => userPrev?.id - userNext?.id)
-      .map((user) => {
-        const { fio, id, deviceId } = user;
-        const [lastName, firstName, middleName] = fio.split(" ");
+    return (
+      filteredData
+        .sort((userPrev, userNext) => userPrev?.userId - userNext?.userId)
+        .map((user) => {
+          const { fio, userId, deviceId } = user;
+          const [lastName, firstName, middleName] = fio.split(" ");
 
-        return {
-          lastName: lastName || "",
-          middleName: middleName || "",
-          firstName: firstName || "",
-          userId: id,
-          deviceId,
-        };
-      })
-      .slice(startIndex, startIndex + ROWS_PER_PAGE);
+          return {
+            lastName: lastName || "",
+            middleName: middleName || "",
+            firstName: firstName || "",
+            userId,
+            deviceId,
+          };
+        })
+        .slice(startIndex, startIndex + ROWS_PER_PAGE) || []
+    );
   }, [filteredData, currentPage]);
 
   const onSearch: ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -78,8 +152,57 @@ const ViewUsers: FC = () => {
         searchValueState={[searchValue, setSearchValue]}
         inputProps={{ onChange: onSearch }}
       />
-      {isLoading ? <Spin /> : <Table onClick={(value: string|number)=>nav(`/review-measurements/${value}`)} data={paginatedData} />}
-      <Link onClick={() => nav("/create")}>
+      {isLoading ? (
+        <Spin />
+      ) : !!paginatedData.length ? (
+        <Table<IAllUsersTableRow>
+          onClick={(value: string | number) => nav(`/review-sessions/${value}`)}
+          data={paginatedData}
+          fields={fields}
+          getKey={(row) => row.userId}
+        >
+          <>
+            <td className={styles.icon}>
+              {isEditing ? (
+                <Save
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // onSave && onSave(rowData);
+                    // handleSubmit(handleSave)();
+                  }}
+                  stroke="#23E70A"
+                />
+              ) : (
+                <Edit
+                  stroke="#23E70A"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
+                  style={{ cursor: "pointer" }}
+                />
+              )}
+            </td>
+            <td className={styles.icon}>
+              <Basket
+                stroke="#FF1A43"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // onDelete && onDelete(rowData.userId);
+                  // handleDelete();
+                }}
+              />
+            </td>
+          </>
+        </Table>
+      ) : (
+        <Empty
+          description={
+            <p className={styles.emptyParagraph}>Список пользователей пуст</p>
+          }
+        />
+      )}
+      <Link onClick={() => nav(RouterPath.CREATE)}>
         Добавить пользователя <ArrowRight stroke="#23E70A" />
       </Link>
       <Pagination

@@ -1,5 +1,9 @@
 import { instance } from "../../axios";
-import { IDevice, IUser, TSwitchDeviceStatus } from "../interfaces/Interfaces";
+import {
+  IDevice,
+  IUser,
+  TActivateMeasurements,
+} from "../interfaces/Interfaces";
 
 class DeviceServices {
   async getAll() {
@@ -7,16 +11,25 @@ class DeviceServices {
   }
 
   async getUsers(deviceId: number) {
-    return instance.get<IUser[]>(`/devices/${deviceId}/users`);
+    return await instance.get<IUser[]>(`/devices/${deviceId}/users`);
   }
 
-  async switchActiveUser(props: TSwitchDeviceStatus) {
-    const { id: deviceId, activeUserId, status } = props;
-    return instance.patch(`/device`, {
-      deviceId,
-      activeUserId,
-      status,
-    });
+  async activateMeasurements(props: TActivateMeasurements) {
+    const { activeUserId, deviceId } = props;
+    return instance.post(
+      `/devices/activate/${deviceId}?activeUserId=${activeUserId}`
+      // {},
+      // {
+        // params: activeUserId,
+        // paramsSerializer: {
+        //   indexes: false, // empty brackets like `arrayOfUserIds[]`
+        // },
+      // }
+    );
+  }
+
+  async deactivateMeasurements(activeUserId: number) {
+    return await instance.post(`/devices/activate/${activeUserId}`);
   }
 }
 
