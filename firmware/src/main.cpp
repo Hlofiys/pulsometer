@@ -8,6 +8,8 @@
 
 #include <ArduinoJson.h>
 
+#include <NTPClient.h>
+
 #include <secrets.h>
 
 #include <MAX3010x.h>
@@ -32,6 +34,9 @@ bool collecting = false;
 
 // MQTT client
 PicoMQTT::Client mqtt("broker.hivemq.com");
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800);
 
 // Sensor (adjust to your sensor type)
 MAX30105 sensor;
@@ -112,6 +117,7 @@ void setup()
 			sensor.shutdown();
 	} });
 	mqtt.begin();
+	timeClient.begin();
 
 	// Inbuilt LED
 	pinMode(ledPin, OUTPUT);
@@ -157,6 +163,7 @@ long latestKeepAlivePublish = 0;
 void loop()
 {
 	mqtt.loop();
+	timeClient.update();
 	if (collecting && millis() - latestBpmPublish > 50000)
 	{
 		auto sample = sensor.readSample(1000);
@@ -228,6 +235,7 @@ void loop()
 									JsonDocument doc;
 									doc["id"] = deviceId;
 									doc["bpm"] = average_bpm;
+									doc["time"] = timeClient.getEpochTime();
 									auto publish = mqtt.begin_publish(mqtt_topic_heartbeat_data, measureJson(doc), 1, true);
 									serializeJson(doc, publish);
 									publish.send();
