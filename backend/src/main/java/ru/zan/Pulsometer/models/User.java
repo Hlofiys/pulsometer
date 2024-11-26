@@ -26,6 +26,4 @@ public class User {
     @Column(value = "device_id")
     private Integer deviceId;
 
-    @Column(value = "pulse_measurements")
-    private List<Integer> pulseMeasurements;
 }
