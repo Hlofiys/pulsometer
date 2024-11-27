@@ -145,6 +145,9 @@ public class PulsometerService {
                     String status = device.getStatus().equalsIgnoreCase("measuring") ? "measuring" : "ready";
                     return deviceRepository.upsertDevice(statusData.getId(), status, LocalDateTime.now());
                 })
+                .switchIfEmpty(
+                        deviceRepository.upsertDevice(statusData.getId(), "ready", LocalDateTime.now())
+                )
                 .doOnSuccess(d -> System.out.println("Device upserted: " + statusData.getId()))
                 .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
                 .subscribe();
