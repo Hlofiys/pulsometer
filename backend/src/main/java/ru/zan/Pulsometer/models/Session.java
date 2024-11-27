@@ -30,5 +30,5 @@ public class Session {
     private LocalDateTime time;
 
     @Column(value = "passed")
-    private Double passed;
+    private Long passed;
 }

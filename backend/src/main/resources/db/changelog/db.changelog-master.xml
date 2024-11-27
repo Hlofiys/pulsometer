@@ -9,5 +9,6 @@
     <include file="/db/changelog/V1__Creating_New_Tables.sql"/>
     <include file="/db/changelog/V2__Delete_Old_Table_Create_New_Tables.sql"/>
     <include file="/db/changelog/V3__Add_Cascade.sql"/>
+    <include file="/db/changelog/V4__Drop_Column_Passed_And_Create_New.sql"/>
 
 </databaseChangeLog>

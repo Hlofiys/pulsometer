@@ -174,8 +174,8 @@ public class PulsometerService {
                     return sessionRepository.findById(pulseDataDTO.getSessionId())
                             .flatMap(receivedSession ->{
                                 LocalDateTime now = LocalDateTime.now();
-                                double timeDifferent = Duration.between(receivedSession.getTime(), now).toMillis()/60000.0;
-                                receivedSession.setPassed(receivedSession.getPassed() + timeDifferent);
+                                long elapsedMillis = Duration.between(receivedSession.getTime(), now).toMillis();
+                                receivedSession.setPassed(receivedSession.getPassed() + elapsedMillis);
                                 receivedSession.setTime(now);
                                 return sessionRepository.save(receivedSession);
                             }).then(Mono.just(pulseMeasurement));
