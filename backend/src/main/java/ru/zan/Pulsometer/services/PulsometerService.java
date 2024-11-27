@@ -22,9 +22,7 @@ import ru.zan.Pulsometer.repositories.DeviceRepository;
 import ru.zan.Pulsometer.repositories.PulseMeasurementRepository;
 import ru.zan.Pulsometer.repositories.SessionRepository;
 import ru.zan.Pulsometer.repositories.UserRepository;
-import ru.zan.Pulsometer.util.DeviceNotFoundException;
-import ru.zan.Pulsometer.util.InvalidDeviceUserMappingException;
-import ru.zan.Pulsometer.util.UserNotFoundException;
+import ru.zan.Pulsometer.util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,9 +140,11 @@ public class PulsometerService {
             return;
         }
 
-        deviceRepository.upsertDevice(statusData.getId(),
-                        "ready",
-                        LocalDateTime.now())
+        deviceRepository.findById(statusData.getId())
+                .flatMap(device -> {
+                    String status = device.getStatus().equalsIgnoreCase("measuring") ? "measuring" : "ready";
+                    return deviceRepository.upsertDevice(statusData.getId(), status, LocalDateTime.now());
+                })
                 .doOnSuccess(d -> System.out.println("Device upserted: " + statusData.getId()))
                 .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
                 .subscribe();
@@ -163,7 +163,7 @@ public class PulsometerService {
         }
         deviceRepository.findById(pulseDataDTO.getId())
                 .flatMap(device -> {
-                    device.setStatus("ready");
+                    device.setStatus("measuring");
                     device.setLastContact(LocalDateTime.now());
                     return deviceRepository.save(device);
                 }).flatMap(savedDevice ->{
@@ -185,20 +185,28 @@ public class PulsometerService {
     }
 
     private Mono<String> createActivateMessage(Integer userId) {
-        Session session = new Session();
-        session.setUserId(userId);
-        session.setTime(LocalDateTime.now());
+        String sessionStatus = "Open";
+        return sessionRepository.existsByUserIdAndSessionStatus(userId,sessionStatus)
+                .flatMap(exists->{
+                    if (exists) {
+                        return Mono.error(new ActiveSessionException("User already has an open session"));
+                    }else {
+                        Session session = new Session();
+                        session.setUserId(userId);
+                        session.setTime(LocalDateTime.now());
 
-        return sessionRepository.save(session)
-                .flatMap(savedSession -> {
-                    String isActivateValue ="1";
-                    MqttPayload payloadObject = createMqttPayload(isActivateValue,savedSession.getSessionId());
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    try {
-                        String payload = objectMapper.writeValueAsString(payloadObject);
-                        return Mono.just(payload);
-                    } catch (JsonProcessingException e) {
-                        return Mono.error(new RuntimeException("Error serializing payload", e));
+                        return sessionRepository.save(session)
+                                .flatMap(savedSession -> {
+                                    String isActivateValue ="1";
+                                    MqttPayload payloadObject = createMqttPayload(isActivateValue,savedSession.getSessionId());
+                                    ObjectMapper objectMapper = new ObjectMapper();
+                                    try {
+                                        String payload = objectMapper.writeValueAsString(payloadObject);
+                                        return Mono.just(payload);
+                                    } catch (JsonProcessingException e) {
+                                        return Mono.error(new RuntimeException("Error serializing payload", e));
+                                    }
+                                });
                     }
                 });
     }
@@ -253,17 +261,28 @@ public class PulsometerService {
 
 
     private Mono<String> createDeactivateMessage(Integer userId) {
-        return sessionRepository.findFirstByUserIdOrderByTimeDesc(userId)
-                .flatMap(session -> {
-                    String isActivateValue ="0";
-                    MqttPayload payloadObject = createMqttPayload(isActivateValue,session.getSessionId());
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    try {
-                        String payload = objectMapper.writeValueAsString(payloadObject);
-                        System.out.println("Деактивация создание сообщения:"+payload);
-                        return Mono.just(payload);
-                    } catch (JsonProcessingException e) {
-                        return Mono.error(new RuntimeException("Error serializing payload", e));
+        String sessionStatus = "Open";
+        return sessionRepository.existsByUserIdAndSessionStatus(userId,sessionStatus)
+                .flatMap(exists ->{
+                    if (exists) {
+                        return sessionRepository.findFirstByUserIdOrderByTimeDesc(userId)
+                                .flatMap(session -> {
+                                    session.setSessionStatus("Closed");
+                                    return sessionRepository.save(session)
+                                            .flatMap(savedSession->{
+                                                String isActivateValue ="0";
+                                                MqttPayload payloadObject = createMqttPayload(isActivateValue,savedSession.getSessionId());
+                                                ObjectMapper objectMapper = new ObjectMapper();
+                                                try {
+                                                    String payload = objectMapper.writeValueAsString(payloadObject);
+                                                    return Mono.just(payload);
+                                                } catch (JsonProcessingException e) {
+                                                    return Mono.error(new PayloadSerializationException("Error serializing payload"));
+                                                }
+                                            });
+                                });
+                    }else {
+                        return Mono.error(new SessionNotFoundException("No active session found for user ID: " + userId));
                     }
                 });
     }
@@ -277,9 +296,7 @@ public class PulsometerService {
 
                     return createDeactivateMessage(userId)
                             .flatMap(payload -> publishMqttMessage(topic, payload))
-                            .flatMap(success -> {
-                                return deviceRepository.save(device).thenReturn(true);
-                            });
+                            .flatMap(success -> deviceRepository.save(device).thenReturn(true));
                 });
     }
 

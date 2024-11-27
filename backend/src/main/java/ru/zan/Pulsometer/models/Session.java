@@ -31,4 +31,7 @@ public class Session {
 
     @Column(value = "passed")
     private Long passed;
+
+    @Column(value = "session_status")
+    private String sessionStatus;
 }
