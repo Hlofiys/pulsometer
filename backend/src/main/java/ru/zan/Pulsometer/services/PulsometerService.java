@@ -33,6 +33,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class PulsometerService {
@@ -41,8 +44,10 @@ public class PulsometerService {
     private final PulseMeasurementRepository pulseMeasurementRepository;
     private final SessionRepository sessionRepository;
     private final ObjectMapper objectMapper;
-    private final MqttAsyncClient mqttAsyncClient;
-    private final String persistenceDir = "src/main/resources/persistence";
+    private MqttAsyncClient mqttAsyncClient;
+    private final ScheduledExecutorService reconnectScheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final int RECONNECT_DELAY = 5;
+    private static final String persistenceDir = "src/main/resources/persistence";
 
 
     @Autowired
@@ -56,38 +61,26 @@ public class PulsometerService {
         this.sessionRepository = sessionRepository;
         this.objectMapper = objectMapper;
 
+        initializeMqttClient();
+    }
+
+    private void initializeMqttClient() throws MqttException {
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
         mqttAsyncClient = new MqttAsyncClient("tcp://broker.hivemq.com:1883", MqttAsyncClient.generateClientId(), persistence);
-
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setCleanSession(true);
-
-        mqttAsyncClient.connect(options, null, new IMqttActionListener() {
-            @Override
-            public void onSuccess(IMqttToken asyncActionToken) {
-                System.out.println("The connection was successful.");
-                subscribeToTopic("device/status");
-                subscribeToTopic("device/data");
-            }
-
-            @Override
-            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                System.out.println("Connection error: " + exception.getMessage());
-            }
-        });
 
         mqttAsyncClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
                 System.out.println("Connection lost: " + cause.getMessage());
+                scheduleReconnect();
             }
 
             @Override
-            public void messageArrived(String topic, MqttMessage message){
-                if(topic.equalsIgnoreCase("device/status")) {
+            public void messageArrived(String topic, MqttMessage message) {
+                if (topic.equalsIgnoreCase("device/status")) {
                     processMessageStatus(topic, message);
-                }else if(topic.equalsIgnoreCase("device/data")) {
-                    processMessageData(topic,message);
+                } else if (topic.equalsIgnoreCase("device/data")) {
+                    processMessageData(topic, message);
                 }
             }
 
@@ -95,6 +88,37 @@ public class PulsometerService {
             public void deliveryComplete(IMqttDeliveryToken token) {
             }
         });
+
+        connectToBroker();
+    }
+
+    private void connectToBroker() {
+        try {
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setCleanSession(true);
+
+            mqttAsyncClient.connect(options, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    System.out.println("Connected successfully.");
+                    subscribeToTopic("device/status");
+                    subscribeToTopic("device/data");
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    System.out.println("Connection failed: " + exception.getMessage());
+                    scheduleReconnect();
+                }
+            });
+        } catch (MqttException e) {
+            System.out.println("Error during connection: " + e.getMessage());
+            scheduleReconnect();
+        }
+    }
+
+    private void scheduleReconnect() {
+        reconnectScheduler.schedule(this::connectToBroker, RECONNECT_DELAY, TimeUnit.SECONDS);
     }
 
     private void subscribeToTopic(String topic) {
