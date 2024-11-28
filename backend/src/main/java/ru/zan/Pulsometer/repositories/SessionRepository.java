@@ -12,4 +12,6 @@ public interface SessionRepository extends R2dbcRepository<Session, Integer> {
     Flux<Session> findAllByUserId(int userId);
 
     Mono<Session> findFirstByUserIdOrderByTimeDesc(int userId);
+
+    Mono<Boolean> existsByUserIdAndSessionStatus(Integer userId, String sessionStatus);
 }

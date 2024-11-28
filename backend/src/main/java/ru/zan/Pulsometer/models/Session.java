@@ -30,5 +30,8 @@ public class Session {
     private LocalDateTime time;
 
     @Column(value = "passed")
-    private Double passed;
+    private Long passed;
+
+    @Column(value = "session_status")
+    private String sessionStatus;
 }
