@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query"
 import SessionService from "../../../services/session/Session.service"
 
-export const useGetMeasurements = (sessionId: number)=> {
+export const useGetMeasurementsBySessionId = (sessionId: number)=> {
     return useQuery({
-        queryKey: ['getSessions', sessionId],
+        queryKey: ['getMeasurementsBySessionId', sessionId],
         queryFn: ()=>SessionService.getMeasurements(sessionId),
         onSuccess: (data)=>console.log(data.data),
         staleTime: 1000*60*2

@@ -148,15 +148,17 @@ const ViewUsers: FC = () => {
   return (
     <div className={styles.viewContainer}>
       <h1>Все пользователи:</h1>
-      <SearchInput
-        searchValueState={[searchValue, setSearchValue]}
-        inputProps={{ onChange: onSearch }}
-      />
+      {!!paginatedData.length && (
+        <SearchInput
+          searchValueState={[searchValue, setSearchValue]}
+          inputProps={{ onChange: onSearch }}
+        />
+      )}
       {isLoading ? (
         <Spin />
       ) : !!paginatedData.length ? (
         <Table<IAllUsersTableRow>
-          onClick={(value: string | number) => nav(`/review-sessions/${value}`)}
+          onClick={(row) => nav(`/review-sessions/${row.userId}`)}
           data={paginatedData}
           fields={fields}
           getKey={(row) => row.userId}

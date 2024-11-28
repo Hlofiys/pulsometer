@@ -7,7 +7,7 @@ interface TableRowProps<T> {
   fields: FieldConfig<T>[]; // Конфигурация полей
   onSave?: (data: T) => void; // Сохранение изменений
   onDelete?: (id: number) => void; // Удаление записи
-  onClick?: (id: number) => void; // Обработчик клика
+  onClick?: (row: T) => void; // Обработчик клика
   children?: ReactNode;
 }
 
@@ -33,7 +33,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
     ) {
       return;
     }
-    onClick && onClick(rowData.userId);
+    onClick && onClick(rowData);
   };
 
   return (

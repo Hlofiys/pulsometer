@@ -15,8 +15,9 @@ export enum RouterPath{
   CREATE = '/create',
   VIEW = '/view',
   START_MEASUREMENTS = '/start-measurements',
+  REVIEW_MEASUREMENTS='/review-measurements',
   REVIEW_SESSION = '/review-sessions',
-  PROCESS_SESSION = '/process-session'
+  PROCESS_SESSION = '/process-session',
 }
 const Router: FC = () => {
   return (
@@ -34,6 +35,7 @@ const Router: FC = () => {
           <Route path={RouterPath.VIEW} element={<ViewUsers />} />
           <Route path={RouterPath.VIEW + '/:deviceId'} element={<ViewUsers />} />
           <Route path={RouterPath.START_MEASUREMENTS + '/:id'} element={<StartMeasurements />} />
+          <Route path={RouterPath.REVIEW_MEASUREMENTS + '/:userId/:sessionId/:startMeasurementTime'} element={<ProcessSession />} />
           <Route path={RouterPath.REVIEW_SESSION + '/:id'} element={<ReviewSessions />} />
           <Route path={RouterPath.PROCESS_SESSION + '/:id'} element={<ProcessSession />} />
         </Route>

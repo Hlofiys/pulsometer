@@ -1,14 +1,14 @@
 import { ChangeEventHandler, FC, useCallback, useMemo, useState } from "react";
 import styles from "./ReviewSessions.module.scss";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   // IMeasurements,
   ISession,
   // TTableUserRow,
 } from "../../../services/interfaces/Interfaces";
-import { parseDateAndTime } from "../../../utils/functions/functions";
+import { convertMilliseconds, parseDateAndTime } from "../../../utils/functions/functions";
 import { useGetUsers } from "../../../api/hooks/user/useGetUsers";
-import { Spin } from "antd";
+import { Empty, Spin } from "antd";
 import { SearchInput } from "../../../ui/input/search/SearchInput";
 // import Link from "../../../ui/buttons/link/Link";
 // import ArrowRight from "../../../ui/icons/ArrowRight";
@@ -17,21 +17,24 @@ import Table from "../../users/view.page/table/Table";
 import { useGetSessions } from "../../../api/hooks/session/useGetSessions";
 import { FieldConfig } from "../../users/view.page/table/row/Row";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
+import { RouterPath } from "../../../router/Router";
 
 const ROWS_PER_PAGE = 5;
 
 interface ISessionUserRow {
-  userId: number;
+  sessionIndex: number;
+  sessionId: number;
   lastName: string;
   firstName: string;
   middleName: string;
   time: string;
   passed: number;
   deviceId: number;
+  userId: number;
 }
 const ReviewSessions: FC = () => {
   const { id: userId } = useParams();
-  // const nav = useNavigate();
+  const nav = useNavigate();
   const [searchValue, setSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
@@ -51,6 +54,7 @@ const ReviewSessions: FC = () => {
       key: "passed",
       label: "Продолжительность",
       type: "text",
+      renderStatic: (value)=> convertMilliseconds(value).formatNumberTime
     },
     {
       key: "deviceId",
@@ -73,7 +77,7 @@ const ReviewSessions: FC = () => {
   // Отфильтрованные данные на основе поиска
   const filteredData: ISession[] = useMemo(() => {
     return (
-      sessions?.data.filter((session) => {
+      (sessions?.data || []).filter((session) => {
         const { default: defaultDate, format } = parseDateAndTime(session.time);
         const formatDateAndTime = format.toLowerCase();
         const defaultDateAndTime = defaultDate.toLowerCase();
@@ -96,10 +100,10 @@ const ReviewSessions: FC = () => {
     return filteredData
       .sort(
         (sessionPrev, sessionNext) =>
-          sessionPrev?.sessionId - sessionNext?.sessionId
+          sessionNext?.sessionId - sessionPrev?.sessionId
       )
-      .map((session) => {
-        const { userId, time, passed } = session;
+      .map((session, index) => {
+        const { userId, time, passed, sessionId } = session;
         const activeUser = users?.data.find((user) => user.userId === +userId!);
         const [lastName, firstName, middleName] = (activeUser?.fio || "").split(
           " "
@@ -109,10 +113,12 @@ const ReviewSessions: FC = () => {
           lastName: lastName || "",
           middleName: middleName || "",
           firstName: firstName || "",
-          userId,
+          sessionIndex: index+1,
+          sessionId,
           time,
           passed,
           deviceId: activeUser?.deviceId || 0,
+          userId
         };
       })
       .slice(startIndex, startIndex + ROWS_PER_PAGE);
@@ -134,21 +140,31 @@ const ReviewSessions: FC = () => {
     <div className={styles.reviewContainer}>
       <h1>Все сессии измерений пользователя:</h1>
 
-      <div className={styles.search}>
-        <p>Введите дату или время:</p>
-        <SearchInput
-          searchValueState={[searchValue, setSearchValue]}
-          inputProps={{ onChange: onSearch }}
-        />
-      </div>
+      {!!paginatedData.length && (
+        <div className={styles.search}>
+          <p>Введите дату или время:</p>
+          <SearchInput
+            searchValueState={[searchValue, setSearchValue]}
+            inputProps={{ onChange: onSearch }}
+          />
+        </div>
+      )}
       {isLoadingGetSessions || isLoadingGetUsers ? (
         <Spin />
-      ) : (
+      ) : paginatedData.length ? (
         <Table<ISessionUserRow>
+          // onClick={(row)=>console.log(row)}
+          onClick={(row)=>nav(`${RouterPath.REVIEW_MEASUREMENTS}/${row.userId}/${row.sessionId}/${row.time}`)}
           data={paginatedData}
           fields={fields}
-          getKey={(row) => row.userId}
-          getIndex={(number) => ++number}
+          getKey={(row) => row.sessionIndex}
+          // getIndex={(number) => ++number}
+        />
+      ) : (
+        <Empty
+          description={
+            <p className={styles.emptyParagraph}>Список пользователей пуст</p>
+          }
         />
       )}
       <Pagination

@@ -21,7 +21,7 @@ const Params: FC<IParamsProps> = (props) => {
         Вид активности: <span>{activityType}</span>
       </p>
       <p className={styles.columnOption} style={{ marginTop: 30 }}>
-        Время: <span>{convertMilliseconds(time).totalTime}</span>
+        Время: <span>{convertMilliseconds(time).formatNumberTime}</span>
       </p>
     </aside>
   );

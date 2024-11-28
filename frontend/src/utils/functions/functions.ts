@@ -21,8 +21,8 @@ export interface ITime {
   minutes: number;
   seconds: number;
   milliseconds: string;
-  formatTime: string;
-  totalTime: string; // Новое поле для общего времени
+  formatWordTime: string;
+  formatNumberTime: string; // Новое поле для общего времени
 }
 
 export const convertMilliseconds = (ms: number): ITime => {
@@ -38,7 +38,7 @@ export const convertMilliseconds = (ms: number): ITime => {
     milliseconds !== "000" ? `${milliseconds} мс.` : "";
   const formattedHours = hours > 0 ? `${hours} ч.` : "";
 
-  const formatTime = [
+  const formatWordTime = [
     formattedHours,
     formattedMinutes,
     formattedSeconds,
@@ -48,7 +48,7 @@ export const convertMilliseconds = (ms: number): ITime => {
     .join(" ");
 
   // Общее время в формате часы:минуты:секунды:миллисекунды
-  const totalTime = [
+  const formatNumberTime = [
     hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
     minutes > 0 || hours > 0 ? minutes.toString().padStart(2, "0") : null, // Минуты, если больше 0 или есть часы
     seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
@@ -61,8 +61,8 @@ export const convertMilliseconds = (ms: number): ITime => {
     minutes,
     seconds,
     milliseconds,
-    formatTime,
-    totalTime,
+    formatWordTime,
+    formatNumberTime,
   };
 };
 

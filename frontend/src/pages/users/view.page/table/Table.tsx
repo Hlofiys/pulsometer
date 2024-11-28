@@ -4,7 +4,7 @@ import TableRow, { FieldConfig } from "./row/Row";
 
 interface TableProps<T> {
   data: T[];
-  onClick?: (value: string | number) => void;
+  onClick?: (value: T) => void;
   fields: FieldConfig<T>[];
   getKey: (row: T) => number;
   getIndex?: (index: number) => number;

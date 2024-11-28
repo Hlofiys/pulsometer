@@ -24,22 +24,29 @@ ChartJS.register(
   PointElement
 );
 
+export interface IDashboardData {
+  labels: number[];
+  values: number[];
+}
 interface TooltipState {
   x: number;
   y: number;
   value: number | null;
   index: number | null;
+  label: string | null;
 }
 
 interface DashboardProps {
-  data: number[]; // Массив значений пульса
+  dashboardData: IDashboardData;
+  // labels: number[];
+  // data: number[]; // Массив значений пульса
   containerStyles?: React.CSSProperties; // Стили для контейнера
   xAxisLabel: string; // Название оси X
   yAxisLabel: string; // Название оси Y
 }
 
 const Dashboard: FC<DashboardProps> = ({
-  data,
+  dashboardData,
   containerStyles,
   xAxisLabel,
   yAxisLabel,
@@ -50,15 +57,16 @@ const Dashboard: FC<DashboardProps> = ({
     y: 0,
     value: null,
     index: null,
+    label: null,
   });
 
   // Данные графика
   const chartData: ChartData<"line"> = {
-    labels: Array.from({ length: data.length }, (_, i) => i * 10), // Временные отметки
+    labels: dashboardData.labels, // Временные отметки
     datasets: [
       {
         label: "Ударов в мин.",
-        data: data, // Данные графика, переданные в props
+        data: dashboardData.values, // Данные графика, переданные в props
         borderColor: "#00ff00", // Цвет линии
         backgroundColor: "rgba(0, 255, 0, 0.1)", // Цвет заливки
         fill: true, // Включение заливки
@@ -101,7 +109,7 @@ const Dashboard: FC<DashboardProps> = ({
           color: "gray", // Устанавливаем цвет линий сетки
           lineWidth: 0.97, // Устанавливаем толщину линий сетки
         },
-        max: data.length * 10,
+        // max: dashboardData.values.length * 10,
       },
       y: {
         type: "linear",
@@ -119,7 +127,7 @@ const Dashboard: FC<DashboardProps> = ({
           lineWidth: 0.97, // Устанавливаем толщину линий сетки
         },
         min: 40,
-        max: 150,
+        max: 160,
       },
     },
   };
@@ -160,7 +168,9 @@ const Dashboard: FC<DashboardProps> = ({
     const { tooltip } = context;
 
     if (!tooltip.opacity) {
-      setTooltipState((prev) => ({ ...prev, value: null, index: null }));
+      if (tooltipState.value !== null) {
+        setTooltipState({ x: 0, y: 0, value: null, index: null, label: null });
+      }
       return;
     }
 
@@ -168,15 +178,23 @@ const Dashboard: FC<DashboardProps> = ({
     if (tooltipModel) {
       const { element } = tooltipModel;
       const { x, y } = element;
-
       const value = tooltipModel.raw as number;
+      const label = tooltipModel.label as string;
 
-      setTooltipState({
-        x,
-        y,
-        value,
-        index: 0,
-      });
+      if (
+        tooltipState.x !== x ||
+        tooltipState.y !== y ||
+        tooltipState.value !== value ||
+        tooltipState.label !== label
+      ) {
+        setTooltipState({
+          x,
+          y,
+          value,
+          index: 0,
+          label,
+        });
+      }
     }
   };
 
@@ -208,6 +226,9 @@ const Dashboard: FC<DashboardProps> = ({
           >
             <p className={`${isAboveThreshold ? styles.warning : ""}`}>
               {tooltipState.value}
+              <span style={{ display: "block", margin: 0, padding: 0 }}>
+                ({tooltipState.label}-я секунда)
+              </span>
               {isAboveThreshold && <span>Пульс превышен!</span>}
             </p>
           </div>
