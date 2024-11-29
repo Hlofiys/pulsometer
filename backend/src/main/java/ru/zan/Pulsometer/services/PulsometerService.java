@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -139,14 +140,17 @@ public class PulsometerService {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
+        LocalDateTime utcNow = Instant.now()
+                .atZone(ZoneOffset.UTC)
+                .toLocalDateTime();
 
         deviceRepository.findById(statusData.getId())
                 .flatMap(device -> {
                     String status = device.getStatus().equalsIgnoreCase("measuring") ? "measuring" : "ready";
-                    return deviceRepository.upsertDevice(statusData.getId(), status, LocalDateTime.now());
+                    return deviceRepository.upsertDevice(statusData.getId(), status, utcNow);
                 })
                 .switchIfEmpty(
-                        deviceRepository.upsertDevice(statusData.getId(), "ready", LocalDateTime.now())
+                        deviceRepository.upsertDevice(statusData.getId(), "ready", utcNow)
                 )
                 .doOnSuccess(d -> System.out.println("Device upserted: " + statusData.getId()))
                 .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
@@ -202,7 +206,10 @@ public class PulsometerService {
                     }else {
                         Session session = new Session();
                         session.setUserId(userId);
-                        session.setTime(TimeUtils.convertEpochMillisToUTC(System.currentTimeMillis()));
+                        LocalDateTime utcNow = Instant.now()
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDateTime();
+                        session.setTime(utcNow);
 
                         return sessionRepository.save(session)
                                 .flatMap(savedSession -> {
