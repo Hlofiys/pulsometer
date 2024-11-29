@@ -20,5 +20,7 @@ public class PulseDataDTO {
     private Integer oxygen;
 
     private Integer sessionId;
+
+    private Long time;
 }
 

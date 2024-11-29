@@ -164,27 +164,33 @@ public class PulsometerService {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
-        deviceRepository.findById(pulseDataDTO.getId())
-                .flatMap(device -> {
-                    device.setStatus("measuring");
-                    device.setLastContact(LocalDateTime.now());
-                    return deviceRepository.save(device);
-                }).flatMap(savedDevice ->{
-                    pulseMeasurement.setBpm(pulseDataDTO.getBpm());
-                    pulseMeasurement.setDate(LocalDateTime.now());
-                    pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
-                    pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
-                    return sessionRepository.findById(pulseDataDTO.getSessionId())
-                            .flatMap(receivedSession ->{
-                                LocalDateTime now = LocalDateTime.now();
-                                long elapsedMillis = Duration.between(receivedSession.getTime(), now).toMillis();
-                                receivedSession.setPassed(receivedSession.getPassed() + elapsedMillis);
-                                receivedSession.setTime(now);
-                                return sessionRepository.save(receivedSession);
-                            }).then(Mono.just(pulseMeasurement));
-                })
-                .flatMap(pulseMeasurementRepository::save)
-                .subscribe();
+        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
+        pulseMeasurementRepository.existsByDate(measurementTime)
+                .flatMap(exists->{
+                    if(exists) {
+                        return Mono.empty();
+                    }else{
+                        return deviceRepository.findById(pulseDataDTO.getId())
+                                .flatMap(device -> {
+                                    device.setStatus("measuring");
+                                    device.setLastContact(measurementTime);
+                                    return deviceRepository.save(device);
+                                }).flatMap(savedDevice ->{
+                                    pulseMeasurement.setBpm(pulseDataDTO.getBpm());
+                                    pulseMeasurement.setDate(measurementTime);
+                                    pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
+                                    pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
+                                    return sessionRepository.findById(pulseDataDTO.getSessionId())
+                                            .flatMap(receivedSession ->{
+                                                long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
+                                                receivedSession.setPassed(receivedSession.getPassed() + elapsedMillis);
+                                                receivedSession.setTime(measurementTime);
+                                                return sessionRepository.save(receivedSession);
+                                            }).then(Mono.just(pulseMeasurement));
+                                })
+                                .flatMap(pulseMeasurementRepository::save);
+                    }
+                }).subscribe();
     }
 
     private Mono<String> createActivateMessage(Integer userId) {
@@ -196,7 +202,7 @@ public class PulsometerService {
                     }else {
                         Session session = new Session();
                         session.setUserId(userId);
-                        session.setTime(LocalDateTime.now());
+                        session.setTime(TimeUtils.convertEpochMillisToUTC(System.currentTimeMillis()));
 
                         return sessionRepository.save(session)
                                 .flatMap(savedSession -> {
