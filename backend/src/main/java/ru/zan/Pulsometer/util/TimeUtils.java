@@ -6,8 +6,8 @@ import java.time.ZoneOffset;
 
 public class TimeUtils {
 
-    public static LocalDateTime convertEpochMillisToUTC(long epochMillis) {
-        return Instant.ofEpochMilli(epochMillis)
+    public static LocalDateTime convertEpochMillisToUTC(long epochSeconds) {
+        return Instant.ofEpochSecond(epochSeconds)
                 .atZone(ZoneOffset.UTC)
                 .toLocalDateTime();
     }
