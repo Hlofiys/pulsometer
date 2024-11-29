@@ -187,8 +187,7 @@ public class PulsometerService {
                                     return sessionRepository.findById(pulseDataDTO.getSessionId())
                                             .flatMap(receivedSession ->{
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
-                                                receivedSession.setPassed(receivedSession.getPassed() + elapsedMillis);
-                                                receivedSession.setTime(measurementTime);
+                                                receivedSession.setPassed(elapsedMillis);
                                                 return sessionRepository.save(receivedSession);
                                             }).then(Mono.just(pulseMeasurement));
                                 })
@@ -281,7 +280,7 @@ public class PulsometerService {
         return sessionRepository.existsByUserIdAndSessionStatus(userId,sessionStatus)
                 .flatMap(exists ->{
                     if (exists) {
-                        return sessionRepository.findFirstByUserIdOrderByTimeDesc(userId)
+                        return sessionRepository.findFirstByUserIdAndSessionStatus(userId,sessionStatus)
                                 .flatMap(session -> {
                                     session.setSessionStatus("Closed");
                                     return sessionRepository.save(session)
