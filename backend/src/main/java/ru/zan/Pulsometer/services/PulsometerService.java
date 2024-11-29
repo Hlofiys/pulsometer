@@ -181,7 +181,8 @@ public class PulsometerService {
                                     return deviceRepository.save(device);
                                 }).flatMap(savedDevice ->{
                                     pulseMeasurement.setBpm(pulseDataDTO.getBpm());
-                                    pulseMeasurement.setDate(measurementTime);
+                                    LocalDateTime date = measurementTime.minusHours(3);
+                                    pulseMeasurement.setDate(date);
                                     pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
                                     pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
                                     return sessionRepository.findById(pulseDataDTO.getSessionId())
