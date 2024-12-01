@@ -1,6 +1,14 @@
-import React, { useState, useRef, useEffect, CSSProperties } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  CSSProperties,
+  useMemo,
+} from "react";
 import styles from "./Dropdown.module.scss";
 import { Spin } from "antd";
+import ArrowLeft from "../../icons/ArrowLeft";
+import ArrowRight from "../../icons/ArrowRight";
 
 export interface IOption<T> {
   label: string;
@@ -15,10 +23,11 @@ export interface IDropdownProps<T> {
   isLoading?: boolean;
   value?: T; // Контролируемое значение
   defaultValue?: T; // Значение по умолчанию
+  isHorizontal?: boolean;
   onChange?: (option: IOption<T>) => void; // Событие изменения значения
 }
 
-const Dropdown = <T,>({
+const Dropdown = <T extends string | number>({
   containersStyles,
   options,
   placeholder,
@@ -26,47 +35,55 @@ const Dropdown = <T,>({
   value,
   defaultValue,
   inputStyles,
+  isHorizontal,
   onChange,
 }: IDropdownProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredOptions, setFilteredOptions] = useState(options);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [inputValue, setInputValue] = useState<string>("");
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
+    null
+  );
+  const [isAnimating, setIsAnimating] = useState(false); // Флаг для блокировки повторных кликов во время анимации
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const optionRefs = useRef<(HTMLDivElement | null)[]>([]); // Хранение ссылок на опции
+  const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Устанавливаем значение по умолчанию или контролируемое значение
+  const filteredOptions = useMemo(
+    () =>
+      options.filter((option) =>
+        option.label.toLowerCase().includes(inputValue.toLowerCase())
+      ),
+    [inputValue, options]
+  );
+
   useEffect(() => {
-    const defaultOption = options.find((option) => option.value == defaultValue);
-    const controlledOption = options.find((option) => option.value == value);
-
-    const initialOption = controlledOption || defaultOption || null;
+    const initialOption = options.find(
+      (option) => option.value === (value ?? defaultValue)
+    );
     setInputValue(initialOption?.label || "");
     setSelectedIndex(
-      initialOption ? options.findIndex((option) => option.value === initialOption.value) : -1
+      initialOption
+        ? options.findIndex((option) => option.value === initialOption.value)
+        : -1
     );
-  }, [defaultValue, value, options]);
-
-  const handleToggle = () => setIsOpen(!isOpen);
-
-  useEffect(() => setFilteredOptions(options), [options]);
+  }, [value, defaultValue, options]);
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    setInputValue(input);
-    setFilteredOptions(
-      options.filter((option) =>
-        option.label.toLowerCase().includes(input.toLowerCase())
-      )
-    );
-    setSelectedIndex(-1);
+    setInputValue(e.target.value);
     setIsOpen(true);
+    setSelectedIndex(-1);
   };
 
   const scrollToActiveOption = () => {
-    if (selectedIndex < 0 || !listRef.current || !optionRefs.current[selectedIndex]) return;
+    if (
+      selectedIndex < 0 ||
+      !listRef.current ||
+      !optionRefs.current[selectedIndex]
+    )
+      return;
 
     const activeOption = optionRefs.current[selectedIndex];
     const dropdownList = listRef.current;
@@ -76,9 +93,9 @@ const Dropdown = <T,>({
       const { scrollTop, clientHeight } = dropdownList;
 
       if (offsetTop < scrollTop) {
-        dropdownList.scrollTop = offsetTop; // Прокрутка вверх
+        dropdownList.scrollTop = offsetTop;
       } else if (offsetTop + offsetHeight > scrollTop + clientHeight) {
-        dropdownList.scrollTop = offsetTop + offsetHeight - clientHeight; // Прокрутка вниз
+        dropdownList.scrollTop = offsetTop + offsetHeight - clientHeight;
       }
     }
   };
@@ -86,38 +103,29 @@ const Dropdown = <T,>({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % filteredOptions.length;
-        return nextIndex;
+        const offset = e.key === "ArrowDown" ? 1 : -1;
+        return (
+          (prevIndex + offset + filteredOptions.length) % filteredOptions.length
+        );
       });
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
-      setSelectedIndex((prevIndex) => {
-        const nextIndex = (prevIndex - 1 + filteredOptions.length) % filteredOptions.length;
-        return nextIndex;
-      });
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (selectedIndex >= 0) {
-        const option = filteredOptions[selectedIndex];
-        setInputValue(option.label);
-        setIsOpen(false);
-        onChange?.(option); // Сообщаем об изменении
-      }
+      selectOption(filteredOptions[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
     }
   };
 
-  useEffect(() => {
-    scrollToActiveOption(); // Прокрутка при изменении активного элемента
-  }, [selectedIndex]);
-
-  const handleOptionClick = (option: IOption<T>) => {
+  const selectOption = (option: IOption<T>) => {
     setInputValue(option.label);
     setIsOpen(false);
-    onChange?.(option); // Сообщаем об изменении
+    onChange?.(option);
   };
+
+  useEffect(() => scrollToActiveOption(), [selectedIndex]);
 
   const handleClickOutside = (event: MouseEvent) => {
     if (
@@ -127,14 +135,79 @@ const Dropdown = <T,>({
       setIsOpen(false);
     }
   };
-
+  
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleOptionSelect = (index: number) => {
+    const option = options[index];
+    if (option) {
+      setInputValue(option.label);
+      onChange?.(option);
+    }
+  };
+
+  const handleArrowClick = (direction: "left" | "right") => {
+    if (isAnimating) return;
+  
+    setSlideDirection(direction);
+    setIsAnimating(true);
+  
+    setTimeout(() => {
+      setSelectedIndex((prevIndex) => {
+        const newIndex =
+          direction === "left"
+            ? (prevIndex - 1 + options.length) % options.length
+            : (prevIndex + 1) % options.length;
+  
+        handleOptionSelect(newIndex);
+        return newIndex;
+      });
+    }, 200);
+  
+    setTimeout(() => {
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 200);
+  };  
+
+  if (isHorizontal) {
+    return (
+      <div
+        data-dropdown="true"
+        className={`${styles.dropdownContainer} ${styles.horizontal}`}
+        ref={dropdownRef}
+        style={containersStyles}
+      >
+        <ArrowLeft onClick={() => handleArrowClick("left")} />
+        <div className={styles.optionWrapper}>
+          {slideDirection && (
+            <div
+              className={`${styles.optionText} ${
+                slideDirection === "left" ? styles["exit-left"] : ""
+              } ${slideDirection === "right" ? styles["exit-right"] : ""}`}
+            >
+              {inputValue}
+            </div>
+          )}
+          <div
+            className={`${styles.optionText} ${
+              slideDirection === "left" ? styles["enter-left"] : ""
+            } ${slideDirection === "right" ? styles["enter-right"] : ""}`}
+          >
+            {options[selectedIndex]?.label || ""}
+          </div>
+        </div>
+        <ArrowRight onClick={() => handleArrowClick("right")} />
+      </div>
+    );
+  }
+
   return (
     <div
+      data-dropdown="true"
       className={styles.dropdownContainer}
       ref={dropdownRef}
       style={containersStyles}
@@ -148,24 +221,26 @@ const Dropdown = <T,>({
           placeholder={placeholder}
           value={inputValue}
           onChange={handleInputChange}
-          onClick={handleToggle}
+          onClick={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           style={inputStyles}
         />
       )}
       <div
         ref={listRef}
-        className={`${styles.dropdownList} ${isOpen ? "" : styles.hidden}`}
+        className={`${styles.dropdownList} ${
+          isOpen && !isHorizontal ? "" : styles.hidden
+        }`}
       >
-        {!!filteredOptions.length ? (
+        {filteredOptions.length ? (
           filteredOptions.map((option, index) => (
             <div
-              key={(option.value as string | number)}
-              ref={(el) => (optionRefs.current[index] = el)} // Сохраняем ссылки на элементы
+              key={option.value}
+              ref={(el) => (optionRefs.current[index] = el)}
               className={`${styles.option} ${
                 index === selectedIndex ? styles.optionActive : ""
               }`}
-              onClick={() => handleOptionClick(option)}
+              onClick={() => selectOption(option)}
             >
               {option.label}
             </div>

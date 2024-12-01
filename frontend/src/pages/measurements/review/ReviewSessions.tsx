@@ -1,23 +1,21 @@
 import { ChangeEventHandler, FC, useCallback, useMemo, useState } from "react";
 import styles from "./ReviewSessions.module.scss";
 import { useNavigate, useParams } from "react-router-dom";
+import { ISession } from "../../../services/interfaces/Interfaces";
 import {
-  // IMeasurements,
-  ISession,
-  // TTableUserRow,
-} from "../../../services/interfaces/Interfaces";
-import { convertMilliseconds, parseDateAndTime } from "../../../utils/functions/functions";
-import { useGetUsers } from "../../../api/hooks/user/useGetUsers";
+  convertMilliseconds,
+  parseDateAndTime,
+} from "../../../utils/functions/functions";
 import { Empty, Spin } from "antd";
 import { SearchInput } from "../../../ui/input/search/SearchInput";
-// import Link from "../../../ui/buttons/link/Link";
-// import ArrowRight from "../../../ui/icons/ArrowRight";
 import Pagination from "../../../ui/pagination/Pagination";
 import Table from "../../users/view.page/table/Table";
 import { useGetSessions } from "../../../api/hooks/session/useGetSessions";
 import { FieldConfig } from "../../users/view.page/table/row/Row";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
 import { RouterPath } from "../../../router/Router";
+import Button from "../../../ui/buttons/additional/Button";
+import { useGetUserById } from "../../../api/hooks/user/useGetUserById";
 
 const ROWS_PER_PAGE = 5;
 
@@ -48,13 +46,13 @@ const ReviewSessions: FC = () => {
       key: "time",
       label: "Начало",
       type: "text",
-      renderStatic: (value: string) => parseDateAndTime(value).format,
+      renderStatic: (date: string) => parseDateAndTime(date).format,
     },
     {
       key: "passed",
       label: "Продолжительность",
       type: "text",
-      renderStatic: (value)=> convertMilliseconds(value).formatNumberTime
+      renderStatic: (value) => convertMilliseconds(value).formatNumberTime,
     },
     {
       key: "deviceId",
@@ -68,7 +66,9 @@ const ReviewSessions: FC = () => {
     },
   ];
 
-  const { data: users, isLoading: isLoadingGetUsers } = useGetUsers();
+  const { data: activeUser, isLoading: isLoadingActiveUser } = useGetUserById(
+    +userId!
+  );
   const { data: sessions, isLoading: isLoadingGetSessions } = useGetSessions(
     +userId!
   );
@@ -77,7 +77,7 @@ const ReviewSessions: FC = () => {
   // Отфильтрованные данные на основе поиска
   const filteredData: ISession[] = useMemo(() => {
     return (
-      (sessions?.data || []).filter((session) => {
+      ((sessions && sessions) || []).filter((session) => {
         const { default: defaultDate, format } = parseDateAndTime(session.time);
         const formatDateAndTime = format.toLowerCase();
         const defaultDateAndTime = defaultDate.toLowerCase();
@@ -87,7 +87,7 @@ const ReviewSessions: FC = () => {
         );
       }) || []
     );
-  }, [searchValue, sessions, users]);
+  }, [searchValue, sessions]);
 
   // Общий подсчет страниц на основе количества строк
   const totalPages = useMemo(() => {
@@ -97,6 +97,7 @@ const ReviewSessions: FC = () => {
   // Данные для отображения на текущей странице
   const paginatedData: ISessionUserRow[] = useMemo(() => {
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    // console.log(filteredData)
     return filteredData
       .sort(
         (sessionPrev, sessionNext) =>
@@ -104,25 +105,24 @@ const ReviewSessions: FC = () => {
       )
       .map((session, index) => {
         const { userId, time, passed, sessionId } = session;
-        const activeUser = users?.data.find((user) => user.userId === +userId!);
-        const [lastName, firstName, middleName] = (activeUser?.fio || "").split(
-          " "
-        );
+        const [lastName, firstName, middleName] = (
+          activeUser?.data.fio || ""
+        ).split(" ");
 
         return {
           lastName: lastName || "",
           middleName: middleName || "",
           firstName: firstName || "",
-          sessionIndex: index+1,
+          sessionIndex: index + 1,
           sessionId,
           time,
           passed,
-          deviceId: activeUser?.deviceId || 0,
-          userId
+          deviceId: activeUser?.data.deviceId || 0,
+          userId,
         };
       })
       .slice(startIndex, startIndex + ROWS_PER_PAGE);
-  }, [filteredData, currentPage, users]);
+  }, [filteredData, currentPage, activeUser]);
 
   const onSearch: ChangeEventHandler<HTMLInputElement> = useCallback(
     (event) => {
@@ -140,21 +140,38 @@ const ReviewSessions: FC = () => {
     <div className={styles.reviewContainer}>
       <h1>Все сессии измерений пользователя:</h1>
 
-      {!!paginatedData.length && (
-        <div className={styles.search}>
-          <p>Введите дату или время:</p>
+      <div className={styles.search}>
+        <p>Введите дату или время:</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <SearchInput
             searchValueState={[searchValue, setSearchValue]}
             inputProps={{ onChange: onSearch }}
           />
+          <Button
+            style={{ height: 50 }}
+            disabled={isLoadingActiveUser}
+            onClick={() =>
+              nav(
+                RouterPath.START_MEASUREMENTS +
+                  `/${activeUser?.data.deviceId}/${userId}`
+              )
+            }
+          >
+            Начать измерение
+          </Button>
         </div>
-      )}
-      {isLoadingGetSessions || isLoadingGetUsers ? (
+      </div>
+      {isLoadingGetSessions || isLoadingActiveUser ? (
         <Spin />
       ) : paginatedData.length ? (
         <Table<ISessionUserRow>
           // onClick={(row)=>console.log(row)}
-          onClick={(row)=>nav(`${RouterPath.REVIEW_MEASUREMENTS}/${row.userId}/${row.sessionId}/${row.time}`)}
+          onClick={(row) =>
+            // console.log(row)
+            nav(
+              `${RouterPath.REVIEW_MEASUREMENTS}/${row.userId}/${row.sessionId}/${row.time}`
+            )
+          }
           data={paginatedData}
           fields={fields}
           getKey={(row) => row.sessionIndex}

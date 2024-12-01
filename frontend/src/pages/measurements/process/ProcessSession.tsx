@@ -10,6 +10,7 @@ import { useGetSessions } from "../../../api/hooks/session/useGetSessions";
 import { useGetUserById } from "../../../api/hooks/user/useGetUserById";
 import SkeletonParams from "./userParams/skeleton/Skeleton";
 import { RouterPath } from "../../../router/Router";
+import Button from "../../../ui/buttons/primary/Button";
 
 const ProcessSession: FC = () => {
   const { userId, sessionId, startMeasurementTime } = useParams();
@@ -26,9 +27,11 @@ const ProcessSession: FC = () => {
 
   const dashboardData = useMemo(() => {
     const startTime = new Date(startMeasurementTime!).getTime();
-
+    // const startTime =new Date(convertTime(new Date(startMeasurementTime!))).getTime();
+    // const startTime = new Date(startMeasurementTime!).getTime();
+    // console.log(convertTime(new Date(startMeasurementTime!)))
     // Проверяем, есть ли элементы в массиве
-    if (measurements?.data.length === 0) {
+    if (measurements?.length === 0) {
       return {
         dashboardParams: [],
         oxygen: 0,
@@ -38,16 +41,17 @@ const ProcessSession: FC = () => {
       };
     }
 
-    const oxygen = measurements?.data[0].oxygen; // Значение oxygen неизменно
-    const bpms = measurements?.data.map(({ bpm }) => bpm) || []; // Массив всех значений bpm
+    const oxygen = measurements?.[0].oxygen; // Значение oxygen неизменно
+    const bpms = measurements?.map(({ bpm }) => bpm) || []; // Массив всех значений bpm
 
     const maxBpm = Math.max(...bpms); // Максимальное значение bpm
     const minBpm = Math.min(...bpms); // Минимальное значение bpm
     const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length; // Среднее значение bpm
 
-    const dashboardParams = measurements?.data.map(({ date, bpm }) => {
+    const dashboardParams = measurements?.map(({ date, bpm }) => {
       const measurementTime = new Date(date).getTime();
-      const secondsDiff = Math.round((startTime - measurementTime) / 1000); // Разница в секундах
+      // console.log('measurementTim: ', measurementTime, "startTime: ", startTime, startTime - measurementTime)
+      const secondsDiff = Math.round((measurementTime - startTime)); // Разница в секундах
       return { label: secondsDiff, value: bpm };
     });
 
@@ -79,7 +83,7 @@ const ProcessSession: FC = () => {
   }, [dashboardData]);
 
   const activeSession = useMemo(
-    () => userSessions?.data.find((user) => user.sessionId === +sessionId!),
+    () => userSessions?.find((user) => user.sessionId === +sessionId!),
     [sessionId, userSessions]
   );
   return (
@@ -103,9 +107,9 @@ const ProcessSession: FC = () => {
       </div>
 
       <section className={styles.buttons}>
-        {/* <Button onClick={() => console.log(dashboardData.dashboardParams)}>
+        <Button onClick={() => console.log(dashboardData.dashboardParams)}>
           Сохранить изменения:
-        </Button> */}
+        </Button>
         <Link onClick={() => nav(RouterPath.REVIEW_SESSION+`/${userId}`)}>
           Смотреть другие результаты <ArrowRight stroke="#23E70A" />
         </Link>

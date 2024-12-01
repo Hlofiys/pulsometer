@@ -7,12 +7,13 @@ interface TableProps<T> {
   onClick?: (value: T) => void;
   fields: FieldConfig<T>[];
   getKey: (row: T) => number;
-  getIndex?: (index: number) => number;
+  getIndex?: (row: T) => number;
   children?: ReactNode;
+  isEdit?:boolean
 }
 
 const Table = <T,>(props: TableProps<T>): JSX.Element => {
-  const { data, onClick, fields, getKey, children, getIndex } = props;
+  const { data, onClick, fields, getKey, getIndex, isEdit } = props;
 
   return (
     <table className={styles.customTable}>
@@ -25,18 +26,15 @@ const Table = <T,>(props: TableProps<T>): JSX.Element => {
         </tr>
       </thead>
       <tbody>
-        {data.map((row, index) => (
+        {data.map((row) => (
           <TableRow
             fields={fields}
-            onSave={(updatedData) => console.log(updatedData)}
-            onDelete={(id) => console.log(`Удалить пользователя с ID ${id}`)}
             key={getKey(row)}
             rowData={row}
-            index={getIndex ? getIndex(index) : getKey(row)}
+            isEdit={isEdit}
+            index={getIndex ? getIndex(row) : getKey(row)}
             onClick={onClick}
-          >
-            {children}
-          </TableRow>
+          />
         ))}
       </tbody>
     </table>

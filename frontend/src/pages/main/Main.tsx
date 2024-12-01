@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import styles from "./Main.module.scss";
 import Button from "../../ui/buttons/primary/Button";
 import AdditionalButton from "../../ui/buttons/additional/Button";
@@ -7,13 +7,26 @@ import { useNavigate } from "react-router-dom";
 import { useGetDevices } from "../../api/hooks/device/useGetDevices";
 import { Spin } from "antd";
 import { RouterPath } from "../../router/Router";
+import Dropdown, { IOption } from "../../ui/input/dropdown/Dropdown";
 
 const Main: FC = () => {
   const { data: devices, isLoading } = useGetDevices();
   const nav = useNavigate();
 
+  const memoTestOptions = useMemo<IOption<number>[]>(
+    () =>
+      devices?.data.map((device) => ({
+        label: `Пульсометр #${device.deviceId}`,
+        value: device.deviceId,
+      })) || [],
+    [devices?.data]
+  );
   return (
     <main className={styles.mainContainer}>
+      <div style={{display: 'flex', alignItems: 'start', gap: 20}}>
+        <Dropdown options={memoTestOptions} containersStyles={{ width: 200 }} value={1}/>
+        <Dropdown options={memoTestOptions} containersStyles={{ width: 200 }} isHorizontal value={1}/>
+      </div>
       <h1>Cистема мониторинга физиологических показателей обучающихся</h1>
       <p>
         Мониторинг жизненно важных показателей включает использование устройств,

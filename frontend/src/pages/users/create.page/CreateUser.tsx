@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useCallback, useEffect, useMemo } from "react";
+import { ChangeEvent, FC, useCallback, useMemo } from "react";
 import styles from "./CreateUser.module.scss";
 import ScopeInput from "../../../ui/input/scopeInput/ScopeInput";
 import Button from "../../../ui/buttons/primary/Button";
@@ -44,7 +44,7 @@ const CreateUser: FC = () => {
     useCreateUser();
 
   const isDisabled = useMemo(
-    () => !hasAllValuesForKeys(newUser, ["surname", "name", "middleName"]),
+    () => !hasAllValuesForKeys(newUser, ["surname", "name", "middleName", "deviceId"]),
     [newUser]
   );
 
@@ -67,14 +67,13 @@ const CreateUser: FC = () => {
 
   const onSubmit: SubmitHandler<INewUser> = (data) => {
     const formData: TCreateUser = {
-      fio: `${data.surname} ${data.name} ${data.middleName}`,
+      fio: `${data.surname.trim()} ${data.name.trim()} ${data.middleName.trim()}`,
       deviceId: data.deviceId,
     };
 
     create_user(formData, { onSuccess: () => reset() });
   };
 
-  useEffect(() => console.log(newUser.deviceId), [newUser.deviceId]);
   return (
     <main className={styles.createuserContainer}>
       <form onSubmit={handleSubmit(onSubmit)}>

@@ -14,14 +14,13 @@ import { useGetUsersByDeviceId } from "../../../api/hooks/device/useGetUsersByDe
 import { FieldConfig } from "./table/row/Row";
 // import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
-import Basket from "../../../ui/icons/Basket";
-import Edit from "../../../ui/icons/Edit";
-import Save from "../../../ui/icons/Save";
 import { RouterPath } from "../../../router/Router";
+import Button from "../../../ui/buttons/additional/Button";
 
 const ROWS_PER_PAGE = 5; // Максимальное количество строк на одной странице
 
 export interface IAllUsersTableRow {
+  index: number;
   lastName: string;
   middleName: string;
   firstName: string;
@@ -29,53 +28,11 @@ export interface IAllUsersTableRow {
   deviceId: number;
 }
 
-/*
-const [isEditing, setIsEditing] = useState(false);
-const { mutateAsync: delete_user, isLoading: isDeleteLoading } =
-useDeleteUser();
-const { mutateAsync: update_user, isLoading: isUpdateLoading } =
-  useUpdateUser();
-
-// Сохранение изменений
-const handleSave = (data: any) => {
-  const { lastName, firstName, middleName, userId, deviceId } = data;
-
-  const isChanged =
-    lastName !== initialData.lastName ||
-    firstName !== initialData.firstName ||
-    middleName !== initialData.middleName ||
-    deviceId !== initialData.deviceId;
-
-  if (isChanged) {
-    const updateUserData: TUpdateUser = {
-      fio: `${lastName} ${firstName} ${middleName}`,
-      deviceId,
-      userId,
-    };
-    update_user(updateUserData, {
-      onSuccess: () => {
-        setInitialData(data); // Обновляем исходные данные
-        setIsEditing(false); // Отключить режим редактирования
-        onSave && onSave(data); // Передать данные в родительский компонент
-      },
-    });
-  } else {
-    setIsEditing(false); // Выходим из режима редактирования без сохранения
-  }
-};
-
-const handleDelete = (data: any) => {
-  delete_user(data.userId);
-};
-*/
-
 const ViewUsers: FC = () => {
   const nav = useNavigate();
   const { deviceId } = useParams();
   const [searchValue, setSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-
-  const [isEditing, setIsEditing] = useState(false);
 
   const { data: fetchedUsers, isLoading } = !!deviceId
     ? useGetUsersByDeviceId(+deviceId)
@@ -83,9 +40,9 @@ const ViewUsers: FC = () => {
   const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
 
   const fields: FieldConfig<IAllUsersTableRow>[] = [
-    { key: "lastName", label: "Фамилия", type: "text" },
-    { key: "firstName", label: "Имя", type: "text" },
-    { key: "middleName", label: "Отчество", type: "text" },
+    { key: "lastName", label: "Фамилия", type: "text", isEditable: true },
+    { key: "firstName", label: "Имя", type: "text", isEditable: true },
+    { key: "middleName", label: "Отчество", type: "text", isEditable: true },
     {
       key: "deviceId",
       label: "Устройство",
@@ -93,6 +50,7 @@ const ViewUsers: FC = () => {
       dropdownOptions: devicesOptions,
       dropdownLoading: isLoadingDevices,
       renderStatic: (value: any) => <div>Пульсометр #{value}</div>,
+      isEditable: true,
     },
   ];
 
@@ -117,11 +75,12 @@ const ViewUsers: FC = () => {
     return (
       filteredData
         .sort((userPrev, userNext) => userPrev?.userId - userNext?.userId)
-        .map((user) => {
+        .map((user, index) => {
           const { fio, userId, deviceId } = user;
           const [lastName, firstName, middleName] = fio.split(" ");
 
           return {
+            index,
             lastName: lastName || "",
             middleName: middleName || "",
             firstName: firstName || "",
@@ -148,12 +107,20 @@ const ViewUsers: FC = () => {
   return (
     <div className={styles.viewContainer}>
       <h1>Все пользователи:</h1>
-      {!!paginatedData.length && (
+      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
         <SearchInput
           searchValueState={[searchValue, setSearchValue]}
           inputProps={{ onChange: onSearch }}
         />
-      )}
+        {!!deviceId && (
+          <Button
+            style={{ height: 50 }}
+            onClick={() => nav(RouterPath.START_MEASUREMENTS + `/${deviceId}`)}
+          >
+            Начать измерение
+          </Button>
+        )}
+      </div>
       {isLoading ? (
         <Spin />
       ) : !!paginatedData.length ? (
@@ -161,42 +128,10 @@ const ViewUsers: FC = () => {
           onClick={(row) => nav(`/review-sessions/${row.userId}`)}
           data={paginatedData}
           fields={fields}
+          isEdit={!Boolean(deviceId)}
           getKey={(row) => row.userId}
-        >
-          <>
-            <td className={styles.icon}>
-              {isEditing ? (
-                <Save
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // onSave && onSave(rowData);
-                    // handleSubmit(handleSave)();
-                  }}
-                  stroke="#23E70A"
-                />
-              ) : (
-                <Edit
-                  stroke="#23E70A"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                  style={{ cursor: "pointer" }}
-                />
-              )}
-            </td>
-            <td className={styles.icon}>
-              <Basket
-                stroke="#FF1A43"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // onDelete && onDelete(rowData.userId);
-                  // handleDelete();
-                }}
-              />
-            </td>
-          </>
-        </Table>
+          getIndex={(row)=>row.index+1}
+        />
       ) : (
         <Empty
           description={

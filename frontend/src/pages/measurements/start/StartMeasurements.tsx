@@ -26,7 +26,7 @@ interface IStartMeasurements {
 }
 const StartMeasurements: FC = () => {
   const nav = useNavigate();
-  const { id: deviceId } = useParams();
+  const { deviceId, userId } = useParams();
 
   const { data: users, isLoading: isLoadingUsers } = useGetUsers();
   const { mutateAsync: activate, isLoading: isLoadingActivate } =
@@ -36,7 +36,7 @@ const StartMeasurements: FC = () => {
   const { control, handleSubmit, reset, watch } = useForm<IStartMeasurements>({
     mode: "onChange",
     defaultValues: {
-      userId: 0,
+      userId: userId && +userId || 0,
       activityId: 0,
     },
   });

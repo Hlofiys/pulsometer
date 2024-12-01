@@ -26,6 +26,9 @@ export interface ITime {
 }
 
 export const convertMilliseconds = (ms: number): ITime => {
+  if (ms === 0)
+    return { minutes:0, seconds:0, milliseconds:'0', formatWordTime:'', formatNumberTime:'' };
+
   const hours = Math.floor(ms / 3600000); // Вычисляем часы
   const minutes = Math.floor((ms % 3600000) / 60000); // Оставшиеся минуты
   const seconds = Math.floor((ms % 60000) / 1000); // Оставшиеся секунды
@@ -50,7 +53,7 @@ export const convertMilliseconds = (ms: number): ITime => {
   // Общее время в формате часы:минуты:секунды:миллисекунды
   const formatNumberTime = [
     hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
-    minutes > 0 || hours > 0 ? minutes.toString().padStart(2, "0") : null, // Минуты, если больше 0 или есть часы
+    minutes.toString().padStart(2, "0"), // Всегда отображаем минуты
     seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
     milliseconds !== "000" ? milliseconds : null, // Миллисекунды, если они не равны "000"
   ]
@@ -94,12 +97,13 @@ export const parseDate = (time: string /*2024-05-22*/): string => {
 
 export const parseDateAndTime = (dateAndTime: string) => {
   //2024-05-22T11:50:00
-  console.log(dateAndTime)
+  // console.log(dateAndTime);
   const [date, time] = dateAndTime.split("T");
   const [hours, minutes] = time.split(":");
 
   return {
     default: dateAndTime,
-    format: `${parseDate(date)}, ${hours}:${minutes}`,
+    format: `${parseDate(date)}, ${+hours}:${minutes}`,
+    convertBY: `${date}T${+hours + 3}${time.replace(hours, "")}`,
   };
 };

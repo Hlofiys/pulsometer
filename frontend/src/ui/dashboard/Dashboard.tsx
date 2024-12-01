@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import type { ChartData, ChartOptions, Plugin, TooltipModel } from "chart.js";
 import styles from "./Dashboard.module.scss";
+import { convertMilliseconds } from "../../utils/functions/functions";
 
 // Регистрация компонентов Chart.js
 ChartJS.register(
@@ -60,6 +61,43 @@ const Dashboard: FC<DashboardProps> = ({
     label: null,
   });
 
+  const handleTooltip = (context: {
+    chart: ChartJS;
+    tooltip: TooltipModel<"line">;
+  }) => {
+    const { tooltip } = context;
+
+    // Если tooltip не отображается, сбрасываем состояние
+    if (!tooltip.opacity) {
+      setTooltipState({ x: 0, y: 0, value: null, index: null, label: null });
+      return;
+    }
+
+    const tooltipModel = tooltip.dataPoints[0];
+
+    // Проверяем существование tooltipModel
+    if (tooltipModel) {
+      const { element } = tooltipModel;
+      const { x, y } = element;
+      const value = tooltipModel.raw as number;
+      const label = tooltipModel.label as string;
+
+      const newState = { x, y, value, index: 0, label };
+
+      // Обновляем состояние только если новый объект отличается от предыдущего
+      setTooltipState((prevState) => {
+        const isSame =
+          prevState.x === newState.x &&
+          prevState.y === newState.y &&
+          prevState.value === newState.value &&
+          prevState.index === newState.index &&
+          prevState.label === newState.label;
+
+        return isSame ? prevState : newState;
+      });
+    }
+  };
+
   // Данные графика
   const chartData: ChartData<"line"> = {
     labels: dashboardData.labels, // Временные отметки
@@ -77,126 +115,91 @@ const Dashboard: FC<DashboardProps> = ({
     ],
   };
 
-  // Опции графика
-  const options: ChartOptions<"line"> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: "nearest",
-      intersect: false,
-    },
-    plugins: {
-      tooltip: {
-        enabled: false,
-        external: (context) => handleTooltip(context),
+  const options: ChartOptions<"line"> = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "nearest",
+        intersect: false,
       },
-    },
-    scales: {
-      x: {
-        type: "linear",
-        title: {
-          display: true,
-          text: xAxisLabel, // Используем название оси X из props
-          color: "#fff",
-          align: "end",
+      plugins: {
+        tooltip: {
+          enabled: false,
+          external: (context) => handleTooltip(context),
         },
-        ticks: {
-          color: "#fff",
-          maxRotation: 0,
-          minRotation: 0,
-        },
-        grid: {
-          color: "gray", // Устанавливаем цвет линий сетки
-          lineWidth: 0.97, // Устанавливаем толщину линий сетки
-        },
-        // max: dashboardData.values.length * 10,
       },
-      y: {
-        type: "linear",
-        title: {
-          display: true,
-          text: yAxisLabel, // Используем название оси Y из props
-          color: "#fff",
-          align: "end",
+      scales: {
+        x: {
+          type: "linear",
+          title: {
+            display: true,
+            text: xAxisLabel, // Используем название оси X из props
+            color: "#fff",
+            align: "end",
+          },
+          ticks: {
+            color: "#fff",
+            maxRotation: 0,
+            minRotation: 0,
+          },
+          grid: {
+            color: "gray", // Устанавливаем цвет линий сетки
+            lineWidth: 0.97, // Устанавливаем толщину линий сетки
+          },
+          // max: dashboardData.values.length * 10,
         },
-        ticks: {
-          color: "#fff",
+        y: {
+          type: "linear",
+          title: {
+            display: true,
+            text: yAxisLabel, // Используем название оси Y из props
+            color: "#fff",
+            align: "end",
+          },
+          ticks: {
+            color: "#fff",
+          },
+          grid: {
+            color: "gray", // Устанавливаем цвет линий сетки
+            lineWidth: 0.97, // Устанавливаем толщину линий сетки
+          },
+          min: 40,
+          max: 160,
         },
-        grid: {
-          color: "gray", // Устанавливаем цвет линий сетки
-          lineWidth: 0.97, // Устанавливаем толщину линий сетки
-        },
-        min: 40,
-        max: 160,
       },
-    },
-  };
+    }),
+    [handleTooltip, xAxisLabel, yAxisLabel]
+  );
 
   // Кастомный плагин для визирных линий
-  const crosshairPlugin: Plugin<"line"> = {
-    id: "crosshairPlugin",
-    afterDraw: (chart) => {
-      const { ctx, chartArea, scales } = chart;
-      const midX = (scales.x.left + scales.x.right) / 2; // Средина по оси X
-      const targetY = scales.y.getPixelForValue(120); // Значение 120 по оси Y
+  const crosshairPlugin: Plugin<"line"> = useMemo(
+    () => ({
+      id: "crosshairPlugin",
+      afterDraw: (chart) => {
+        const { ctx, chartArea, scales } = chart;
+        const midX = (scales.x.left + scales.x.right) / 2;
+        const targetY = scales.y.getPixelForValue(120);
 
-      ctx.save();
-      ctx.strokeStyle = "#e0022a";
-      ctx.lineWidth = 0.97;
+        ctx.save();
+        ctx.strokeStyle = "#e0022a";
+        ctx.lineWidth = 0.97;
 
-      // Вертикальная линия (средина времени)
-      ctx.beginPath();
-      ctx.moveTo(midX, chartArea.top);
-      ctx.lineTo(midX, chartArea.bottom);
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(midX, chartArea.top);
+        ctx.lineTo(midX, chartArea.bottom);
+        ctx.stroke();
 
-      // Горизонтальная линия (120 ударов в минуту)
-      ctx.beginPath();
-      ctx.moveTo(chartArea.left, targetY);
-      ctx.lineTo(chartArea.right, targetY);
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, targetY);
+        ctx.lineTo(chartArea.right, targetY);
+        ctx.stroke();
 
-      ctx.restore();
-    },
-  };
-
-  // Обработчик кастомного tooltip
-  const handleTooltip = (context: {
-    chart: ChartJS;
-    tooltip: TooltipModel<"line">;
-  }) => {
-    const { tooltip } = context;
-
-    if (!tooltip.opacity) {
-      if (tooltipState.value !== null) {
-        setTooltipState({ x: 0, y: 0, value: null, index: null, label: null });
-      }
-      return;
-    }
-
-    const tooltipModel = tooltip.dataPoints[0];
-    if (tooltipModel) {
-      const { element } = tooltipModel;
-      const { x, y } = element;
-      const value = tooltipModel.raw as number;
-      const label = tooltipModel.label as string;
-
-      if (
-        tooltipState.x !== x ||
-        tooltipState.y !== y ||
-        tooltipState.value !== value ||
-        tooltipState.label !== label
-      ) {
-        setTooltipState({
-          x,
-          y,
-          value,
-          index: 0,
-          label,
-        });
-      }
-    }
-  };
+        ctx.restore();
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
     return () => {
@@ -216,7 +219,7 @@ const Dashboard: FC<DashboardProps> = ({
     <div className={styles.dashboard} style={containerStyles}>
       <div className={styles.chartContainer}>
         <Line data={chartData} options={options} plugins={[crosshairPlugin]} />
-        {tooltipState.value !== null && (
+        {tooltipState.value !== null && tooltipState.label !== null && (
           <div
             className={`${styles.tooltip}`}
             style={{
@@ -227,7 +230,8 @@ const Dashboard: FC<DashboardProps> = ({
             <p className={`${isAboveThreshold ? styles.warning : ""}`}>
               {tooltipState.value}
               <span style={{ display: "block", margin: 0, padding: 0 }}>
-                ({tooltipState.label}-я секунда)
+                {convertMilliseconds(+tooltipState.label * 1000).milliseconds}
+                {+tooltipState.label}
               </span>
               {isAboveThreshold && <span>Пульс превышен!</span>}
             </p>

@@ -15,7 +15,7 @@ export const SearchInput: FC<ISearchInput> = (props) => {
   const [isMagnifierVisible, setIsMagnifierVisible] = useState<boolean>(true);
 
   return (
-    <form className={styles.searchForm} {...formProps}>
+    <form className={styles.searchForm} onSubmit={(event)=>event.preventDefault()} {...formProps}>
       <Magnifier
         style={{
           display:

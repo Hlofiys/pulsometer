@@ -5,7 +5,7 @@ export const useGetMeasurementsById = (userId?: number)=>{
     return useQuery({
         queryKey: ['getMeasurements'],
         queryFn: ()=>SessionService.getMeasurements(userId!),
-        onSuccess:(data)=>data.data,
+        onSuccess:(data)=>data,
         enabled: !!userId
     })
 }

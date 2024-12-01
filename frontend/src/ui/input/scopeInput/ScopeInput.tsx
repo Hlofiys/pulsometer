@@ -12,7 +12,6 @@ interface IScopeInput<T> {
 }
 const ScopeInput: FC<IScopeInput<string|number>> = (props) => {
   const { inputProps, dropdownProps, ariaDescription } = props;
-  // const label = (inputProps!['aria-description'] || dropdownProps!['aria-description'] || '');
 
   return (
     <div className={styles.scopeInputcontainer}>
