@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -139,16 +140,28 @@ public class PulsometerService {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
+        LocalDateTime utcNow = Instant.now()
+                .atZone(ZoneOffset.UTC)
+                .toLocalDateTime();
 
         deviceRepository.findById(statusData.getId())
                 .flatMap(device -> {
-                    String status = device.getStatus().equalsIgnoreCase("measuring") ? "measuring" : "ready";
-                    return deviceRepository.upsertDevice(statusData.getId(), status, LocalDateTime.now());
+                    String currentStatus = device.getStatus();
+                    String newStatus = currentStatus.equalsIgnoreCase("measuring") ? "measuring" : "ready";
+                    device.setLastContact(utcNow);
+                    device.setStatus(newStatus);
+                    return deviceRepository.save(device);
                 })
                 .switchIfEmpty(
-                        deviceRepository.upsertDevice(statusData.getId(), "ready", LocalDateTime.now())
+                        Mono.defer(() -> {
+                            Device newDevice = new Device();
+                            newDevice.setDeviceId(statusData.getId());
+                            newDevice.setStatus("ready");
+                            newDevice.setLastContact(utcNow);
+                            return deviceRepository.save(newDevice);
+                        })
                 )
-                .doOnSuccess(d -> System.out.println("Device upserted: " + statusData.getId()))
+                .doOnSuccess(d -> System.out.println("Device processed: " + statusData.getId()))
                 .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
                 .subscribe();
     }
@@ -164,27 +177,33 @@ public class PulsometerService {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
-        deviceRepository.findById(pulseDataDTO.getId())
-                .flatMap(device -> {
-                    device.setStatus("measuring");
-                    device.setLastContact(LocalDateTime.now());
-                    return deviceRepository.save(device);
-                }).flatMap(savedDevice ->{
-                    pulseMeasurement.setBpm(pulseDataDTO.getBpm());
-                    pulseMeasurement.setDate(LocalDateTime.now());
-                    pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
-                    pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
-                    return sessionRepository.findById(pulseDataDTO.getSessionId())
-                            .flatMap(receivedSession ->{
-                                LocalDateTime now = LocalDateTime.now();
-                                long elapsedMillis = Duration.between(receivedSession.getTime(), now).toMillis();
-                                receivedSession.setPassed(receivedSession.getPassed() + elapsedMillis);
-                                receivedSession.setTime(now);
-                                return sessionRepository.save(receivedSession);
-                            }).then(Mono.just(pulseMeasurement));
-                })
-                .flatMap(pulseMeasurementRepository::save)
-                .subscribe();
+        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
+        pulseMeasurementRepository.existsByDate(measurementTime)
+                .flatMap(exists->{
+                    if(exists) {
+                        return Mono.empty();
+                    }else{
+                        return deviceRepository.findById(pulseDataDTO.getId())
+                                .flatMap(device -> {
+                                    device.setStatus("measuring");
+                                    device.setLastContact(measurementTime);
+                                    return deviceRepository.save(device);
+                                }).flatMap(savedDevice ->{
+                                    pulseMeasurement.setBpm(pulseDataDTO.getBpm());
+                                    LocalDateTime date = measurementTime.minusHours(3);
+                                    pulseMeasurement.setDate(date);
+                                    pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
+                                    pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
+                                    return sessionRepository.findById(pulseDataDTO.getSessionId())
+                                            .flatMap(receivedSession ->{
+                                                long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
+                                                receivedSession.setPassed(elapsedMillis);
+                                                return sessionRepository.save(receivedSession);
+                                            }).then(Mono.just(pulseMeasurement));
+                                })
+                                .flatMap(pulseMeasurementRepository::save);
+                    }
+                }).subscribe();
     }
 
     private Mono<String> createActivateMessage(Integer userId) {
@@ -196,7 +215,10 @@ public class PulsometerService {
                     }else {
                         Session session = new Session();
                         session.setUserId(userId);
-                        session.setTime(LocalDateTime.now());
+                        LocalDateTime utcNow = Instant.now()
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDateTime();
+                        session.setTime(utcNow);
 
                         return sessionRepository.save(session)
                                 .flatMap(savedSession -> {
@@ -218,18 +240,16 @@ public class PulsometerService {
         return new MqttPayload(isActivateValue, sessionId);
     }
 
-    public Mono<Boolean> publishActivate(Integer deviceId, Integer userId) {
-        String topic = "device/switch/" + deviceId;
-
-        return deviceRepository.findById(deviceId)
-                .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
+    public Mono<Boolean> publishActivate(Integer userId) {
+        String topic = "device/switch/";
+        return deviceRepository.findFirstByUserIdInUsers(userId)
+                .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device with such user not found: " + userId)))
                 .flatMap(device -> userRepository.findById(userId)
                         .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
-                        .flatMap(user -> {
-
+                        .flatMap(user ->{
                             if (!device.getUsers().contains(user.getUserId())) {
                                 return Mono.error(new InvalidDeviceUserMappingException(
-                                        "User with ID: " + userId + " does not have access to device with ID: " + deviceId));
+                                        "User with ID: " + userId + " does not have access to device with ID: " + device.getDeviceId()));
                             }
 
                             return createActivateMessage(userId)
@@ -268,7 +288,7 @@ public class PulsometerService {
         return sessionRepository.existsByUserIdAndSessionStatus(userId,sessionStatus)
                 .flatMap(exists ->{
                     if (exists) {
-                        return sessionRepository.findFirstByUserIdOrderByTimeDesc(userId)
+                        return sessionRepository.findFirstByUserIdAndSessionStatus(userId,sessionStatus)
                                 .flatMap(session -> {
                                     session.setSessionStatus("Closed");
                                     return sessionRepository.save(session)
@@ -404,14 +424,20 @@ public class PulsometerService {
     }
 
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 120000)
     public void updateDeviceStatus() {
-        Instant twoMinutesAgo = Instant.now().minus(2, ChronoUnit.MINUTES);
-        Flux<Device> devicesToUpdate = deviceRepository.findByLastContactBefore(twoMinutesAgo);
-        devicesToUpdate
+        LocalDateTime twoMinutesAgo = Instant.now()
+                .minus(110, ChronoUnit.SECONDS)
+                .atZone(ZoneOffset.UTC)
+                .toLocalDateTime();
+        deviceRepository.findAll()
+                .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
                 .flatMap(device -> {
-                    device.setStatus("off");
-                    return deviceRepository.save(device);
+                    if (!device.getStatus().equalsIgnoreCase("measuring")) {
+                        device.setStatus("off");
+                        return deviceRepository.save(device);
+                    }
+                    return Mono.empty();
                 })
                 .subscribe();
     }
