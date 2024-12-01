@@ -71,15 +71,14 @@ public class DeviceController {
             @ApiResponse(responseCode = "404", description = "Device not found"),
             @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
-    @PostMapping("/activate/{deviceId}")
-    public Mono<ResponseEntity<?>> manageStatusActivate (@PathVariable("deviceId") Integer deviceId,
-                                                         @RequestParam(value = "activeUserId") Integer activeUserId){
-        if (deviceId == null || deviceId <= 0) {
+    @PostMapping("/activate")
+    public Mono<ResponseEntity<?>> manageStatusActivate (@RequestParam(value = "activeUserId") Integer activeUserId){
+        if (activeUserId == null || activeUserId <= 0) {
             return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Invalid or missing deviceId", HttpStatus.BAD_REQUEST.value())));
+                    .body(new ErrorResponse("Invalid or missing activeUserId", HttpStatus.BAD_REQUEST.value())));
         }
 
-        return pulsometerService.publishActivate(deviceId, activeUserId)
+        return pulsometerService.publishActivate(activeUserId)
                 .map(isPublish -> isPublish
                         ? ResponseEntity.ok(true)
                         : ResponseEntity.status(HttpStatus.BAD_REQUEST)

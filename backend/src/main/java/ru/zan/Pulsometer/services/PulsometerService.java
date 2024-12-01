@@ -146,13 +146,22 @@ public class PulsometerService {
 
         deviceRepository.findById(statusData.getId())
                 .flatMap(device -> {
-                    String status = device.getStatus().equalsIgnoreCase("measuring") ? "measuring" : "ready";
-                    return deviceRepository.upsertDevice(statusData.getId(), status, utcNow);
+                    String currentStatus = device.getStatus();
+                    String newStatus = currentStatus.equalsIgnoreCase("measuring") ? "measuring" : "ready";
+                    device.setLastContact(utcNow);
+                    device.setStatus(newStatus);
+                    return deviceRepository.save(device);
                 })
                 .switchIfEmpty(
-                        deviceRepository.upsertDevice(statusData.getId(), "ready", utcNow)
+                        Mono.defer(() -> {
+                            Device newDevice = new Device();
+                            newDevice.setDeviceId(statusData.getId());
+                            newDevice.setStatus("ready");
+                            newDevice.setLastContact(utcNow);
+                            return deviceRepository.save(newDevice);
+                        })
                 )
-                .doOnSuccess(d -> System.out.println("Device upserted: " + statusData.getId()))
+                .doOnSuccess(d -> System.out.println("Device processed: " + statusData.getId()))
                 .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
                 .subscribe();
     }
@@ -231,18 +240,16 @@ public class PulsometerService {
         return new MqttPayload(isActivateValue, sessionId);
     }
 
-    public Mono<Boolean> publishActivate(Integer deviceId, Integer userId) {
-        String topic = "device/switch/" + deviceId;
-
-        return deviceRepository.findById(deviceId)
-                .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device not found with ID: " + deviceId)))
+    public Mono<Boolean> publishActivate(Integer userId) {
+        String topic = "device/switch/";
+        return deviceRepository.findFirstByUserIdInUsers(userId)
+                .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device with such user not found: " + userId)))
                 .flatMap(device -> userRepository.findById(userId)
                         .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
-                        .flatMap(user -> {
-
+                        .flatMap(user ->{
                             if (!device.getUsers().contains(user.getUserId())) {
                                 return Mono.error(new InvalidDeviceUserMappingException(
-                                        "User with ID: " + userId + " does not have access to device with ID: " + deviceId));
+                                        "User with ID: " + userId + " does not have access to device with ID: " + device.getDeviceId()));
                             }
 
                             return createActivateMessage(userId)
@@ -417,14 +424,20 @@ public class PulsometerService {
     }
 
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 120000)
     public void updateDeviceStatus() {
-        Instant twoMinutesAgo = Instant.now().minus(2, ChronoUnit.MINUTES);
-        Flux<Device> devicesToUpdate = deviceRepository.findByLastContactBefore(twoMinutesAgo);
-        devicesToUpdate
+        LocalDateTime twoMinutesAgo = Instant.now()
+                .minus(110, ChronoUnit.SECONDS)
+                .atZone(ZoneOffset.UTC)
+                .toLocalDateTime();
+        deviceRepository.findAll()
+                .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
                 .flatMap(device -> {
-                    device.setStatus("off");
-                    return deviceRepository.save(device);
+                    if (!device.getStatus().equalsIgnoreCase("measuring")) {
+                        device.setStatus("off");
+                        return deviceRepository.save(device);
+                    }
+                    return Mono.empty();
                 })
                 .subscribe();
     }
