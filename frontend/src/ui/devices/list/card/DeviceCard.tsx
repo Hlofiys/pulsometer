@@ -1,5 +1,5 @@
 import { FC } from "react";
-import pulsometerDefault from "../../../../assets/photos/defaultPulsometer.png";
+import pulsometerDefault from "../../../../assets/photos/defaultPulsometer.webp";
 import TopArrow from "../../../icons/TopArrow";
 import styles from "./DeviceCard.module.scss";
 import { IDevice } from "../../../../services/interfaces/Interfaces";

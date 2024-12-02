@@ -40,10 +40,8 @@ const Statistic: FC<IStatisticProps> = (props) => {
       ) : (
         <Dashboard
           dashboardData={dashboardParams}
-          // labels={dashboardData.map(item=>)}
-          // data={dashboardData.map((item)=>item.value)}
           containerStyles={{ flex: 1 }}
-          xAxisLabel="Время,секунд"
+          xAxisLabel="Время, секунд"
           yAxisLabel="Ударов в мин."
         />
       )}

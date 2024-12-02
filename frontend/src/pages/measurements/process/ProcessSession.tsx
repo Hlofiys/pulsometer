@@ -11,6 +11,7 @@ import { useGetUserById } from "../../../api/hooks/user/useGetUserById";
 import SkeletonParams from "./userParams/skeleton/Skeleton";
 import { RouterPath } from "../../../router/Router";
 import Button from "../../../ui/buttons/primary/Button";
+import { convertMilliseconds } from "../../../utils/functions/functions";
 
 const ProcessSession: FC = () => {
   const { userId, sessionId, startMeasurementTime } = useParams();
@@ -52,7 +53,7 @@ const ProcessSession: FC = () => {
       const measurementTime = new Date(date).getTime();
       // console.log('measurementTim: ', measurementTime, "startTime: ", startTime, startTime - measurementTime)
       const secondsDiff = Math.round((measurementTime - startTime)); // Разница в секундах
-      return { label: secondsDiff, value: bpm };
+      return { label: convertMilliseconds(secondsDiff).totalSeconds, value: bpm };
     });
 
     return {
@@ -96,7 +97,7 @@ const ProcessSession: FC = () => {
             fio={userData?.data.fio || ""}
             deviceId={userData?.data.deviceId || 0}
             activityType="Бег"
-            time={activeSession?.passed || 0}
+            time={!!activeSession?.passed && (activeSession!.passed - 3 * 60 * 60 * 1000) || 0}
           />
         )}
         <Statistic
@@ -107,7 +108,7 @@ const ProcessSession: FC = () => {
       </div>
 
       <section className={styles.buttons}>
-        <Button onClick={() => console.log(dashboardData.dashboardParams)}>
+        <Button onClick={() => console.log(dashboardData.dashboardParams[5], convertMilliseconds(dashboardData.dashboardParams[5].label * 1000))}>
           Сохранить изменения:
         </Button>
         <Link onClick={() => nav(RouterPath.REVIEW_SESSION+`/${userId}`)}>

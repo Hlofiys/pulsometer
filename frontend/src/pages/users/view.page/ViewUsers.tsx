@@ -39,7 +39,7 @@ const ViewUsers: FC = () => {
     : useGetUsers();
   const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
 
-  const fields: FieldConfig<IAllUsersTableRow>[] = [
+  const fields: FieldConfig<IAllUsersTableRow>[] = useMemo(()=>[
     { key: "lastName", label: "Фамилия", type: "text", isEditable: true },
     { key: "firstName", label: "Имя", type: "text", isEditable: true },
     { key: "middleName", label: "Отчество", type: "text", isEditable: true },
@@ -52,7 +52,7 @@ const ViewUsers: FC = () => {
       renderStatic: (value: any) => <div>Пульсометр #{value}</div>,
       isEditable: true,
     },
-  ];
+  ], [devicesOptions])
 
   // Отфильтрованные данные на основе поиска
   const filteredData: TTableUserRow[] = useMemo(() => {
@@ -62,7 +62,7 @@ const ViewUsers: FC = () => {
         return fio.includes(searchValue.toLowerCase());
       }) || []
     );
-  }, [searchValue, fetchedUsers, deviceId]);
+  }, [searchValue, fetchedUsers?.data, deviceId]);
 
   // Общий подсчет страниц на основе количества строк
   const totalPages = useMemo(() => {
@@ -128,7 +128,7 @@ const ViewUsers: FC = () => {
           onClick={(row) => nav(`/review-sessions/${row.userId}`)}
           data={paginatedData}
           fields={fields}
-          isEdit={!Boolean(deviceId)}
+          isEdit
           getKey={(row) => row.userId}
           getIndex={(row)=>row.index+1}
         />

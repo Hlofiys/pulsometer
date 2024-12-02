@@ -15,9 +15,9 @@ class DeviceServices {
   }
 
   async activateMeasurements(props: TActivateMeasurements) {
-    const { activeUserId, deviceId } = props;
+    const { activeUserId } = props;
     return instance.post(
-      `/devices/activate/${deviceId}?activeUserId=${activeUserId}`
+      `/devices/activate?activeUserId=${activeUserId}`
       // {},
       // {
         // params: activeUserId,

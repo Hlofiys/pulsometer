@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ISession } from "../../../services/interfaces/Interfaces";
 import {
   convertMilliseconds,
-  parseDateAndTime,
+  parseUTCDateAndTime,
 } from "../../../utils/functions/functions";
 import { Empty, Spin } from "antd";
 import { SearchInput } from "../../../ui/input/search/SearchInput";
@@ -46,13 +46,14 @@ const ReviewSessions: FC = () => {
       key: "time",
       label: "Начало",
       type: "text",
-      renderStatic: (date: string) => parseDateAndTime(date).format,
+      renderStatic: (date: string) => parseUTCDateAndTime(date).belarusian,
     },
     {
       key: "passed",
       label: "Продолжительность",
       type: "text",
-      renderStatic: (value) => convertMilliseconds(value).formatNumberTime,
+      renderStatic: (value) =>
+        convertMilliseconds(value - 3 * 60 * 60 * 1000).formatNumberTime,
     },
     {
       key: "deviceId",
@@ -78,8 +79,10 @@ const ReviewSessions: FC = () => {
   const filteredData: ISession[] = useMemo(() => {
     return (
       ((sessions && sessions) || []).filter((session) => {
-        const { default: defaultDate, format } = parseDateAndTime(session.time);
-        const formatDateAndTime = format.toLowerCase();
+        const { default: defaultDate, belarusian } = parseUTCDateAndTime(
+          session.time
+        );
+        const formatDateAndTime = belarusian.toLowerCase();
         const defaultDateAndTime = defaultDate.toLowerCase();
         return (
           formatDateAndTime.includes(searchValue.toLowerCase()) ||
@@ -165,9 +168,7 @@ const ReviewSessions: FC = () => {
         <Spin />
       ) : paginatedData.length ? (
         <Table<ISessionUserRow>
-          // onClick={(row)=>console.log(row)}
           onClick={(row) =>
-            // console.log(row)
             nav(
               `${RouterPath.REVIEW_MEASUREMENTS}/${row.userId}/${row.sessionId}/${row.time}`
             )
@@ -195,13 +196,3 @@ const ReviewSessions: FC = () => {
 };
 
 export default ReviewSessions;
-
-// import React from 'react'
-
-// const ReviewMeasurements = () => {
-//   return (
-//     <div>ReviewMeasurements</div>
-//   )
-// }
-
-// export default ReviewMeasurements

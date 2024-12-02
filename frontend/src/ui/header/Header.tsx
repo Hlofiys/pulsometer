@@ -1,6 +1,6 @@
 import { FC } from "react";
 import styles from "./Header.module.scss";
-import logo from "../../assets/photos/logo.png";
+import logo from "../../assets/photos/logo.webp";
 import { useNavigate } from "react-router-dom";
 import { RouterPath } from "../../router/Router";
 

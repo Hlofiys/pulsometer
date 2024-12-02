@@ -52,7 +52,7 @@ const StartMeasurements: FC = () => {
 
     await activate({
       activeUserId: userId,
-      deviceId: +deviceId!,
+      // deviceId: +deviceId!,
     }, {onSuccess: ()=>reset()} );
   };
 

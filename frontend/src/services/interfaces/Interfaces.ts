@@ -19,7 +19,7 @@ export interface IDevice {
 }
 
 export interface TActivateMeasurements
-  extends Pick<IDevice, "activeUserId" | "deviceId"> {}
+  extends Pick<IDevice, "activeUserId"> {}
 
 // export type TDeviceStatus = "activate" | "deactivate";
 

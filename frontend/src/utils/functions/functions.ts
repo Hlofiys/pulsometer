@@ -23,11 +23,19 @@ export interface ITime {
   milliseconds: string;
   formatWordTime: string;
   formatNumberTime: string; // Новое поле для общего времени
+  totalSeconds: number;
 }
 
-export const convertMilliseconds = (ms: number): ITime => {
+export const convertMilliseconds = (ms: number, withoutMs?: boolean): ITime => {
   if (ms === 0)
-    return { minutes:0, seconds:0, milliseconds:'0', formatWordTime:'', formatNumberTime:'' };
+    return {
+      minutes: 0,
+      seconds: 0,
+      milliseconds: "0",
+      formatWordTime: "",
+      formatNumberTime: "",
+      totalSeconds: 0,
+    };
 
   const hours = Math.floor(ms / 3600000); // Вычисляем часы
   const minutes = Math.floor((ms % 3600000) / 60000); // Оставшиеся минуты
@@ -55,7 +63,7 @@ export const convertMilliseconds = (ms: number): ITime => {
     hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
     minutes.toString().padStart(2, "0"), // Всегда отображаем минуты
     seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
-    milliseconds !== "000" ? milliseconds : null, // Миллисекунды, если они не равны "000"
+    milliseconds !== "000" && !withoutMs ? milliseconds : null, // Миллисекунды, если они не равны "000"
   ]
     .filter(Boolean) // Убираем пустые значения
     .join(":"); // Объединяем через ":"
@@ -66,6 +74,7 @@ export const convertMilliseconds = (ms: number): ITime => {
     milliseconds,
     formatWordTime,
     formatNumberTime,
+    totalSeconds: ms / 1000,
   };
 };
 
@@ -95,15 +104,27 @@ export const parseDate = (time: string /*2024-05-22*/): string => {
   return `${day} ${monthes[+month - 1]} ${year}г.`;
 };
 
-export const parseDateAndTime = (dateAndTime: string) => {
-  //2024-05-22T11:50:00
-  // console.log(dateAndTime);
-  const [date, time] = dateAndTime.split("T");
-  const [hours, minutes] = time.split(":");
 
+export const parseUTCDateAndTime = (dateAndTime: string) => {
+  // Создаём объект даты из строки
+  const utcDate = new Date(dateAndTime);
+
+  // Преобразуем в UTC+3 (Беларусь)
+  const belarusTime = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000);
+
+  // Извлекаем компоненты даты
+  const year = belarusTime.getFullYear();
+  const month = String(belarusTime.getMonth() + 1).padStart(2, "0");
+  const day = String(belarusTime.getDate()).padStart(2, "0");
+  const hours = String(belarusTime.getHours()).padStart(2, "0");
+  const minutes = String(belarusTime.getMinutes()).padStart(2, "0");
+  const seconds = String(belarusTime.getSeconds()).padStart(2, "0");
+
+  const formatDate = parseDate(`${year}-${month}-${day}`) //2024-05-22
+
+  // Форматируем в строку
   return {
+    belarusian: `${formatDate}, ${hours}:${minutes}:${seconds}`,
     default: dateAndTime,
-    format: `${parseDate(date)}, ${+hours}:${minutes}`,
-    convertBY: `${date}T${+hours + 3}${time.replace(hours, "")}`,
   };
 };

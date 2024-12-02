@@ -36,10 +36,11 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit, watch } = useForm({
     mode: 'onChange',
     defaultValues: rowData,
   });
+  const rowValues = watch();
 
   const { data: devices, isLoading: isLoadingDevices } = useGetDevices();
 
@@ -61,6 +62,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
         userId: rowData.userId,
       };
 
+      console.log(updateUserData)
       update_user(updateUserData, {
         onSuccess: () => setIsEditing(false),
       });
@@ -96,6 +98,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
           {isEditing && field.isEditable ? (
             <Controller
               name={field.key as string}
+              key={field.key as string}
               control={control}
               render={({ field: controllerField }) => {
                 const { ref, ...controlField } = controllerField;
@@ -125,9 +128,9 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
               }}
             />
           ) : field.renderStatic ? (
-            field.renderStatic(rowData[field.key])
+            field.renderStatic(rowValues[field.key])
           ) : (
-            rowData[field.key]
+            rowValues[field.key]
           )}
         </td>
       ))}
