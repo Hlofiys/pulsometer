@@ -42,12 +42,13 @@ const ProcessSession: FC = () => {
       };
     }
 
-    const oxygen = measurements?.[0].oxygen; // Значение oxygen неизменно
     const bpms = measurements?.map(({ bpm }) => bpm) || []; // Массив всех значений bpm
+    const oxygens = measurements?.map(({ oxygen }) => oxygen) || []; // Массив всех значений bpm
 
     const maxBpm = Math.max(...bpms); // Максимальное значение bpm
     const minBpm = Math.min(...bpms); // Минимальное значение bpm
     const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length; // Среднее значение bpm
+    const averageOxygen = oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length; // Среднее значение oxygen
 
     const dashboardParams = measurements?.map(({ date, bpm }) => {
       const measurementTime = new Date(date).getTime();
@@ -58,7 +59,7 @@ const ProcessSession: FC = () => {
 
     return {
       dashboardParams: dashboardParams || [],
-      oxygen: oxygen || 0,
+      oxygen: averageOxygen || 0,
       maxBpm,
       minBpm,
       averageBpm: Math.round(averageBpm), // Округляем до целого
@@ -108,7 +109,7 @@ const ProcessSession: FC = () => {
       </div>
 
       <section className={styles.buttons}>
-        <Button onClick={() => console.log(dashboardData.dashboardParams[5], convertMilliseconds(dashboardData.dashboardParams[5].label * 1000))}>
+        <Button onClick={() => console.log(dashboardData.dashboardParams, convertMilliseconds(dashboardData.dashboardParams[5].label * 1000))}>
           Сохранить изменения:
         </Button>
         <Link onClick={() => nav(RouterPath.REVIEW_SESSION+`/${userId}`)}>

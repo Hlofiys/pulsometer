@@ -80,9 +80,7 @@ const Dashboard: FC<DashboardProps> = ({
       const { element } = tooltipModel;
       const { x, y } = element;
       const value = tooltipModel.raw as number;
-      const label = +tooltipModel.label.split(',').join('') as number;
-
-      // console.log(+tooltipModel.label)
+      const label = +tooltipModel.label.replace(/\s/g, '').replaceAll(',', '.') as number;
 
       const newState = { x, y, value, index: 0, label };
 
@@ -232,7 +230,7 @@ const Dashboard: FC<DashboardProps> = ({
             <p className={`${isAboveThreshold ? styles.warning : ""}`}>
               {tooltipState.value}
               <span style={{ display: "block", margin: 0, padding: 0 }}>
-                {convertMilliseconds(tooltipState.label, true).formatNumberTime}
+                {convertMilliseconds(tooltipState.label*1000, true).formatNumberTime}
                 {/* {typeof(tooltipState.label)} */}
               </span>
               {isAboveThreshold && <span>Пульс превышен!</span>}
