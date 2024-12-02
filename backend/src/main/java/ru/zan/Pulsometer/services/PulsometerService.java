@@ -241,7 +241,6 @@ public class PulsometerService {
     }
 
     public Mono<Boolean> publishActivate(Integer userId) {
-        String topic = "device/switch/";
         return deviceRepository.findFirstByUserIdInUsers(userId)
                 .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device with such user not found: " + userId)))
                 .flatMap(device -> {
@@ -262,7 +261,7 @@ public class PulsometerService {
                                                 return Mono.error(new InvalidDeviceUserMappingException(
                                                         "User with ID: " + userId + " does not have access to device with ID: " + device.getDeviceId()));
                                             }
-
+                                            String topic = "device/switch/" + device.getDeviceId();
                                             return createActivateMessage(userId)
                                                     .flatMap(payload -> publishMqttMessage(topic, payload))
                                                     .flatMap(success -> {
