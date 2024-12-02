@@ -241,25 +241,37 @@ public class PulsometerService {
     }
 
     public Mono<Boolean> publishActivate(Integer userId) {
-        String topic = "device/switch/";
         return deviceRepository.findFirstByUserIdInUsers(userId)
                 .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device with such user not found: " + userId)))
-                .flatMap(device -> userRepository.findById(userId)
-                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
-                        .flatMap(user ->{
-                            if (!device.getUsers().contains(user.getUserId())) {
-                                return Mono.error(new InvalidDeviceUserMappingException(
-                                        "User with ID: " + userId + " does not have access to device with ID: " + device.getDeviceId()));
-                            }
+                .flatMap(device -> {
 
-                            return createActivateMessage(userId)
-                                    .flatMap(payload -> publishMqttMessage(topic, payload))
-                                    .flatMap(success -> {
-                                        device.setStatus("measuring");
-                                        device.setActiveUserId(userId);
-                                        return deviceRepository.save(device).thenReturn(true);
-                                    });
-                        }));
+                    if ("off".equalsIgnoreCase(device.getStatus())) {
+                        return Mono.error(new IllegalStateException("Cannot start session: device status is 'off'"));
+                    }
+                    return hasSingleActiveSession(device.getUsers())
+                            .flatMap(exists->{
+                                if (exists) {
+                                    return Mono.error(new ActiveSessionException("There is already an active session for one of the device's users."));
+                                }
+                                return userRepository.findById(userId)
+                                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
+                                        .flatMap(user -> {
+
+                                            if (!device.getUsers().contains(user.getUserId())) {
+                                                return Mono.error(new InvalidDeviceUserMappingException(
+                                                        "User with ID: " + userId + " does not have access to device with ID: " + device.getDeviceId()));
+                                            }
+                                            String topic = "device/switch/" + device.getDeviceId();
+                                            return createActivateMessage(userId)
+                                                    .flatMap(payload -> publishMqttMessage(topic, payload))
+                                                    .flatMap(success -> {
+                                                        device.setStatus("measuring");
+                                                        device.setActiveUserId(userId);
+                                                        return deviceRepository.save(device).thenReturn(true);
+                                                    });
+                                        });
+                            });
+                });
     }
 
     private Mono<Boolean> publishMqttMessage(String topic, String payload) {
@@ -282,6 +294,14 @@ public class PulsometerService {
         });
     }
 
+    private Mono<Boolean> hasSingleActiveSession(List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Mono.just(false);
+        }
+
+        return sessionRepository.existsMultipleActiveSessionsByUserIds(userIds)
+                .map(exists -> exists);
+    }
 
     private Mono<String> createDeactivateMessage(Integer userId) {
         String sessionStatus = "Open";
@@ -433,13 +453,18 @@ public class PulsometerService {
         deviceRepository.findAll()
                 .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
                 .flatMap(device -> {
-                    if (!device.getStatus().equalsIgnoreCase("measuring")) {
-                        device.setStatus("off");
-                        return deviceRepository.save(device);
-                    }
-                    return Mono.empty();
+                    device.setStatus("off");
+                    return deviceRepository.save(device)
+                            .flatMap(savedDevice-> closeOpenSessionsForUsers(savedDevice.getUsers()));
                 })
                 .subscribe();
+    }
+
+    private Mono<Void> closeOpenSessionsForUsers(List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Mono.empty();
+        }
+        return sessionRepository.updateSessionStatusForUsers(userIds);
     }
 
     @PreDestroy
