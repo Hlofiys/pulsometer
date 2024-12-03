@@ -110,6 +110,17 @@ public class UserController {
                 .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    @Operation(summary = "Return a session by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Session found"),
+            @ApiResponse(responseCode = "404", description = "Session not found")
+    })
+    @GetMapping("/{sessionId}/sessions/info")
+    public Mono<ResponseEntity<Session>> getSession(@PathVariable("sessionId") Integer sessionId){
+        return pulsometerService.getSession(sessionId)
+                .map(session -> ResponseEntity.status(HttpStatus.OK).body(session))
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 
     @Operation(summary = "Update user by its ID")
     @ApiResponses(value = {
