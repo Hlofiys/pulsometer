@@ -141,25 +141,28 @@ public class PulsometerService {
                 .atZone(ZoneOffset.UTC)
                 .toLocalDateTime();
 
-        deviceRepository.findById(statusData.getId())
-                .flatMap(device -> {
-                    String currentStatus = device.getStatus();
-                    String newStatus = currentStatus.equalsIgnoreCase("measuring") ? "measuring" : "ready";
-                    device.setLastContact(utcNow);
-                    device.setStatus(newStatus);
-                    return deviceRepository.save(device);
+        deviceRepository.existsByDeviceId(statusData.getId())
+                .flatMap(exists -> {
+                    if (!exists) {
+                        Device newDevice = new Device();
+                        newDevice.setDeviceId(statusData.getId());
+                        newDevice.setStatus("ready");
+                        newDevice.setLastContact(utcNow);
+                        return deviceRepository.saveNewDeviceIfNotExists(newDevice.getDeviceId(), newDevice.getStatus(), newDevice.getLastContact());
+                    } else {
+                        return deviceRepository.findById(statusData.getId())
+                                .flatMap(device -> {
+                                    String currentStatus = device.getStatus();
+                                    String newStatus = currentStatus.equalsIgnoreCase("measuring") ? "measuring" : "ready";
+                                    device.setLastContact(utcNow);
+                                    device.setStatus(newStatus);
+                                    System.out.println("Updating device with new status: " + newStatus);
+                                    return deviceRepository.save(device);
+                                });
+                    }
                 })
-                .switchIfEmpty(
-                        Mono.defer(() -> {
-                            Device newDevice = new Device();
-                            newDevice.setDeviceId(statusData.getId());
-                            newDevice.setStatus("ready");
-                            newDevice.setLastContact(utcNow);
-                            return deviceRepository.save(newDevice);
-                        })
-                )
-                .doOnSuccess(d -> System.out.println("Device processed: " + statusData.getId()))
-                .doOnError(e -> System.err.println("Error processing message: " + e.getMessage()))
+                .doOnSuccess(device -> System.out.println("Device successfully processed: " + device))
+                .doOnError(e -> System.err.println("Error processing device: " + e.getMessage()))
                 .subscribe();
     }
 
