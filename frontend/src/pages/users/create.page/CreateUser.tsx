@@ -15,10 +15,10 @@ import {
 import Link from "../../../ui/buttons/link/Link";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 import { useNavigate } from "react-router-dom";
-import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
 import { TCreateUser } from "../../../services/interfaces/Interfaces";
 import { useCreateUser } from "../../../api/hooks/user/useCreateUser";
 import { RouterPath } from "../../../router/Router";
+import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
 
 interface INewUser {
   surname: string;
@@ -39,7 +39,7 @@ const CreateUser: FC = () => {
   });
   const newUser = watch();
 
-  const { data: devices, isLoading } = useGetDevices();
+  // const { data: devices, isLoading } = useGetDevices();
   const { mutateAsync: create_user, isLoading: isLoadingCreate } =
     useCreateUser();
 
@@ -48,14 +48,7 @@ const CreateUser: FC = () => {
     [newUser]
   );
 
-  const devicesOptions = useMemo(() => {
-    return (
-      devices?.data.map((device) => ({
-        label: `Пульсометр #${device.deviceId}`,
-        value: device.deviceId,
-      })) || []
-    );
-  }, [devices]);
+  const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
 
   const useEnterFio = useCallback(
     (
@@ -128,7 +121,7 @@ const CreateUser: FC = () => {
                 dropdownProps={{
                   ...dropdownField,
                   value: field.value,
-                  isLoading: isLoading,
+                  isLoading: isLoadingDevices,
                   isDropDown: true,
                   options: devicesOptions,
                   onChange: (device) => onChange(device.value),

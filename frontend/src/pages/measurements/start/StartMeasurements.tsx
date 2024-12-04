@@ -57,7 +57,7 @@ const StartMeasurements: FC = () => {
   };
 
   const activeDevice = useMemo(
-    () => devices?.data.find((device) => device.deviceId === +deviceId!),
+    () => (devices?.data || []).find((device) => device.deviceId === +deviceId!),
     [devices, deviceId]
   );
 

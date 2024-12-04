@@ -73,7 +73,7 @@ const ViewUsers: FC = () => {
   const paginatedData: IAllUsersTableRow[] = useMemo(() => {
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     return (
-      filteredData
+      (!!filteredData.length ? filteredData : [])
         .sort((userPrev, userNext) => userPrev?.userId - userNext?.userId)
         .map((user, index) => {
           const { fio, userId, deviceId } = user;

@@ -6,7 +6,7 @@ export const useGetDeviceOptions = () => {
 
     const devicesOptions = useMemo(() => {
       return (
-        devices?.data.map((device) => ({
+        (devices?.data || []).map((device) => ({
           label: `Пульсометр #${device.deviceId}`,
           value: device.deviceId,
         })) || []
