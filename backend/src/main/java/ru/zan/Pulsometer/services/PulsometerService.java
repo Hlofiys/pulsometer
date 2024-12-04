@@ -10,10 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.zan.Pulsometer.DTOs.MqttPayload;
-import ru.zan.Pulsometer.DTOs.PulseDataDTO;
-import ru.zan.Pulsometer.DTOs.StatusDataDTO;
-import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
+import ru.zan.Pulsometer.DTOs.*;
 import ru.zan.Pulsometer.models.Device;
 import ru.zan.Pulsometer.models.PulseMeasurement;
 import ru.zan.Pulsometer.models.Session;
@@ -206,7 +203,7 @@ public class PulsometerService {
                 }).subscribe();
     }
 
-    private Mono<String> createActivateMessage(Integer userId) {
+    private Mono<String> createActivateMessage(Integer userId,String typeActivity) {
         String sessionStatus = "Open";
         return sessionRepository.existsByUserIdAndSessionStatus(userId,sessionStatus)
                 .flatMap(exists->{
@@ -219,6 +216,7 @@ public class PulsometerService {
                                 .atZone(ZoneOffset.UTC)
                                 .toLocalDateTime();
                         session.setTime(utcNow);
+                        session.setTypeActivity(typeActivity);
 
                         return sessionRepository.save(session)
                                 .flatMap(savedSession -> {
@@ -240,7 +238,7 @@ public class PulsometerService {
         return new MqttPayload(isActivateValue, sessionId);
     }
 
-    public Mono<Boolean> publishActivate(Integer userId) {
+    public Mono<Boolean> publishActivate(Integer userId,String typeActivity) {
         return deviceRepository.findFirstByUserIdInUsers(userId)
                 .switchIfEmpty(Mono.error(new DeviceNotFoundException("Device with such user not found: " + userId)))
                 .flatMap(device -> {
@@ -262,7 +260,7 @@ public class PulsometerService {
                                                         "User with ID: " + userId + " does not have access to device with ID: " + device.getDeviceId()));
                                             }
                                             String topic = "device/switch/" + device.getDeviceId();
-                                            return createActivateMessage(userId)
+                                            return createActivateMessage(userId,typeActivity)
                                                     .flatMap(payload -> publishMqttMessage(topic, payload))
                                                     .flatMap(success -> {
                                                         device.setStatus("measuring");
@@ -415,8 +413,26 @@ public class PulsometerService {
         return userRepository.findAll();
     }
 
-    public Flux<Device> getAllDevices() {
-        return deviceRepository.findAll();
+    public Flux<DeviceDTO> getAllDevices() {
+        return deviceRepository.findAll()
+                .flatMap(device -> {
+                    if (device.getActiveUserId() != null) {
+                        return sessionRepository.findOpenSessionIdByUserId(device.getActiveUserId())
+                                .map(sessionId -> mapToDeviceDTO(device, sessionId))
+                                .switchIfEmpty(Mono.just(mapToDeviceDTO(device, null)));
+                    }
+                    return Mono.just(mapToDeviceDTO(device, null));
+                });
+    }
+
+    private DeviceDTO mapToDeviceDTO(Device device, Integer sessionId) {
+        return new DeviceDTO(
+                device.getDeviceId(),
+                device.getStatus(),
+                sessionId,
+                device.getLastContact(),
+                device.getUsers()
+        );
     }
 
     public Mono<Boolean> checkDeviceExists(Integer deviceId) {
@@ -441,6 +457,10 @@ public class PulsometerService {
 
     public Flux<PulseMeasurement> getMeasurementsBySessionId (Integer sessionId) {
         return pulseMeasurementRepository.findAllBySessionId(sessionId);
+    }
+
+    public Mono<Session> getSession(Integer sessionId) {
+        return sessionRepository.findById(sessionId);
     }
 
 

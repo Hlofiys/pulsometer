@@ -26,4 +26,7 @@ public interface SessionRepository extends R2dbcRepository<Session, Integer> {
 
     @Query("SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id IN (:userIds) AND session_status = 'Open')")
     Mono<Boolean> existsMultipleActiveSessionsByUserIds(@Param("userIds") List<Integer> userIds);
+
+    @Query("SELECT s.session_id FROM sessions s WHERE s.user_id = :userId AND s.session_status = 'Open' ORDER BY s.time DESC LIMIT 1")
+    Mono<Integer> findOpenSessionIdByUserId(@Param("userId") Integer userId);
 }

@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.zan.Pulsometer.models.Device;
+import ru.zan.Pulsometer.DTOs.DeviceDTO;
 import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.services.PulsometerService;
 import ru.zan.Pulsometer.util.*;
@@ -33,7 +33,7 @@ public class DeviceController {
             @ApiResponse(responseCode = "204", description = "No devices found")
     })
     @GetMapping("")
-    public Mono<ResponseEntity<Flux<Device>>> getDevices (){
+    public Mono<ResponseEntity<Flux<DeviceDTO>>> getDevices (){
         return pulsometerService.getAllDevices()
                 .collectList()
                 .flatMap(devices -> {
@@ -72,13 +72,19 @@ public class DeviceController {
             @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @PostMapping("/activate")
-    public Mono<ResponseEntity<?>> manageStatusActivate (@RequestParam(value = "activeUserId") Integer activeUserId){
+    public Mono<ResponseEntity<?>> manageStatusActivate (@RequestParam(value = "activeUserId") Integer activeUserId,
+                                                         @RequestParam(value = "typeActivity") String typeActivity){
         if (activeUserId == null || activeUserId <= 0) {
             return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse("Invalid or missing activeUserId", HttpStatus.BAD_REQUEST.value())));
         }
 
-        return pulsometerService.publishActivate(activeUserId)
+        if (typeActivity == null || typeActivity.trim().isEmpty()) {
+            return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse("Invalid or missing typeActivity", HttpStatus.BAD_REQUEST.value())));
+        }
+
+        return pulsometerService.publishActivate(activeUserId,typeActivity)
                 .map(isPublish -> isPublish
                         ? ResponseEntity.ok(true)
                         : ResponseEntity.status(HttpStatus.BAD_REQUEST)
