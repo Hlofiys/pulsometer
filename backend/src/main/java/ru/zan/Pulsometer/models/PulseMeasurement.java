@@ -1,5 +1,6 @@
 package ru.zan.Pulsometer.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,6 +28,7 @@ public class PulseMeasurement {
     @Size(min = 1,max = 50)
     private Integer oxygen;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime date;
 
     @Column(value = "session_id")
