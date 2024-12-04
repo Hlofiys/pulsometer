@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class PulsometerService {
+
     private final UserRepository userRepository;
     private final DeviceRepository deviceRepository;
     private final PulseMeasurementRepository pulseMeasurementRepository;
@@ -44,18 +45,19 @@ public class PulsometerService {
     private final ScheduledExecutorService reconnectScheduler = Executors.newSingleThreadScheduledExecutor();
     private static final int RECONNECT_DELAY = 5;
     private static final String persistenceDir = "src/main/resources/persistence";
-
+    private final WebSocketBroadcastService webSocketBroadcastService;
 
     @Autowired
     public PulsometerService(UserRepository userRepository,
                              DeviceRepository deviceRepository,
                              PulseMeasurementRepository pulseMeasurementRepository, SessionRepository sessionRepository,
-                             ObjectMapper objectMapper) throws MqttException {
+                             ObjectMapper objectMapper, WebSocketBroadcastService webSocketBroadcastService) throws MqttException {
         this.userRepository = userRepository;
         this.deviceRepository = deviceRepository;
         this.pulseMeasurementRepository = pulseMeasurementRepository;
         this.sessionRepository = sessionRepository;
         this.objectMapper = objectMapper;
+        this.webSocketBroadcastService = webSocketBroadcastService;
 
         initializeMqttClient();
     }
@@ -133,6 +135,7 @@ public class PulsometerService {
         StatusDataDTO statusData;
         try {
             statusData = objectMapper.readValue(payload, StatusDataDTO.class);
+            webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(statusData.getId(),"ready"));
         } catch (IOException e) {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
@@ -161,7 +164,7 @@ public class PulsometerService {
                                 });
                     }
                 })
-                .doOnSuccess(device -> System.out.println("Device successfully processed: " + device))
+                .doOnSuccess(device -> System.out.println("Device successfully processed: "))
                 .doOnError(e -> System.err.println("Error processing device: " + e.getMessage()))
                 .subscribe();
     }
@@ -173,6 +176,9 @@ public class PulsometerService {
         PulseDataDTO pulseDataDTO;
         try {
             pulseDataDTO = objectMapper.readValue(payload, PulseDataDTO.class);
+            String message = objectMapper.writeValueAsString(convertToDataWebSocketDTO(pulseDataDTO,
+                    TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime())));
+            webSocketBroadcastService.sendDataMessage(message);
         } catch (JsonProcessingException e) {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
@@ -186,6 +192,7 @@ public class PulsometerService {
                         return deviceRepository.findById(pulseDataDTO.getId())
                                 .flatMap(device -> {
                                     device.setStatus("measuring");
+                                    webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"measuring"));
                                     device.setLastContact(measurementTime);
                                     return deviceRepository.save(device);
                                 }).flatMap(savedDevice ->{
@@ -204,6 +211,16 @@ public class PulsometerService {
                                 .flatMap(pulseMeasurementRepository::save);
                     }
                 }).subscribe();
+    }
+
+    private DataWebSocketDTO convertToDataWebSocketDTO(PulseDataDTO pulseDataDTO,LocalDateTime date) {
+        DataWebSocketDTO dataWebSocketDTO = new DataWebSocketDTO();
+        dataWebSocketDTO.setId(pulseDataDTO.getId());
+        dataWebSocketDTO.setBpm(pulseDataDTO.getBpm());
+        dataWebSocketDTO.setOxygen(pulseDataDTO.getOxygen());
+        dataWebSocketDTO.setSessionId(pulseDataDTO.getSessionId());
+        dataWebSocketDTO.setDate(date);
+        return dataWebSocketDTO;
     }
 
     private Mono<String> createActivateMessage(Integer userId,String typeActivity) {
@@ -267,6 +284,7 @@ public class PulsometerService {
                                                     .flatMap(payload -> publishMqttMessage(topic, payload))
                                                     .flatMap(success -> {
                                                         device.setStatus("measuring");
+                                                        webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"measuring"));
                                                         device.setActiveUserId(userId);
                                                         return deviceRepository.save(device).thenReturn(true);
                                                     });
@@ -337,6 +355,7 @@ public class PulsometerService {
                 .flatMap(device -> {
                     String topic = "device/switch/" + device.getDeviceId();
                     device.setStatus("ready");
+                    webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"ready"));
 
                     return createDeactivateMessage(userId)
                             .flatMap(payload -> publishMqttMessage(topic, payload))
@@ -477,6 +496,7 @@ public class PulsometerService {
                 .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
                 .flatMap(device -> {
                     device.setStatus("off");
+                    webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"off"));
                     return deviceRepository.save(device)
                             .flatMap(savedDevice-> closeOpenSessionsForUsers(savedDevice.getUsers()));
                 })
@@ -503,6 +523,15 @@ public class PulsometerService {
                     file.delete();
                 }
             }
+        }
+    }
+
+    private String serializeStatusWebSocketDTO (Integer id,String status) {
+        StatusWebSocketDTO statusWebSocketDTO = new StatusWebSocketDTO(id, status);
+        try {
+            return objectMapper.writeValueAsString(statusWebSocketDTO);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize object", e);
         }
     }
 
