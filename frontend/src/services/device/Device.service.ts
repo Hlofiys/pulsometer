@@ -5,6 +5,12 @@ import {
   TActivateMeasurements,
 } from "../interfaces/Interfaces";
 
+export enum DeviceStatus {
+  "off" = "Отключено",
+  "ready" = "Подключено",
+  "measuring" = "В процессе измерения",
+}
+
 class DeviceServices {
   async getAll() {
     return await instance.get<IDevice[]>("/devices");
@@ -15,21 +21,25 @@ class DeviceServices {
   }
 
   async activateMeasurements(props: TActivateMeasurements) {
-    const { activeUserId } = props;
+    const { userId, typeActivity } = props;
     return instance.post(
-      `/devices/activate?activeUserId=${activeUserId}`
-      // {},
-      // {
-        // params: activeUserId,
-        // paramsSerializer: {
-        //   indexes: false, // empty brackets like `arrayOfUserIds[]`
-        // },
-      // }
+      `/devices/activate`,
+      {},
+      {
+        params: {
+          activeUserId: userId,
+          typeActivity,
+        },
+      }
     );
   }
 
   async deactivateMeasurements(activeUserId: number) {
-    return await instance.post(`/devices/activate/${activeUserId}`);
+    return await instance.post(
+      `/devices/deactivate`,
+      {},
+      { params: { activeUserId } }
+    );
   }
 }
 

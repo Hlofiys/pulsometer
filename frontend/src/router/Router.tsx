@@ -8,6 +8,7 @@ import StartMeasurements from "../pages/measurements/start/StartMeasurements";
 // import ProcessMeasurements from "../pages/measurements/process/ProcessSession";
 import ReviewSessions from "../pages/measurements/review/ReviewSessions";
 import ProcessSession from "../pages/measurements/process/ProcessSession";
+import WebSocketComponent from "../pages/WebSocket";
 
 export enum RouterPath{
   NOT_FOUND = '*',
@@ -18,6 +19,7 @@ export enum RouterPath{
   REVIEW_MEASUREMENTS='/review-measurements',
   REVIEW_SESSION = '/review-sessions',
   PROCESS_SESSION = '/process-session',
+  WEB_SOCKET = '/web-socket'
 }
 const Router: FC = () => {
   return (
@@ -36,9 +38,12 @@ const Router: FC = () => {
           <Route path={RouterPath.VIEW + '/:deviceId'} element={<ViewUsers />} />
           <Route path={RouterPath.START_MEASUREMENTS + '/:deviceId/:userId'} element={<StartMeasurements />} />
           <Route path={RouterPath.START_MEASUREMENTS + '/:deviceId'} element={<StartMeasurements />} />
-          <Route path={RouterPath.REVIEW_MEASUREMENTS + '/:userId/:sessionId/:startMeasurementTime'} element={<ProcessSession />} />
+          <Route path={RouterPath.REVIEW_MEASUREMENTS + '/:sessionId'} element={<ProcessSession />} />
           <Route path={RouterPath.REVIEW_SESSION + '/:id'} element={<ReviewSessions />} />
-          <Route path={RouterPath.PROCESS_SESSION + '/:id'} element={<ProcessSession />} />
+          <Route path={RouterPath.PROCESS_SESSION + '/:sessionId'} element={<ProcessSession />} />
+
+          <Route path={RouterPath.WEB_SOCKET} element={<WebSocketComponent />} />
+          
         </Route>
       </Routes>
     </BrowserRouter>

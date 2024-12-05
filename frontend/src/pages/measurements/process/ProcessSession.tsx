@@ -6,32 +6,66 @@ import Link from "../../../ui/buttons/link/Link";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetMeasurementsBySessionId } from "../../../api/hooks/session/useGetMeasurementsBySessionId";
-import { useGetSessions } from "../../../api/hooks/session/useGetSessions";
 import { useGetUserById } from "../../../api/hooks/user/useGetUserById";
 import SkeletonParams from "./userParams/skeleton/Skeleton";
 import { RouterPath } from "../../../router/Router";
 import Button from "../../../ui/buttons/primary/Button";
 import { convertMilliseconds } from "../../../utils/functions/functions";
+import { useGetSessionById } from "../../../api/hooks/session/useSessionById";
+import { useDeactivateMeasurements } from "../../../api/hooks/device/useDeactivateMeasurements";
+// import useWebSocket from "react-use-websocket";
 
 const ProcessSession: FC = () => {
-  const { userId, sessionId, startMeasurementTime } = useParams();
+  const { sessionId } = useParams();
   const nav = useNavigate();
+  // const [localMeasurements, setLocalMeasurements] = useState<IMeasurements[]>(
+  //   []
+  // );
 
   const { data: measurements, isLoading: isLoadingMeasurements } =
     useGetMeasurementsBySessionId(+sessionId!);
-  const { data: userSessions, isLoading: isLoadingSessions } = useGetSessions(
-    +userId!
-  );
+
+  const {
+    data: activeSession,
+    isLoading: isLoadingActiveSession,
+    refetch,
+  } = useGetSessionById(+sessionId!);
+
   const { data: userData, isLoading: isLoadingUserData } = useGetUserById(
-    +userId!
+    activeSession?.data.userId || 0,
+    !isLoadingActiveSession
   );
 
+  const { mutateAsync: deactivate, isLoading: isLoadingDeactivate } =
+    useDeactivateMeasurements();
+
+  // useEffect(()=>{
+  //   activeSession?.data.sessionStatus === "Open" &&
+  //     useWebSocket("wss://pulse.hlofiys.xyz/ws/data", {
+  //       shouldReconnect: () => true, // Попытки переподключения
+  //       onMessage: (data) => {
+  //         (JSON.parse(data.data) as IMeasurements[])
+  //           setLocalMeasurements(JSON.parse(data.data));
+  //       },
+  //       reconnectAttempts: 10,
+  //       reconnectInterval: 5000, // Интервал между попытками
+  //     });
+
+  // }, [activeSession?.data]);
+
   const dashboardData = useMemo(() => {
-    const startTime = new Date(startMeasurementTime!).getTime();
-    // const startTime =new Date(convertTime(new Date(startMeasurementTime!))).getTime();
-    // const startTime = new Date(startMeasurementTime!).getTime();
-    // console.log(convertTime(new Date(startMeasurementTime!)))
-    // Проверяем, есть ли элементы в массиве
+    if (!!activeSession?.data && isLoadingActiveSession) {
+      return {
+        dashboardParams: [],
+        oxygen: 0,
+        maxBpm: 0,
+        minBpm: 0,
+        averageBpm: 0,
+      };
+    }
+
+    const startTime = new Date(activeSession?.data.time || "").getTime();
+
     if (measurements?.length === 0) {
       return {
         dashboardParams: [],
@@ -48,13 +82,17 @@ const ProcessSession: FC = () => {
     const maxBpm = Math.max(...bpms); // Максимальное значение bpm
     const minBpm = Math.min(...bpms); // Минимальное значение bpm
     const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length; // Среднее значение bpm
-    const averageOxygen = oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length; // Среднее значение oxygen
+    const averageOxygen =
+      oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length; // Среднее значение oxygen
 
     const dashboardParams = measurements?.map(({ date, bpm }) => {
       const measurementTime = new Date(date).getTime();
       // console.log('measurementTim: ', measurementTime, "startTime: ", startTime, startTime - measurementTime)
-      const secondsDiff = Math.round((measurementTime - startTime)); // Разница в секундах
-      return { label: convertMilliseconds(secondsDiff).totalSeconds, value: bpm };
+      const secondsDiff = Math.round(measurementTime - startTime); // Разница в секундах
+      return {
+        label: convertMilliseconds(secondsDiff).totalSeconds,
+        value: bpm,
+      };
     });
 
     return {
@@ -64,7 +102,7 @@ const ProcessSession: FC = () => {
       minBpm,
       averageBpm: Math.round(averageBpm), // Округляем до целого
     };
-  }, [measurements]);
+  }, [measurements, activeSession?.data, isLoadingActiveSession]);
 
   const paramSet = useMemo(() => {
     return [
@@ -84,35 +122,49 @@ const ProcessSession: FC = () => {
     ];
   }, [dashboardData]);
 
-  const activeSession = useMemo(
-    () => userSessions?.find((user) => user.sessionId === +sessionId!),
-    [sessionId, userSessions]
-  );
   return (
     <div className={styles.mainProcessContainer}>
       <div className={styles.processMeasurementsContainer}>
-        {isLoadingSessions || isLoadingUserData ? (
+        {isLoadingActiveSession || isLoadingUserData ? (
           <SkeletonParams />
         ) : (
           <Params
             fio={userData?.data.fio || ""}
             deviceId={userData?.data.deviceId || 0}
-            activityType="Бег"
-            time={!!activeSession?.passed && (activeSession!.passed - 3 * 60 * 60 * 1000) || 0}
+            activityType={activeSession?.data.typeActivity.trim() || ""}
+            time={
+              (!!activeSession?.data.passed &&
+                activeSession!.data.passed - 3 * 60 * 60 * 1000) ||
+              0
+            }
           />
         )}
         <Statistic
           dashboardData={dashboardData.dashboardParams}
-          isLoading={isLoadingMeasurements}
+          isLoading={isLoadingMeasurements || isLoadingActiveSession}
           paramSet={paramSet}
         />
       </div>
 
       <section className={styles.buttons}>
-        <Button onClick={() => console.log(dashboardData.dashboardParams, convertMilliseconds(dashboardData.dashboardParams[5].label * 1000))}>
-          Сохранить изменения:
-        </Button>
-        <Link onClick={() => nav(RouterPath.REVIEW_SESSION+`/${userId}`)}>
+        {activeSession?.data.sessionStatus === "Open" && (
+          <Button
+            isLoading={isLoadingDeactivate}
+            disabled={isLoadingDeactivate}
+            onClick={() =>
+              deactivate(activeSession?.data.userId || 0, {
+                onSuccess: () => refetch(),
+              })
+            }
+          >
+            Остановить измерения
+          </Button>
+        )}
+        <Link
+          onClick={() =>
+            nav(RouterPath.REVIEW_SESSION + `/${activeSession?.data.userId}`)
+          }
+        >
           Смотреть другие результаты <ArrowRight stroke="#23E70A" />
         </Link>
       </section>

@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
   padding: 25px;
   gap: 10px;
   border-radius: 15px;
@@ -20,6 +21,44 @@
 
   &:hover {
     color: #23e70a;
+  }
+
+  .deviceStatus {
+    left: 50%; /* Центрирование */
+    transform: translateX(-50%); /* Центрирование по горизонтали */
+    font-family: "Lora-SemiBold";
+    font-size: 16px;
+    font-weight: 600;
+    padding: 5px 15px;
+    border-radius: 15px; /* Более плавные края */
+    position: absolute;
+    text-align: center;
+    min-width: 200px;
+    // background: rgba(255, 255, 255, 0.4); /* Полупрозрачный фон */
+    backdrop-filter: blur(5px); /* Лёгкий эффект размытия */
+    -webkit-backdrop-filter: blur(5px); /* Поддержка Safari */
+    border: 1px solid rgba(255, 255, 255, 0.25); /* Белая рамка с прозрачностью */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Лёгкая тень */
+    color: #fff; /* Белый текст */
+    -webkit-text-stroke: 0.15px black; /* Толщина и цвет обводки */
+    transition: background 0.3s ease, color 0.3s ease;
+
+    &.ready {
+      background: rgba(27, 223, 1, 0.3); /* Лёгкий зелёный */
+      color: #22ce0c; /* Яркий зелёный текст */
+    }
+
+    &.off {
+      background: rgba(255, 77, 77, 0.3); /* Лёгкий красный */
+      color: #f53f3f; /* Яркий красный текст */
+    }
+
+    &.measuring {
+      background: rgba(255, 193, 7, 0.6); /* Яркий жёлтый фон с меньшей прозрачностью */
+      color: #ffb74b; /* Насыщенный оранжево-жёлтый текст */
+      border: 1px solid #ffc107; /* Жёлтая рамка для чёткости */
+      box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4); /* Тёплая тень */
+    }
   }
 
   img {

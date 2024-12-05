@@ -1,7 +1,6 @@
 import { FC, useMemo } from "react";
 import styles from "./StartMeasurements.module.scss";
 import { DeviceCard } from "../../../ui/devices/list/card/DeviceCard";
-import { IOption } from "../../../ui/input/dropdown/Dropdown";
 import ScopeInput from "../../../ui/input/scopeInput/ScopeInput";
 import Button from "../../../ui/buttons/primary/Button";
 import Link from "../../../ui/buttons/link/Link";
@@ -15,14 +14,9 @@ import { Spin } from "antd";
 import { useActivateMeasurements } from "../../../api/hooks/device/useActivateMeasurements";
 import { RouterPath } from "../../../router/Router";
 
-const options: IOption<number>[] = [
-  { label: "Бег", value: 1 },
-  { label: "Спортивная ходьба", value: 2 },
-];
-
 interface IStartMeasurements {
   userId: number;
-  activityId: number;
+  typeActivity: string;
 }
 const StartMeasurements: FC = () => {
   const nav = useNavigate();
@@ -36,28 +30,37 @@ const StartMeasurements: FC = () => {
   const { control, handleSubmit, reset, watch } = useForm<IStartMeasurements>({
     mode: "onChange",
     defaultValues: {
-      userId: userId && +userId || 0,
-      activityId: 0,
+      userId: (userId && +userId) || 0,
+      typeActivity: "",
     },
   });
   const startParams = watch();
 
   const isDisabled = useMemo(
-    () => !hasAllValuesForKeys(startParams, ["userId", "activityId"]),
+    () => !hasAllValuesForKeys(startParams, ["userId", "typeActivity"]),
     [startParams]
   );
 
   const onSubmit: SubmitHandler<IStartMeasurements> = async (data) => {
-    const { userId } = data;
+    const { userId, typeActivity } = data;
 
-    await activate({
-      activeUserId: userId,
-      // deviceId: +deviceId!,
-    }, {onSuccess: ()=>reset()} );
+    await activate(
+      {
+        userId,
+        typeActivity: typeActivity.trim(),
+      },
+      {
+        onSuccess: () => {
+          reset();
+          // nav(RouterPath.PROCESS_SESSION+`/${}`)
+        },
+      }
+    );
   };
 
   const activeDevice = useMemo(
-    () => (devices?.data || []).find((device) => device.deviceId === +deviceId!),
+    () =>
+      (devices?.data || []).find((device) => device.deviceId === +deviceId!),
     [devices, deviceId]
   );
 
@@ -101,19 +104,17 @@ const StartMeasurements: FC = () => {
             }}
           />
           <Controller
-            name="activityId"
-            key={"activityId"}
+            name="typeActivity"
+            key={"typeActivity"}
             control={control}
             render={({ field }) => {
-              const { ref, onChange, ...dropdownField } = field;
+              const { ref, onChange, ...inputField } = field;
               return (
                 <ScopeInput
-                  dropdownProps={{
-                    ...dropdownField,
-                    onChange: (option) => onChange(option.value),
-                    containersStyles: { width: "50%" },
-                    isDropDown: true,
-                    options: options,
+                  inputProps={{
+                    ...inputField,
+                    onChange,
+                    style: { width: "50%" },
                   }}
                   ariaDescription={"Вид активности"}
                 />

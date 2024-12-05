@@ -13,5 +13,5 @@ export const useGetDeviceOptions = () => {
       );
     }, [devices]);
 
-    return {devicesOptions, isLoadingDevices};
+    return {devicesOptions, isLoadingDevices, devices: devices?.data};
 }

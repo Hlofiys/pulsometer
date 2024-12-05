@@ -37,22 +37,25 @@ const ViewUsers: FC = () => {
   const { data: fetchedUsers, isLoading } = !!deviceId
     ? useGetUsersByDeviceId(+deviceId)
     : useGetUsers();
-  const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
+  const { devicesOptions, isLoadingDevices, devices } = useGetDeviceOptions();
 
-  const fields: FieldConfig<IAllUsersTableRow>[] = useMemo(()=>[
-    { key: "lastName", label: "Фамилия", type: "text", isEditable: true },
-    { key: "firstName", label: "Имя", type: "text", isEditable: true },
-    { key: "middleName", label: "Отчество", type: "text", isEditable: true },
-    {
-      key: "deviceId",
-      label: "Устройство",
-      type: "dropdown",
-      dropdownOptions: devicesOptions,
-      dropdownLoading: isLoadingDevices,
-      renderStatic: (value: any) => <div>Пульсометр #{value}</div>,
-      isEditable: true,
-    },
-  ], [devicesOptions])
+  const fields: FieldConfig<IAllUsersTableRow>[] = useMemo(
+    () => [
+      { key: "lastName", label: "Фамилия", type: "text", isEditable: true },
+      { key: "firstName", label: "Имя", type: "text", isEditable: true },
+      { key: "middleName", label: "Отчество", type: "text", isEditable: true },
+      {
+        key: "deviceId",
+        label: "Устройство",
+        type: "dropdown",
+        dropdownOptions: devicesOptions,
+        dropdownLoading: isLoadingDevices,
+        renderStatic: (value: any) => <div>Пульсометр #{value}</div>,
+        isEditable: true,
+      },
+    ],
+    [devicesOptions]
+  );
 
   // Отфильтрованные данные на основе поиска
   const filteredData: TTableUserRow[] = useMemo(() => {
@@ -104,6 +107,16 @@ const ViewUsers: FC = () => {
     setCurrentPage(page);
   }, []);
 
+  const activeDevice = useMemo(
+    () => devices?.find((device) => device.deviceId === +deviceId!),
+    [devices]
+  );
+
+  const isButtonDisabled = useMemo(
+    () => ["off", "measuring"].includes(activeDevice?.status || ""),
+    [activeDevice]
+  );
+
   return (
     <div className={styles.viewContainer}>
       <h1>Все пользователи:</h1>
@@ -115,6 +128,10 @@ const ViewUsers: FC = () => {
         {!!deviceId && (
           <Button
             style={{ height: 50 }}
+            disabled={isButtonDisabled}
+            name={
+              isButtonDisabled ? "Устройство выключено" : "Начать измерения"
+            }
             onClick={() => nav(RouterPath.START_MEASUREMENTS + `/${deviceId}`)}
           >
             Начать измерение
@@ -130,7 +147,7 @@ const ViewUsers: FC = () => {
           fields={fields}
           isEdit
           getKey={(row) => row.userId}
-          getIndex={(row)=>row.index+1}
+          getIndex={(row) => row.index + 1}
         />
       ) : (
         <Empty

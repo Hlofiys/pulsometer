@@ -24,4 +24,10 @@
     color: #fbfaf8;
     border: 1px solid #fbfaf8;
   }
+
+  &:disabled{
+    border: 1px solid #cccccc82;
+    background-color: #cccccc82;
+    color: #3f3f3f;
+  }
 }

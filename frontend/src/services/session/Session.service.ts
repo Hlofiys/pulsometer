@@ -15,6 +15,10 @@ class SessionService {
     );
     return measurements.data;
   }
+
+  async getBySessionId(sessionId:number){
+    return instance.get<ISession>(`/users/${sessionId}/sessions/info`);
+  } 
 }
 
 export default new SessionService();

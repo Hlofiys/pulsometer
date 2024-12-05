@@ -170,7 +170,7 @@ const ReviewSessions: FC = () => {
         <Table<ISessionUserRow>
           onClick={(row) =>
             nav(
-              `${RouterPath.REVIEW_MEASUREMENTS}/${row.userId}/${row.sessionId}/${row.time}`
+              `${RouterPath.REVIEW_MEASUREMENTS}/${row.sessionId}`
             )
           }
           data={paginatedData}
