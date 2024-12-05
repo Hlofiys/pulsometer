@@ -22,6 +22,6 @@ public class StatusWebSocketHandler implements WebSocketHandler {
         return session.send(
                 broadcastService.getStatusMessages()
                         .map(session::textMessage)
-        );
+        ).then();
     }
 }

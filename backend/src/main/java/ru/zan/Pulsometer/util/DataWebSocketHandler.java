@@ -22,6 +22,6 @@ public class DataWebSocketHandler implements WebSocketHandler {
         return session.send(
                 broadcastService.getDataMessages()
                         .map(session::textMessage)
-        );
+        ).then();
     }
 }
