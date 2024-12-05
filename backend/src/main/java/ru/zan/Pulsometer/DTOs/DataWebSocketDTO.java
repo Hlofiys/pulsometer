@@ -21,5 +21,5 @@ public class DataWebSocketDTO {
 
     private Integer sessionId;
 
-    private LocalDateTime date;
+    private String date;
 }

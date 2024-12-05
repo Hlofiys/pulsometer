@@ -27,11 +27,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class PulsometerService {
@@ -178,12 +180,6 @@ public class PulsometerService {
         try {
             pulseDataDTO = objectMapper.readValue(payload, PulseDataDTO.class);
             System.out.println("Parsed message payload: " + pulseDataDTO);
-
-            String message = objectMapper.writeValueAsString(
-                    convertToDataWebSocketDTO(pulseDataDTO, TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime()))
-            );
-            webSocketBroadcastService.sendDataMessage(message);
-            System.out.println("Sent WebSocket data message: " + message);
         } catch (JsonProcessingException e) {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
@@ -238,24 +234,26 @@ public class PulsometerService {
                                 .flatMap(pulseMeasurementRepository::save);
                     }
                 })
-                .doOnSuccess(result -> {
-                    if (result != null) {
-                        System.out.println("Pulse measurement saved successfully: " + result);
-                    }
-                })
+                .flatMap(savedMeasurement ->
+                        pulseMeasurementRepository.findAllBySessionId(pulseDataDTO.getSessionId())
+                                .collectList()
+                                .doOnNext(pulseMeasurements -> {
+                                    List<DataWebSocketDTO> dataWebSocketDTOList = pulseMeasurements.stream()
+                                            .map(mappedPulseMeasurement -> {
+                                                DataWebSocketDTO dto = new DataWebSocketDTO();
+                                                dto.setId(mappedPulseMeasurement.getMeasurementId());
+                                                dto.setBpm(mappedPulseMeasurement.getBpm());
+                                                dto.setOxygen(mappedPulseMeasurement.getOxygen());
+                                                dto.setSessionId(mappedPulseMeasurement.getSessionId());
+                                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null); // Преобразуем LocalDateTime в строку
+                                                return dto;
+                                            })
+                                            .collect(Collectors.toList());
+                                    webSocketBroadcastService.sendDataMessage(dataWebSocketDTOList);
+                                })
+                )
                 .doOnError(e -> System.err.println("Error occurred while processing pulse measurement: " + e.getMessage()))
                 .subscribe();
-    }
-
-
-    private DataWebSocketDTO convertToDataWebSocketDTO(PulseDataDTO pulseDataDTO,LocalDateTime date) {
-        DataWebSocketDTO dataWebSocketDTO = new DataWebSocketDTO();
-        dataWebSocketDTO.setId(pulseDataDTO.getId());
-        dataWebSocketDTO.setBpm(pulseDataDTO.getBpm());
-        dataWebSocketDTO.setOxygen(pulseDataDTO.getOxygen());
-        dataWebSocketDTO.setSessionId(pulseDataDTO.getSessionId());
-        dataWebSocketDTO.setDate(date);
-        return dataWebSocketDTO;
     }
 
     private Mono<String> createActivateMessage(Integer userId,String typeActivity) {
