@@ -171,47 +171,82 @@ public class PulsometerService {
 
     private void processMessageData(String topic, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
-        System.out.println("Message arrived on topic " + topic + ": " + payload);
+        System.out.println("Message arrived on topic '" + topic + "': " + payload);
+
         PulseMeasurement pulseMeasurement = new PulseMeasurement();
         PulseDataDTO pulseDataDTO;
         try {
             pulseDataDTO = objectMapper.readValue(payload, PulseDataDTO.class);
-            String message = objectMapper.writeValueAsString(convertToDataWebSocketDTO(pulseDataDTO,
-                    TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime())));
+            System.out.println("Parsed message payload: " + pulseDataDTO);
+
+            String message = objectMapper.writeValueAsString(
+                    convertToDataWebSocketDTO(pulseDataDTO, TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime()))
+            );
             webSocketBroadcastService.sendDataMessage(message);
+            System.out.println("Sent WebSocket data message: " + message);
         } catch (JsonProcessingException e) {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
+
         LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
+        System.out.println("Converted measurement time: " + measurementTime);
+
         pulseMeasurementRepository.existsByDate(measurementTime)
-                .flatMap(exists->{
-                    if(exists) {
+                .flatMap(exists -> {
+                    if (exists) {
+                        System.out.println("Pulse measurement already exists for time: " + measurementTime);
                         return Mono.empty();
-                    }else{
+                    } else {
                         return deviceRepository.findById(pulseDataDTO.getId())
                                 .flatMap(device -> {
+                                    System.out.println("Device found: " + device);
+
                                     device.setStatus("measuring");
-                                    webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"measuring"));
+                                    webSocketBroadcastService.sendStatusMessage(
+                                            serializeStatusWebSocketDTO(device.getDeviceId(), "measuring")
+                                    );
+                                    System.out.println("Sent WebSocket status message for device: " + device.getDeviceId());
+
                                     device.setLastContact(measurementTime);
+                                    System.out.println("Updated device last contact: " + device);
+
                                     return deviceRepository.save(device);
-                                }).flatMap(savedDevice ->{
+                                })
+                                .flatMap(savedDevice -> {
+                                    System.out.println("Device saved: " + savedDevice);
+
                                     pulseMeasurement.setBpm(pulseDataDTO.getBpm());
                                     LocalDateTime date = measurementTime.minusHours(3);
                                     pulseMeasurement.setDate(date);
                                     pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
                                     pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
+                                    System.out.println("Prepared pulse measurement: " + pulseMeasurement);
+
                                     return sessionRepository.findById(pulseDataDTO.getSessionId())
-                                            .flatMap(receivedSession ->{
+                                            .flatMap(receivedSession -> {
+                                                System.out.println("Session found: " + receivedSession);
+
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
                                                 receivedSession.setPassed(elapsedMillis);
+                                                System.out.println("Updated session elapsed time: " + elapsedMillis + " ms");
+
                                                 return sessionRepository.save(receivedSession);
-                                            }).then(Mono.just(pulseMeasurement));
+                                            })
+                                            .then(Mono.just(pulseMeasurement));
                                 })
                                 .flatMap(pulseMeasurementRepository::save);
                     }
-                }).subscribe();
+                })
+                .doOnSuccess(result -> {
+                    if (result != null) {
+                        System.out.println("Pulse measurement saved successfully: " + result);
+                    }
+                })
+                .doOnError(e -> System.err.println("Error occurred while processing pulse measurement: " + e.getMessage()))
+                .subscribe();
     }
+
 
     private DataWebSocketDTO convertToDataWebSocketDTO(PulseDataDTO pulseDataDTO,LocalDateTime date) {
         DataWebSocketDTO dataWebSocketDTO = new DataWebSocketDTO();
