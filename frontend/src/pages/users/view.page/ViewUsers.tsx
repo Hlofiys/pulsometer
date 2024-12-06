@@ -34,10 +34,10 @@ const ViewUsers: FC = () => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  const { devicesOptions, isLoadingDevices, devices } = useGetDeviceOptions();
   const { data: fetchedUsers, isLoading } = !!deviceId
     ? useGetUsersByDeviceId(+deviceId)
     : useGetUsers();
-  const { devicesOptions, isLoadingDevices, devices } = useGetDeviceOptions();
 
   const fields: FieldConfig<IAllUsersTableRow>[] = useMemo(
     () => [

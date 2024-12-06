@@ -36,7 +36,7 @@ const ReviewSessions: FC = () => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
+  const { devicesOptions, isLoadingDevices, devices } = useGetDeviceOptions();
 
   const fields: FieldConfig<ISessionUserRow>[] = [
     { key: "lastName", label: "Фамилия", type: "text" },
@@ -139,6 +139,17 @@ const ReviewSessions: FC = () => {
     setCurrentPage(page);
   }, []);
 
+  const activeDevice = useMemo(
+    () =>
+      devices?.find((device) => device.deviceId === activeUser?.data.deviceId),
+    [devices, activeUser?.data]
+  );
+
+  const isButtonDisabled = useMemo(
+    () => ["off", "measuring"].includes(activeDevice?.status || ""),
+    [activeDevice]
+  );
+
   return (
     <div className={styles.reviewContainer}>
       <h1>Все сессии измерений пользователя:</h1>
@@ -152,7 +163,11 @@ const ReviewSessions: FC = () => {
           />
           <Button
             style={{ height: 50 }}
-            disabled={isLoadingActiveUser}
+            // disabled={isLoadingActiveUser}
+            disabled={isButtonDisabled || isLoadingActiveUser}
+            name={
+              isButtonDisabled ? "Устройство выключено" : "Начать измерения"
+            }
             onClick={() =>
               nav(
                 RouterPath.START_MEASUREMENTS +
@@ -169,9 +184,7 @@ const ReviewSessions: FC = () => {
       ) : paginatedData.length ? (
         <Table<ISessionUserRow>
           onClick={(row) =>
-            nav(
-              `${RouterPath.REVIEW_MEASUREMENTS}/${row.sessionId}`
-            )
+            nav(`${RouterPath.REVIEW_MEASUREMENTS}/${row.sessionId}`)
           }
           data={paginatedData}
           fields={fields}

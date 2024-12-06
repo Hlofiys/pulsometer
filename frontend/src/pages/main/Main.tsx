@@ -35,7 +35,6 @@ const Main: FC = () => {
           Все пользователи
         </AdditionalButton>
       </section>
-
       {isLoading ? (
         <Spin />
       ) : (

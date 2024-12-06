@@ -20,7 +20,6 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
 
   const [deviceStatus, setDeviceStatus] = useState<TDeviceStatus>(
     device.status || "off"
-    // 'measuring'
   );
 
   useWebSocket("wss://pulse.hlofiys.xyz/ws/status", {
@@ -28,6 +27,15 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
     onMessage: (data) => {
       JSON.parse(data.data).id === device.deviceId &&
         setDeviceStatus(JSON.parse(data.data).status);
+    },
+    onOpen: () => {
+      console.log("Open status socket!");
+    },
+    onClose: () => {
+      console.log("Close status socket!");
+    },
+    onError: () => {
+      console.log("Error connecting status!");
     },
     reconnectAttempts: 10,
     reconnectInterval: 5000, // Интервал между попытками
@@ -39,7 +47,9 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
       style={isShowCard ? { flexDirection: "column-reverse" } : undefined}
       onClick={() => onClick && onClick(device.deviceId)}
     >
-      <p className={`${styles.deviceStatus} ${styles[deviceStatus]}`}>{DeviceStatus[deviceStatus]}</p>
+      <p className={`${styles.deviceStatus} ${styles[deviceStatus]}`}>
+        {DeviceStatus[deviceStatus]}
+      </p>
       <img src={pulsometerDefault} alt="фото устройства" />
       <label
         style={

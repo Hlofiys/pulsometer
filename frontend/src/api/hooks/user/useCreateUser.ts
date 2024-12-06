@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import UserService from "../../../services/user/User.service"
+import { useError } from '../error/useError';
 
 export const useCreateUser = () => {
 
     const queryClient = useQueryClient();
+    const { onError } = useError();
     
     return useMutation({
         mutationKey: ['createUser'],
@@ -12,5 +14,6 @@ export const useCreateUser = () => {
             await queryClient.invalidateQueries(['getUsers'])
             console.log('Success create!')
         },
+        onError
     })
 }

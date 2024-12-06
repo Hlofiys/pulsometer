@@ -1,4 +1,4 @@
-import { FC, useRef, useEffect, useState, useMemo } from "react";
+import { FC, useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -61,42 +61,52 @@ const Dashboard: FC<DashboardProps> = ({
     label: null,
   });
 
-  const handleTooltip = (context: {
-    chart: ChartJS;
-    tooltip: TooltipModel<"line">;
-  }) => {
-    const { tooltip } = context;
+  const handleTooltip = useCallback(
+    (context: { chart: ChartJS; tooltip: TooltipModel<"line"> }) => {
+      const { tooltip } = context;
 
-    // Если tooltip не отображается, сбрасываем состояние
-    if (!tooltip.opacity) {
-      setTooltipState({ x: 0, y: 0, value: null, index: null, label: null });
-      return;
-    }
+      // Если tooltip не отображается, сбрасываем состояние
+      if (!tooltip.opacity) {
+        setTooltipState((prevState) => {
+          if (
+            prevState.x !== 0 ||
+            prevState.y !== 0 ||
+            prevState.value !== null ||
+            prevState.index !== null ||
+            prevState.label !== null
+          ) {
+            return { x: 0, y: 0, value: null, index: null, label: null };
+          }
+          return prevState;
+        });
+        return;
+      }
 
-    const tooltipModel = tooltip.dataPoints[0];
+      const tooltipModel = tooltip.dataPoints[0];
 
-    // Проверяем существование tooltipModel
-    if (tooltipModel) {
-      const { element } = tooltipModel;
-      const { x, y } = element;
-      const value = tooltipModel.raw as number;
-      const label = +tooltipModel.label.replace(/\s/g, '').replaceAll(',', '.') as number;
+      if (tooltipModel) {
+        const { element } = tooltipModel;
+        const { x, y } = element;
+        const value = tooltipModel.raw as number;
+        const label = +tooltipModel.label
+          .replace(/\s/g, "")
+          .replaceAll(",", ".");
 
-      const newState = { x, y, value, index: 0, label };
-
-      // Обновляем состояние только если новый объект отличается от предыдущего
-      setTooltipState((prevState) => {
-        const isSame =
-          prevState.x === newState.x &&
-          prevState.y === newState.y &&
-          prevState.value === newState.value &&
-          prevState.index === newState.index &&
-          prevState.label === newState.label;
-
-        return isSame ? prevState : newState;
-      });
-    }
-  };
+        setTooltipState((prevState) => {
+          if (
+            prevState.x !== x ||
+            prevState.y !== y ||
+            prevState.value !== value ||
+            prevState.label !== label
+          ) {
+            return { x, y, value, index: 0, label };
+          }
+          return prevState;
+        });
+      }
+    },
+    []
+  );
 
   // Данные графика
   const chartData: ChartData<"line"> = {
@@ -230,7 +240,10 @@ const Dashboard: FC<DashboardProps> = ({
             <p className={`${isAboveThreshold ? styles.warning : ""}`}>
               {tooltipState.value}
               <span style={{ display: "block", margin: 0, padding: 0 }}>
-                {convertMilliseconds(tooltipState.label*1000, true).formatNumberTime}
+                {
+                  convertMilliseconds(tooltipState.label * 1000, true)
+                    .formatNumberTime
+                }
                 {/* {typeof(tooltipState.label)} */}
               </span>
               {isAboveThreshold && <span>Пульс превышен!</span>}

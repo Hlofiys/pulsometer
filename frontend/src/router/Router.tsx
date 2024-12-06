@@ -5,7 +5,6 @@ import GeneralRoute from "./route/GeneralRoute";
 import CreateUser from "../pages/users/create.page/CreateUser";
 import ViewUsers from "../pages/users/view.page/ViewUsers";
 import StartMeasurements from "../pages/measurements/start/StartMeasurements";
-// import ProcessMeasurements from "../pages/measurements/process/ProcessSession";
 import ReviewSessions from "../pages/measurements/review/ReviewSessions";
 import ProcessSession from "../pages/measurements/process/ProcessSession";
 import WebSocketComponent from "../pages/WebSocket";

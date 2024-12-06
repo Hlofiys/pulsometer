@@ -1,4 +1,4 @@
-import { FC, useMemo } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import styles from "./ProcessSession.module.scss";
 import Params from "./userParams/Params";
 import Statistic from "./statistic/Statistic";
@@ -13,14 +13,16 @@ import Button from "../../../ui/buttons/primary/Button";
 import { convertMilliseconds } from "../../../utils/functions/functions";
 import { useGetSessionById } from "../../../api/hooks/session/useSessionById";
 import { useDeactivateMeasurements } from "../../../api/hooks/device/useDeactivateMeasurements";
-// import useWebSocket from "react-use-websocket";
+import useWebSocket from "react-use-websocket";
+import { IMeasurements } from "../../../services/interfaces/Interfaces";
 
 const ProcessSession: FC = () => {
   const { sessionId } = useParams();
   const nav = useNavigate();
-  // const [localMeasurements, setLocalMeasurements] = useState<IMeasurements[]>(
-  //   []
-  // );
+  const [_, setLocalMeasurements] = useState<IMeasurements[]>(
+    []
+  );
+  const [shouldConnect, setShouldConnect] = useState(false);
 
   const { data: measurements, isLoading: isLoadingMeasurements } =
     useGetMeasurementsBySessionId(+sessionId!);
@@ -39,19 +41,39 @@ const ProcessSession: FC = () => {
   const { mutateAsync: deactivate, isLoading: isLoadingDeactivate } =
     useDeactivateMeasurements();
 
-  // useEffect(()=>{
-  //   activeSession?.data.sessionStatus === "Open" &&
-  //     useWebSocket("wss://pulse.hlofiys.xyz/ws/data", {
-  //       shouldReconnect: () => true, // Попытки переподключения
-  //       onMessage: (data) => {
-  //         (JSON.parse(data.data) as IMeasurements[])
-  //           setLocalMeasurements(JSON.parse(data.data));
-  //       },
-  //       reconnectAttempts: 10,
-  //       reconnectInterval: 5000, // Интервал между попытками
-  //     });
+  // Настройка WebSocket
+  const { lastMessage } = useWebSocket(
+    shouldConnect ? "wss://pulse.hlofiys.xyz/ws/data" : null,
+    {
+      shouldReconnect: () => true,
+      onOpen: () => {
+        console.log("Open data socket!");
+      },
+      onClose: () => {
+        console.log("Close data socket!");
+      },
+      onError: () => {
+        console.log("Error data status!");
+      },
+      reconnectAttempts: 10,
+      reconnectInterval: 5000,
+    }
+  );
 
-  // }, [activeSession?.data]);
+  // Обработка данных WebSocket
+  useEffect(() => {
+    if (lastMessage) {
+      setLocalMeasurements((prev) => [
+        ...prev,
+        ...(JSON.parse(lastMessage.data) as IMeasurements[]),
+      ]);
+    }
+  }, [lastMessage]);
+
+  // Управление подключением WebSocket
+  useEffect(() => {
+    setShouldConnect(activeSession?.data.sessionStatus === "Open");
+  }, [activeSession?.data.sessionStatus]);
 
   const dashboardData = useMemo(() => {
     if (!!activeSession?.data && isLoadingActiveSession) {
@@ -76,19 +98,18 @@ const ProcessSession: FC = () => {
       };
     }
 
-    const bpms = measurements?.map(({ bpm }) => bpm) || []; // Массив всех значений bpm
-    const oxygens = measurements?.map(({ oxygen }) => oxygen) || []; // Массив всех значений bpm
+    const bpms = measurements?.map(({ bpm }) => bpm) || [];
+    const oxygens = measurements?.map(({ oxygen }) => oxygen) || [];
 
-    const maxBpm = Math.max(...bpms); // Максимальное значение bpm
-    const minBpm = Math.min(...bpms); // Минимальное значение bpm
-    const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length; // Среднее значение bpm
+    const maxBpm = Math.max(...bpms);
+    const minBpm = Math.min(...bpms);
+    const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length;
     const averageOxygen =
-      oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length; // Среднее значение oxygen
+      oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length;
 
     const dashboardParams = measurements?.map(({ date, bpm }) => {
       const measurementTime = new Date(date).getTime();
-      // console.log('measurementTim: ', measurementTime, "startTime: ", startTime, startTime - measurementTime)
-      const secondsDiff = Math.round(measurementTime - startTime); // Разница в секундах
+      const secondsDiff = Math.round(measurementTime - startTime);
       return {
         label: convertMilliseconds(secondsDiff).totalSeconds,
         value: bpm,
@@ -100,7 +121,7 @@ const ProcessSession: FC = () => {
       oxygen: averageOxygen || 0,
       maxBpm,
       minBpm,
-      averageBpm: Math.round(averageBpm), // Округляем до целого
+      averageBpm: Math.round(averageBpm),
     };
   }, [measurements, activeSession?.data, isLoadingActiveSession]);
 
