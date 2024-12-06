@@ -244,7 +244,6 @@ const Dashboard: FC<DashboardProps> = ({
                   convertMilliseconds(tooltipState.label * 1000, true)
                     .formatNumberTime
                 }
-                {/* {typeof(tooltipState.label)} */}
               </span>
               {isAboveThreshold && <span>Пульс превышен!</span>}
             </p>

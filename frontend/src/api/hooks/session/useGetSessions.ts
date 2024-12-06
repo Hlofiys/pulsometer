@@ -9,7 +9,7 @@ export const useGetSessions = (userId: number)=> {
         queryKey: ['getSessions', userId],
         queryFn: ()=>SessionService.getByUserId(userId),
         onSuccess: (data)=>console.log(data),
-        staleTime: 1000*60*2,
+        staleTime: 1000*60*1,
         onError
     })
 }

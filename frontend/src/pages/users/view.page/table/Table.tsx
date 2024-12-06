@@ -28,6 +28,7 @@ const Table = <T,>(props: TableProps<T>): JSX.Element => {
       <tbody>
         {data.map((row) => (
           <TableRow
+          
             fields={fields}
             key={getKey(row)}
             rowData={row}

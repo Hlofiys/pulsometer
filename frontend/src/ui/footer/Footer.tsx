@@ -1,11 +1,13 @@
 import { FC, memo } from "react";
 import styles from "./Footer.module.scss";
+import logo from '../../assets/photos/logo.webp';
 
 const Footer: FC = () => {
   return (
     <footer className={styles.footerContainer}>
       <article>
-        <p>УО “Белорусская государственная академия связи” © 2024</p>
+        <img src={logo} alt="логотип" />
+        <p>УО “Белорусская государственная академия связи” <br />© 2024</p>
       </article>
       <article>
         <p>Адрес:</p>г. Минск, ул. Ф.Скорины, 8/2

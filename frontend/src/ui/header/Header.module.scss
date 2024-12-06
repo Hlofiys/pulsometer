@@ -5,6 +5,7 @@
   align-items: center;
   padding: 30px 5px;
   gap: 10px;
+  user-select: none;
   border-bottom: 1px solid #5b5d63;
 
   img {
@@ -36,8 +37,18 @@
     color: #fbfaf8;
 
     p {
+      display: flex;
+      align-items: center;
+      cursor: default;
+      gap: 15px;
       margin: 0;
       padding: 0;
+
+      svg{
+        width: 25px;
+        height: 25px;
+        cursor: default;
+      }
     }
   }
 }

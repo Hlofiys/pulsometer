@@ -23,7 +23,7 @@ const StartMeasurements: FC = () => {
   const { deviceId, userId } = useParams();
 
   const { data: users, isLoading: isLoadingUsers } = useGetUsers();
-  const { mutateAsync: activate, isLoading: isLoadingActivate } =
+  const { data, mutateAsync: activate, isLoading: isLoadingActivate } =
     useActivateMeasurements();
   const { data: devices, isLoading: isLoadingDevices } = useGetDevices();
 
@@ -71,7 +71,7 @@ const StartMeasurements: FC = () => {
       )}
 
       <section>
-        <h1>Для запуска измерений выберите пользователя и вид активности:</h1>
+        <h1 onClick={()=>console.log(data?.data)}>Для запуска измерений выберите пользователя и вид активности:</h1>
         <form
           action=""
           className={styles.measurementsFormProps}

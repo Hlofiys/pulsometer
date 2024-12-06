@@ -6,10 +6,11 @@ export const useGetUserById = (userId: number, enabled?: boolean) => {
   const { onError } = useError();
 
   return useQuery({
-    queryKey: ["getUserById"],
+    queryKey: ["getUserById", userId],
     queryFn: () => UserService.getById(userId!),
     onSuccess: (data) => console.log(data.data),
     enabled: !!userId || enabled,
+    staleTime: 1000*60*2,
     onError
   });
 };

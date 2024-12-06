@@ -19,7 +19,7 @@ import { IMeasurements } from "../../../services/interfaces/Interfaces";
 const ProcessSession: FC = () => {
   const { sessionId } = useParams();
   const nav = useNavigate();
-  const [_, setLocalMeasurements] = useState<IMeasurements[]>(
+  const [localMeasurements, setLocalMeasurements] = useState<IMeasurements[]>(
     []
   );
   const [shouldConnect, setShouldConnect] = useState(false);
@@ -46,6 +46,9 @@ const ProcessSession: FC = () => {
     shouldConnect ? "wss://pulse.hlofiys.xyz/ws/data" : null,
     {
       shouldReconnect: () => true,
+      onMessage: ({ data }) => {
+        console.log(data);
+      },
       onOpen: () => {
         console.log("Open data socket!");
       },
@@ -62,13 +65,17 @@ const ProcessSession: FC = () => {
 
   // Обработка данных WebSocket
   useEffect(() => {
-    if (lastMessage) {
-      setLocalMeasurements((prev) => [
-        ...prev,
-        ...(JSON.parse(lastMessage.data) as IMeasurements[]),
-      ]);
+    if (!!lastMessage?.data&&lastMessage.data!=='ping') {
+      if (Array.isArray(JSON.parse(lastMessage.data))) {
+        setLocalMeasurements(
+          (JSON.parse(lastMessage.data) as IMeasurements[])
+        );
+      }
+      
     }
   }, [lastMessage]);
+
+  useEffect(() => setLocalMeasurements(measurements || []), [measurements]);
 
   // Управление подключением WebSocket
   useEffect(() => {
@@ -88,7 +95,7 @@ const ProcessSession: FC = () => {
 
     const startTime = new Date(activeSession?.data.time || "").getTime();
 
-    if (measurements?.length === 0) {
+    if (localMeasurements?.length === 0) {
       return {
         dashboardParams: [],
         oxygen: 0,
@@ -98,16 +105,16 @@ const ProcessSession: FC = () => {
       };
     }
 
-    const bpms = measurements?.map(({ bpm }) => bpm) || [];
-    const oxygens = measurements?.map(({ oxygen }) => oxygen) || [];
+    const bpms = localMeasurements?.map(({ bpm }) => bpm) || [];
+    const oxygens = localMeasurements?.map(({ oxygen }) => oxygen) || [];
 
     const maxBpm = Math.max(...bpms);
     const minBpm = Math.min(...bpms);
     const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length;
     const averageOxygen =
-      oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length;
+      Math.round(oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length);
 
-    const dashboardParams = measurements?.map(({ date, bpm }) => {
+    const dashboardParams = localMeasurements?.map(({ date, bpm }) => {
       const measurementTime = new Date(date).getTime();
       const secondsDiff = Math.round(measurementTime - startTime);
       return {
@@ -123,7 +130,7 @@ const ProcessSession: FC = () => {
       minBpm,
       averageBpm: Math.round(averageBpm),
     };
-  }, [measurements, activeSession?.data, isLoadingActiveSession]);
+  }, [ activeSession?.data, localMeasurements, isLoadingActiveSession]);
 
   const paramSet = useMemo(() => {
     return [

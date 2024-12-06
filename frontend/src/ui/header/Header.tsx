@@ -3,6 +3,7 @@ import styles from "./Header.module.scss";
 import logo from "../../assets/photos/logo.webp";
 import { useNavigate } from "react-router-dom";
 import { RouterPath } from "../../router/Router";
+import { FundViewOutlined } from "@ant-design/icons";
 
 const Header: FC = () => {
   const nav = useNavigate();
@@ -11,8 +12,11 @@ const Header: FC = () => {
       <img src={logo} alt="логотип" onClick={() => nav(RouterPath.MAIN)} />
       <h5>УО “Белорусская государственная академия связи”</h5>
       <aside>
-        <p>О проекте</p>
-        <p>Пульсометр</p>
+        {/* <p>О проекте</p> */}
+        <p>
+          <FundViewOutlined />
+          Система маниторинга
+        </p>
       </aside>
     </header>
   );

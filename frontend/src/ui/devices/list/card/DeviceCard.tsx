@@ -1,5 +1,5 @@
 import { FC, useState } from "react";
-import pulsometerDefault from "../../../../assets/photos/images.png";
+import pulsometerDefault from "../../../../assets/photos/defaultPulsometer.webp";
 import TopArrow from "../../../icons/TopArrow";
 import styles from "./DeviceCard.module.scss";
 import {
@@ -22,11 +22,14 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
     device.status || "off"
   );
 
-  useWebSocket("wss://pulse.hlofiys.xyz/ws/status", {
+  const {} = useWebSocket("wss://pulse.hlofiys.xyz/ws/status", {
     shouldReconnect: () => true, // Попытки переподключения
     onMessage: (data) => {
-      JSON.parse(data.data).id === device.deviceId &&
-        setDeviceStatus(JSON.parse(data.data).status);
+      if (data.data !== "ping") {
+        if (JSON.parse(data.data).id === device.deviceId) {
+          setDeviceStatus(JSON.parse(data.data).status);
+        }
+      }
     },
     onOpen: () => {
       console.log("Open status socket!");

@@ -10,7 +10,9 @@ import { useUpdateUser } from "../../../../../api/hooks/user/useUpdateUser";
 import { TUpdateUser } from "../../../../../services/interfaces/Interfaces";
 import { Spin } from "antd";
 import Dropdown from "../../../../../ui/input/dropdown/Dropdown";
-import { useGetDevices } from "../../../../../api/hooks/device/useGetDevices";
+import { useParams } from "react-router-dom";
+import { capitalizeFirstLetter } from "../../../../../utils/functions/functions";
+import { useGetDeviceOptions } from "../../../../../api/hooks/device/useGetDeviceOptions";
 
 interface TableRowProps<T> {
   index: number;
@@ -33,21 +35,23 @@ export interface FieldConfig<T> {
 
 const TableRow: FC<TableRowProps<any>> = (props) => {
   const { index, rowData, fields, onClick, isEdit } = props;
+  const { deviceId } = useParams();
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const { control, handleSubmit, watch } = useForm({
-    mode: 'onChange',
+    mode: "onChange",
     defaultValues: rowData,
   });
   const rowValues = watch();
 
-  const { data: devices, isLoading: isLoadingDevices } = useGetDevices();
+  // const { data: devices, isLoading: isLoadingDevices } = useGetDevices();
+  const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
 
   const { mutateAsync: delete_user, isLoading: isDeleteLoading } =
-    useDeleteUser();
+    useDeleteUser(Number(deviceId));
   const { mutateAsync: update_user, isLoading: isUpdateLoading } =
-    useUpdateUser();
+    useUpdateUser(Number(deviceId));
 
   // Сохранение изменений
   const handleSave = (data: any) => {
@@ -62,7 +66,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
         userId: rowData.userId,
       };
 
-      console.log(updateUserData)
+      console.log(updateUserData);
       update_user(updateUserData, {
         onSuccess: () => setIsEditing(false),
       });
@@ -101,28 +105,30 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
               key={field.key as string}
               control={control}
               render={({ field: controllerField }) => {
-                const { ref, ...controlField } = controllerField;
+                const { ref, onChange, ...controlField } = controllerField;
 
                 return field.type === "text" ? (
-                  <Input {...controllerField} style={{ minHeight: 20 }} />
+                  <Input
+                    {...controlField}
+                    onChange={(event) =>
+                      onChange(capitalizeFirstLetter(event.target.value))
+                    }
+                    style={{ minHeight: 20 }}
+                  />
                 ) : (
                   <Dropdown
-                    // {...controlField}
                     value={controllerField.value}
-                    onChange={(selectedOption) => {
-                      // Обновляем только значение, исключая побочные эффекты
-                      controlField.onChange(selectedOption.value);
-                      // console.log(selectedOption.value);
-                    }}
+                    onChange={(selectedOption) =>
+                      onChange(selectedOption.value)
+                    }
                     isHorizontal
                     isLoading={isLoadingDevices}
-                    containersStyles={{ width: 250, minHeight: 20, padding: '7px 15px' }}
-                    options={
-                      devices?.data.map((device) => ({
-                        label: `Пульсометр #${device.deviceId}`,
-                        value: device.deviceId,
-                      })) || []
-                    }
+                    containersStyles={{
+                      width: 250,
+                      minHeight: 20,
+                      padding: "7px 15px",
+                    }}
+                    options={devicesOptions}
                   />
                 );
               }}
