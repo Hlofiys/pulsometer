@@ -380,6 +380,10 @@ public class PulsometerService {
                 });
     }
 
+    public Mono<Integer> getOpenSessionByUserId (Integer userId) {
+        return sessionRepository.findOpenSessionIdByUserId(userId)
+                .switchIfEmpty(Mono.error(new RuntimeException("No open session found for userId: " + userId)));
+    }
 
     public Mono<Boolean> createUser (User user) {
         user.setUserId(null);

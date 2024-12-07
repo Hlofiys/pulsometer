@@ -86,7 +86,7 @@ public class DeviceController {
 
         return pulsometerService.publishActivate(activeUserId,typeActivity)
                 .map(isPublish -> isPublish
-                        ? ResponseEntity.ok(true)
+                        ? ResponseEntity.ok(pulsometerService.getOpenSessionByUserId(activeUserId))
                         : ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ErrorResponse("Failed to process the request", HttpStatus.BAD_REQUEST.value())))
                 .onErrorResume(this::handleError);
