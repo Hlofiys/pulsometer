@@ -137,7 +137,6 @@ public class PulsometerService {
         StatusDataDTO statusData;
         try {
             statusData = objectMapper.readValue(payload, StatusDataDTO.class);
-            webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(statusData.getId(),"ready"));
         } catch (IOException e) {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
@@ -153,7 +152,9 @@ public class PulsometerService {
                         newDevice.setDeviceId(statusData.getId());
                         newDevice.setStatus("ready");
                         newDevice.setLastContact(utcNow);
-                        return deviceRepository.saveNewDeviceIfNotExists(newDevice.getDeviceId(), newDevice.getStatus(), newDevice.getLastContact());
+                        return deviceRepository.saveNewDeviceIfNotExists(newDevice.getDeviceId(), newDevice.getStatus(), newDevice.getLastContact())
+                                .doOnSuccess(savedDevice->
+                                webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(statusData.getId(),"ready")));
                     } else {
                         return deviceRepository.findById(statusData.getId())
                                 .flatMap(device -> {
@@ -162,7 +163,9 @@ public class PulsometerService {
                                     device.setLastContact(utcNow);
                                     device.setStatus(newStatus);
                                     System.out.println("Updating device with new status: " + newStatus);
-                                    return deviceRepository.save(device);
+                                    return deviceRepository.save(device)
+                                            .doOnSuccess(savedDevice->
+                                            webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(statusData.getId(),newStatus)));
                                 });
                     }
                 })
