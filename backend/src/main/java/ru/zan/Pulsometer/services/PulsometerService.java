@@ -195,12 +195,18 @@ public class PulsometerService {
                     } else {
                         return deviceRepository.findById(pulseDataDTO.getId())
                                 .flatMap(device -> {
-                                    device.setStatus("measuring");
+
+                                    if ("off".equalsIgnoreCase(device.getStatus())) {
+                                        device.setStatus("ready");
+                                        device.setLastContact(measurementTime);
+                                    } else {
+                                        device.setStatus("measuring");
+                                    }
+
                                     webSocketBroadcastService.sendStatusMessage(
-                                            serializeStatusWebSocketDTO(device.getDeviceId(), "measuring")
+                                            serializeStatusWebSocketDTO(device.getDeviceId(), device.getStatus())
                                     );
 
-                                    device.setLastContact(measurementTime);
                                     return deviceRepository.save(device);
                                 })
                                 .flatMap(savedDevice -> {
@@ -212,8 +218,12 @@ public class PulsometerService {
 
                                     return sessionRepository.findById(pulseDataDTO.getSessionId())
                                             .flatMap(receivedSession -> {
+                                                if (receivedSession.getSessionStatus().equalsIgnoreCase("Closed")) {
+                                                    receivedSession.setSessionStatus("Open");
+                                                }
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
                                                 receivedSession.setPassed(elapsedMillis);
+                                                receivedSession.setTime(measurementTime);
                                                 return sessionRepository.save(receivedSession);
                                             })
                                             .then(Mono.just(pulseMeasurement));
@@ -232,7 +242,7 @@ public class PulsometerService {
                                                 dto.setBpm(mappedPulseMeasurement.getBpm());
                                                 dto.setOxygen(mappedPulseMeasurement.getOxygen());
                                                 dto.setSessionId(mappedPulseMeasurement.getSessionId());
-                                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null); // Преобразуем LocalDateTime в строку
+                                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
                                                 return dto;
                                             })
                                             .collect(Collectors.toList());

@@ -29,7 +29,7 @@ public class DataWebSocketHandler implements WebSocketHandler {
 
         Flux<WebSocketMessage> pingMessages = Flux.interval(Duration.ofSeconds(15))
                 .map(aLong -> session.textMessage("ping"));
-        
+
         Flux<WebSocketMessage> messagesToSend = Flux.merge(
                 pingMessages,
                 broadcastService.getDataMessages()
