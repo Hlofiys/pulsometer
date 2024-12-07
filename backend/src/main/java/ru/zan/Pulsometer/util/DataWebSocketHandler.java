@@ -27,13 +27,14 @@ public class DataWebSocketHandler implements WebSocketHandler {
         Flux<WebSocketMessage> pingMessages = Flux.interval(Duration.ofSeconds(15))
                 .map(aLong -> session.textMessage("ping"));
 
-        Flux<WebSocketMessage> messagesToSend = Flux.merge(
-                pingMessages,
-                broadcastService.getDataMessages().map(session::textMessage)
-        );
+        Flux<WebSocketMessage> dataMessages = broadcastService.getDataMessages()
+                .map(session::textMessage)
+                .doOnNext(msg -> System.out.println("Data message sent: " + msg.getPayloadAsText()));
+
+        Flux<WebSocketMessage> messagesToSend = Flux.merge(pingMessages, dataMessages);
 
         return session.send(messagesToSend)
-                .doOnError(error -> System.err.println("Error occurred with WebSocket session /ws/data: " + error.getMessage()))
-                .then();
+                .doOnTerminate(() -> System.out.println("WebSocket session terminated."))
+                .doOnError(error -> System.err.println("Error occurred with WebSocket session /ws/data: " + error.getMessage())).then();
     }
 }
