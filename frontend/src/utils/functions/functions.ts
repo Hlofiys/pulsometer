@@ -26,14 +26,23 @@ export interface ITime {
   totalSeconds: number;
 }
 
-export const convertMilliseconds = (ms: number, withoutMs?: boolean): ITime => {
+interface IConvertMillisecondsProps {
+  ms: number;
+  withoutMs?: boolean;
+  isLive?: boolean;
+}
+export const convertMilliseconds = (
+  props: IConvertMillisecondsProps
+): ITime => {
+  const { ms, withoutMs, isLive } = props;
+
   if (ms === 0)
     return {
       minutes: 0,
       seconds: 0,
       milliseconds: "0",
       formatWordTime: "",
-      formatNumberTime: "",
+      formatNumberTime: "00:00",
       totalSeconds: 0,
     };
 
@@ -59,12 +68,14 @@ export const convertMilliseconds = (ms: number, withoutMs?: boolean): ITime => {
     .join(" ");
 
   // Общее время в формате часы:минуты:секунды:миллисекунды
-  const formatNumberTime = [
-    hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
-    minutes.toString().padStart(2, "0"), // Всегда отображаем минуты
-    seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
-    milliseconds !== "000" && !withoutMs ? milliseconds : null, // Миллисекунды, если они не равны "000"
-  ]
+  const formatNumberTime = isLive 
+  ? `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}''` // Формат для режима реального времени "чч:мм''"
+  : [
+      hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
+      minutes.toString().padStart(2, "0"), // Всегда отображаем минуты
+      seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
+      milliseconds !== "000" && !withoutMs ? milliseconds : null, // Миллисекунды, если они не равны "000"
+    ]
     .filter(Boolean) // Убираем пустые значения
     .join(":"); // Объединяем через ":"
 
@@ -104,7 +115,6 @@ export const parseDate = (time: string /*2024-05-22*/): string => {
   return `${day} ${monthes[+month - 1]} ${year}г.`;
 };
 
-
 export const parseUTCDateAndTime = (dateAndTime: string) => {
   // Создаём объект даты из строки
   const utcDate = new Date(dateAndTime);
@@ -120,7 +130,7 @@ export const parseUTCDateAndTime = (dateAndTime: string) => {
   const minutes = String(belarusTime.getMinutes()).padStart(2, "0");
   const seconds = String(belarusTime.getSeconds()).padStart(2, "0");
 
-  const formatDate = parseDate(`${year}-${month}-${day}`) //2024-05-22
+  const formatDate = parseDate(`${year}-${month}-${day}`); //2024-05-22
 
   // Форматируем в строку
   return {

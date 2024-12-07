@@ -46,7 +46,7 @@
       &.greenBorder {
         border-color: #23e70a;
         color: #23e70a;
-      }
+      }   
     }
   }
 
@@ -58,11 +58,12 @@
     margin: 0;
     padding: 0;
 
-    span {
+    p {
       min-height: 117px;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
       font-family: "Lora-Regular";
       font-size: 50px;
       font-weight: 600;
@@ -70,12 +71,54 @@
       padding: 10px;
       border: 1px solid #fbfaf8;
       color: #23e70a;
+      margin: 0;
       border-radius: 10px;
-
+    
       &.greenBorder {
         border-color: #23e70a;
         color: #23e70a;
       }
-    }
+    
+      .liveIndicator {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14pt;
+        top: 0;
+        left: 20px;
+        color: red; // Цвет текста для live индикатора
+    
+        &::before {
+          content: '';
+          display: inline-block;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: red; // Цвет круга для live индикатора
+        }
+      }
+    
+      .liveStatus {
+        --color: #23e70a; // Цвет по умолчанию (зелёный для времени)
+        animation: pulseLive 1.5s infinite ease-in-out;
+      }
+    
+      .liveIndicator.liveStatus {
+        --color: red; // Устанавливаем красный цвет для индикатора live
+        animation: pulseLive 1.5s infinite ease-in-out;
+      }
+    
+      @keyframes pulseLive {
+        0%, 100% {
+          opacity: 1;
+          text-shadow: 0 0 30px var(--color), 0 0 20px var(--color);
+        }
+        50% {
+          opacity: 0.6;
+          text-shadow: 0 0 30px var(--color);
+        }
+      }
+    }    
   }
 }

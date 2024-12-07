@@ -241,7 +241,7 @@ const Dashboard: FC<DashboardProps> = ({
               {tooltipState.value}
               <span style={{ display: "block", margin: 0, padding: 0 }}>
                 {
-                  convertMilliseconds(tooltipState.label * 1000, true)
+                  convertMilliseconds({ms: tooltipState.label * 1000, withoutMs: true})
                     .formatNumberTime
                 }
               </span>

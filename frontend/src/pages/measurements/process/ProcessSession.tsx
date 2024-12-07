@@ -65,13 +65,10 @@ const ProcessSession: FC = () => {
 
   // Обработка данных WebSocket
   useEffect(() => {
-    if (!!lastMessage?.data&&lastMessage.data!=='ping') {
+    if (!!lastMessage?.data && lastMessage.data !== "ping") {
       if (Array.isArray(JSON.parse(lastMessage.data))) {
-        setLocalMeasurements(
-          (JSON.parse(lastMessage.data) as IMeasurements[])
-        );
+        setLocalMeasurements(JSON.parse(lastMessage.data) as IMeasurements[]);
       }
-      
     }
   }, [lastMessage]);
 
@@ -111,14 +108,15 @@ const ProcessSession: FC = () => {
     const maxBpm = Math.max(...bpms);
     const minBpm = Math.min(...bpms);
     const averageBpm = bpms.reduce((sum, bpm) => sum + bpm, 0) / bpms.length;
-    const averageOxygen =
-      Math.round(oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length);
+    const averageOxygen = Math.round(
+      oxygens.reduce((sum, bpm) => sum + bpm, 0) / oxygens.length
+    );
 
     const dashboardParams = localMeasurements?.map(({ date, bpm }) => {
       const measurementTime = new Date(date).getTime();
       const secondsDiff = Math.round(measurementTime - startTime);
       return {
-        label: convertMilliseconds(secondsDiff).totalSeconds,
+        label: convertMilliseconds({ms: secondsDiff}).totalSeconds,
         value: bpm,
       };
     });
@@ -130,7 +128,7 @@ const ProcessSession: FC = () => {
       minBpm,
       averageBpm: Math.round(averageBpm),
     };
-  }, [ activeSession?.data, localMeasurements, isLoadingActiveSession]);
+  }, [activeSession?.data, localMeasurements, isLoadingActiveSession]);
 
   const paramSet = useMemo(() => {
     return [
@@ -159,12 +157,7 @@ const ProcessSession: FC = () => {
           <Params
             fio={userData?.data.fio || ""}
             deviceId={userData?.data.deviceId || 0}
-            activityType={activeSession?.data.typeActivity.trim() || ""}
-            time={
-              (!!activeSession?.data.passed &&
-                activeSession!.data.passed - 3 * 60 * 60 * 1000) ||
-              0
-            }
+            session={activeSession?.data}
           />
         )}
         <Statistic

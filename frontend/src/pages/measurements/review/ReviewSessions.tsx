@@ -53,7 +53,7 @@ const ReviewSessions: FC = () => {
       label: "Продолжительность",
       type: "text",
       renderStatic: (value) =>
-        convertMilliseconds(value - 3 * 60 * 60 * 1000).formatNumberTime,
+        convertMilliseconds({ms: value - 3 * 60 * 60 * 1000}).formatNumberTime,
     },
     {
       key: "deviceId",

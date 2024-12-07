@@ -66,7 +66,6 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
         userId: rowData.userId,
       };
 
-      console.log(updateUserData);
       update_user(updateUserData, {
         onSuccess: () => setIsEditing(false),
       });
