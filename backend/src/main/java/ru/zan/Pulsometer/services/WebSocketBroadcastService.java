@@ -13,27 +13,21 @@ import java.util.List;
 public class WebSocketBroadcastService {
 
     private final Sinks.Many<String> statusSink = Sinks.many().multicast().onBackpressureBuffer();
-    private final Sinks.Many<String> dataSink = Sinks.many().multicast().onBackpressureBuffer();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Sinks.Many<List<DataWebSocketDTO>> dataSink = Sinks.many().multicast().onBackpressureBuffer();
 
     public void sendStatusMessage(String message) {
         statusSink.tryEmitNext(message);
     }
 
     public void sendDataMessage(List<DataWebSocketDTO> measurements) {
-        try {
-            String message = objectMapper.writeValueAsString(measurements);
-            dataSink.tryEmitNext(message);
-        } catch (JsonProcessingException e) {
-            System.err.println("Failed to serialize measurements: " + e.getMessage());
-        }
+        dataSink.tryEmitNext(measurements);
     }
 
     public Flux<String> getStatusMessages() {
         return statusSink.asFlux();
     }
 
-    public Flux<String> getDataMessages() {
+    public Flux<List<DataWebSocketDTO>> getDataMessages() {
         return dataSink.asFlux();
     }
 }

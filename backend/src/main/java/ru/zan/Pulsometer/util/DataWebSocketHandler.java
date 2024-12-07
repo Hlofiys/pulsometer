@@ -1,5 +1,7 @@
 package ru.zan.Pulsometer.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
@@ -15,6 +17,7 @@ import java.time.Duration;
 public class DataWebSocketHandler implements WebSocketHandler {
 
     private final WebSocketBroadcastService broadcastService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public DataWebSocketHandler(WebSocketBroadcastService broadcastService) {
@@ -26,15 +29,24 @@ public class DataWebSocketHandler implements WebSocketHandler {
 
         Flux<WebSocketMessage> pingMessages = Flux.interval(Duration.ofSeconds(15))
                 .map(aLong -> session.textMessage("ping"));
-
-        Flux<WebSocketMessage> dataMessages = broadcastService.getDataMessages()
-                .map(session::textMessage)
-                .doOnNext(msg -> System.out.println("Data message sent: " + msg.getPayloadAsText()));
-
-        Flux<WebSocketMessage> messagesToSend = Flux.merge(pingMessages, dataMessages);
+        
+        Flux<WebSocketMessage> messagesToSend = Flux.merge(
+                pingMessages,
+                broadcastService.getDataMessages()
+                        .map(dataList -> {
+                            try {
+                                String json = objectMapper.writeValueAsString(dataList);
+                                return session.textMessage(json);
+                            } catch (JsonProcessingException e) {
+                                System.err.println("Error serializing data: " + e.getMessage());
+                                return session.textMessage("[]");
+                            }
+                        })
+        );
 
         return session.send(messagesToSend)
                 .doOnTerminate(() -> System.out.println("WebSocket session terminated."))
-                .doOnError(error -> System.err.println("Error occurred with WebSocket session /ws/data: " + error.getMessage())).then();
+                .doOnError(error -> System.err.println("Error occurred with WebSocket session /ws/data: " + error.getMessage()))
+                .then();
     }
 }
