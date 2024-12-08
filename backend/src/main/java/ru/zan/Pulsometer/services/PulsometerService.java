@@ -141,9 +141,6 @@ public class PulsometerService {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
-        LocalDateTime utcNow = Instant.now()
-                .atZone(ZoneOffset.UTC)
-                .toLocalDateTime();
 
         deviceRepository.existsByDeviceId(statusData.getId())
                 .flatMap(exists -> {
@@ -151,7 +148,7 @@ public class PulsometerService {
                         Device newDevice = new Device();
                         newDevice.setDeviceId(statusData.getId());
                         newDevice.setStatus("ready");
-                        newDevice.setLastContact(utcNow);
+                        newDevice.setLastContact(LocalDateTime.now());
                         return deviceRepository.saveNewDeviceIfNotExists(newDevice.getDeviceId(), newDevice.getStatus(), newDevice.getLastContact())
                                 .doOnSuccess(savedDevice->
                                 webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(statusData.getId(),"ready")));
@@ -160,7 +157,7 @@ public class PulsometerService {
                                 .flatMap(device -> {
                                     String currentStatus = device.getStatus();
                                     String newStatus = currentStatus.equalsIgnoreCase("measuring") ? "measuring" : "ready";
-                                    device.setLastContact(utcNow);
+                                    device.setLastContact(LocalDateTime.now());
                                     device.setStatus(newStatus);
                                     System.out.println("Updating device with new status: " + newStatus);
                                     return deviceRepository.save(device)
@@ -187,7 +184,7 @@ public class PulsometerService {
             return;
         }
 
-        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
+        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime()).plusHours(3);
         pulseMeasurementRepository.existsByDate(measurementTime)
                 .flatMap(exists -> {
                     if (exists) {
@@ -211,8 +208,7 @@ public class PulsometerService {
                                 })
                                 .flatMap(savedDevice -> {
                                     pulseMeasurement.setBpm(pulseDataDTO.getBpm());
-                                    LocalDateTime date = measurementTime.minusHours(3);
-                                    pulseMeasurement.setDate(date);
+                                    pulseMeasurement.setDate(measurementTime);
                                     pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
                                     pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
 
@@ -262,10 +258,7 @@ public class PulsometerService {
                     }else {
                         Session session = new Session();
                         session.setUserId(userId);
-                        LocalDateTime utcNow = Instant.now()
-                                .atZone(ZoneOffset.UTC)
-                                .toLocalDateTime();
-                        session.setTime(utcNow);
+                        session.setTime(LocalDateTime.now());
                         session.setTypeActivity(typeActivity);
 
                         return sessionRepository.save(session)
