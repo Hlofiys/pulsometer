@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import ru.zan.Pulsometer.services.SseBroadcastService;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/sse")
 public class SseController {
 
@@ -20,14 +21,12 @@ public class SseController {
     }
 
     @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamStatusUpdates(ServerHttpResponse response) {
-        response.getHeaders().add("Access-Control-Allow-Origin", "*");
+    public Flux<String> streamStatusUpdates() {
         return sseBroadcastService.getStatusMessage();
     }
 
     @GetMapping(path = "/data", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamDataUpdates(ServerHttpResponse response) {
-        response.getHeaders().add("Access-Control-Allow-Origin", "*");
+    public Flux<String> streamDataUpdates() {
         return sseBroadcastService.getDataMessage();
     }
 }
