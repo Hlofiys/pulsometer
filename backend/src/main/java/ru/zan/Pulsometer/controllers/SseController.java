@@ -1,6 +1,7 @@
 package ru.zan.Pulsometer.controllers;
 
 import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,14 +20,14 @@ public class SseController {
     }
 
     @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @CrossOrigin(origins = "*")
-    public Flux<String> streamStatusUpdates() {
+    public Flux<String> streamStatusUpdates(ServerHttpResponse response) {
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
         return sseBroadcastService.getStatusMessage();
     }
 
     @GetMapping(path = "/data", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @CrossOrigin(origins = "*")
-    public Flux<String> streamDataUpdates() {
+    public Flux<String> streamDataUpdates(ServerHttpResponse response) {
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
         return sseBroadcastService.getDataMessage();
     }
 }
