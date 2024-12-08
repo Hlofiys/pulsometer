@@ -23,10 +23,7 @@ import ru.zan.Pulsometer.util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -517,7 +514,7 @@ public class PulsometerService {
     public void updateDeviceStatus() {
         LocalDateTime twoMinutesAgo = Instant.now()
                 .minus(110, ChronoUnit.SECONDS)
-                .atZone(ZoneOffset.UTC)
+                .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
         deviceRepository.findAll()
                 .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
