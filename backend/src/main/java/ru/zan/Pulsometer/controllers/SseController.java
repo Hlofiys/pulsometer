@@ -21,12 +21,14 @@ public class SseController {
     }
 
     @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamStatusUpdates() {
+    public Flux<String> streamStatusUpdates(ServerHttpResponse response) {
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
         return sseBroadcastService.getStatusMessage();
     }
 
     @GetMapping(path = "/data", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamDataUpdates() {
+    public Flux<String> streamDataUpdates(ServerHttpResponse response) {
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
         return sseBroadcastService.getDataMessage();
     }
 }
