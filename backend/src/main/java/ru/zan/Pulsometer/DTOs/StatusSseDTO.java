@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatusWebSocketDTO {
+public class StatusSseDTO {
 
     private Integer id;
 

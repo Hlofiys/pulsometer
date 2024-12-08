@@ -1,0 +1,29 @@
+package ru.zan.Pulsometer.controllers;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import ru.zan.Pulsometer.services.SseBroadcastService;
+
+@RestController
+@RequestMapping("/sse")
+public class SseController {
+
+    private final SseBroadcastService sseBroadcastService;
+
+    public SseController(SseBroadcastService sseBroadcastService) {
+        this.sseBroadcastService = sseBroadcastService;
+    }
+
+    @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> streamStatusUpdates() {
+        return sseBroadcastService.getStatusMessage();
+    }
+
+    @GetMapping(path = "/data", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> streamDataUpdates() {
+        return sseBroadcastService.getDataMessage();
+    }
+}

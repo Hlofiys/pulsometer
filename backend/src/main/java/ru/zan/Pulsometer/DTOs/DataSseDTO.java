@@ -2,14 +2,12 @@ package ru.zan.Pulsometer.DTOs;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class DataWebSocketDTO {
+public class DataSseDTO {
 
     private Integer id;
 
