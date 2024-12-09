@@ -23,10 +23,7 @@ import ru.zan.Pulsometer.util.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -47,19 +44,19 @@ public class PulsometerService {
     private final ScheduledExecutorService reconnectScheduler = Executors.newSingleThreadScheduledExecutor();
     private static final int RECONNECT_DELAY = 5;
     private static final String persistenceDir = "src/main/resources/persistence";
-    private final WebSocketBroadcastService webSocketBroadcastService;
+    private final SseBroadcastService sseBroadcastService;
 
     @Autowired
     public PulsometerService(UserRepository userRepository,
                              DeviceRepository deviceRepository,
                              PulseMeasurementRepository pulseMeasurementRepository, SessionRepository sessionRepository,
-                             ObjectMapper objectMapper, WebSocketBroadcastService webSocketBroadcastService) throws MqttException {
+                             ObjectMapper objectMapper,SseBroadcastService sseBroadcastService) throws MqttException {
         this.userRepository = userRepository;
         this.deviceRepository = deviceRepository;
         this.pulseMeasurementRepository = pulseMeasurementRepository;
         this.sessionRepository = sessionRepository;
         this.objectMapper = objectMapper;
-        this.webSocketBroadcastService = webSocketBroadcastService;
+        this.sseBroadcastService = sseBroadcastService;
 
         initializeMqttClient();
     }
@@ -137,14 +134,10 @@ public class PulsometerService {
         StatusDataDTO statusData;
         try {
             statusData = objectMapper.readValue(payload, StatusDataDTO.class);
-            webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(statusData.getId(),"ready"));
         } catch (IOException e) {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
-        LocalDateTime utcNow = Instant.now()
-                .atZone(ZoneOffset.UTC)
-                .toLocalDateTime();
 
         deviceRepository.existsByDeviceId(statusData.getId())
                 .flatMap(exists -> {
@@ -152,17 +145,21 @@ public class PulsometerService {
                         Device newDevice = new Device();
                         newDevice.setDeviceId(statusData.getId());
                         newDevice.setStatus("ready");
-                        newDevice.setLastContact(utcNow);
-                        return deviceRepository.saveNewDeviceIfNotExists(newDevice.getDeviceId(), newDevice.getStatus(), newDevice.getLastContact());
+                        newDevice.setLastContact(LocalDateTime.now());
+                        return deviceRepository.saveNewDeviceIfNotExists(newDevice.getDeviceId(), newDevice.getStatus(), newDevice.getLastContact())
+                                .doOnSuccess(savedDevice->
+                                sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(statusData.getId(),"ready")));
                     } else {
                         return deviceRepository.findById(statusData.getId())
                                 .flatMap(device -> {
                                     String currentStatus = device.getStatus();
                                     String newStatus = currentStatus.equalsIgnoreCase("measuring") ? "measuring" : "ready";
-                                    device.setLastContact(utcNow);
+                                    device.setLastContact(LocalDateTime.now());
                                     device.setStatus(newStatus);
                                     System.out.println("Updating device with new status: " + newStatus);
-                                    return deviceRepository.save(device);
+                                    return deviceRepository.save(device)
+                                            .doOnSuccess(savedDevice->
+                                            sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(statusData.getId(),newStatus)));
                                 });
                     }
                 })
@@ -192,25 +189,34 @@ public class PulsometerService {
                     } else {
                         return deviceRepository.findById(pulseDataDTO.getId())
                                 .flatMap(device -> {
-                                    device.setStatus("measuring");
-                                    webSocketBroadcastService.sendStatusMessage(
-                                            serializeStatusWebSocketDTO(device.getDeviceId(), "measuring")
+
+                                    if ("off".equalsIgnoreCase(device.getStatus())) {
+                                        device.setStatus("ready");
+                                        device.setLastContact(measurementTime);
+                                    } else {
+                                        device.setStatus("measuring");
+                                    }
+
+                                    sseBroadcastService.sendStatusMessage(
+                                            serializeStatusSseDTO(device.getDeviceId(), device.getStatus())
                                     );
 
-                                    device.setLastContact(measurementTime);
                                     return deviceRepository.save(device);
                                 })
                                 .flatMap(savedDevice -> {
                                     pulseMeasurement.setBpm(pulseDataDTO.getBpm());
-                                    LocalDateTime date = measurementTime.minusHours(3);
-                                    pulseMeasurement.setDate(date);
+                                    pulseMeasurement.setDate(measurementTime);
                                     pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
                                     pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
 
                                     return sessionRepository.findById(pulseDataDTO.getSessionId())
                                             .flatMap(receivedSession -> {
+                                                if (receivedSession.getSessionStatus().equalsIgnoreCase("Closed")) {
+                                                    receivedSession.setSessionStatus("Open");
+                                                }
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
                                                 receivedSession.setPassed(elapsedMillis);
+                                                receivedSession.setTime(measurementTime);
                                                 return sessionRepository.save(receivedSession);
                                             })
                                             .then(Mono.just(pulseMeasurement));
@@ -222,18 +228,18 @@ public class PulsometerService {
                         pulseMeasurementRepository.findAllBySessionId(pulseDataDTO.getSessionId())
                                 .collectList()
                                 .doOnNext(pulseMeasurements -> {
-                                    List<DataWebSocketDTO> dataWebSocketDTOList = pulseMeasurements.stream()
+                                    List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
                                             .map(mappedPulseMeasurement -> {
-                                                DataWebSocketDTO dto = new DataWebSocketDTO();
+                                                DataSseDTO dto = new DataSseDTO();
                                                 dto.setId(mappedPulseMeasurement.getMeasurementId());
                                                 dto.setBpm(mappedPulseMeasurement.getBpm());
                                                 dto.setOxygen(mappedPulseMeasurement.getOxygen());
                                                 dto.setSessionId(mappedPulseMeasurement.getSessionId());
-                                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null); // Преобразуем LocalDateTime в строку
+                                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
                                                 return dto;
                                             })
                                             .collect(Collectors.toList());
-                                    webSocketBroadcastService.sendDataMessage(dataWebSocketDTOList);
+                                    sseBroadcastService.sendDataMessage(serializeDataSseDTO(dataSseDTOList));
                                 })
                 )
                 .doOnError(e -> System.err.println("Error occurred while processing pulse measurement: " + e.getMessage()))
@@ -249,10 +255,7 @@ public class PulsometerService {
                     }else {
                         Session session = new Session();
                         session.setUserId(userId);
-                        LocalDateTime utcNow = Instant.now()
-                                .atZone(ZoneOffset.UTC)
-                                .toLocalDateTime();
-                        session.setTime(utcNow);
+                        session.setTime(LocalDateTime.now());
                         session.setTypeActivity(typeActivity);
 
                         return sessionRepository.save(session)
@@ -301,7 +304,7 @@ public class PulsometerService {
                                                     .flatMap(payload -> publishMqttMessage(topic, payload))
                                                     .flatMap(success -> {
                                                         device.setStatus("measuring");
-                                                        webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"measuring"));
+                                                        sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(),"measuring"));
                                                         device.setActiveUserId(userId);
                                                         return deviceRepository.save(device).thenReturn(true);
                                                     });
@@ -372,7 +375,7 @@ public class PulsometerService {
                 .flatMap(device -> {
                     String topic = "device/switch/" + device.getDeviceId();
                     device.setStatus("ready");
-                    webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"ready"));
+                    sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(),"ready"));
 
                     return createDeactivateMessage(userId)
                             .flatMap(payload -> publishMqttMessage(topic, payload))
@@ -511,13 +514,13 @@ public class PulsometerService {
     public void updateDeviceStatus() {
         LocalDateTime twoMinutesAgo = Instant.now()
                 .minus(110, ChronoUnit.SECONDS)
-                .atZone(ZoneOffset.UTC)
+                .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
         deviceRepository.findAll()
                 .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
                 .flatMap(device -> {
                     device.setStatus("off");
-                    webSocketBroadcastService.sendStatusMessage(serializeStatusWebSocketDTO(device.getDeviceId(),"off"));
+                    sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(),"off"));
                     return deviceRepository.save(device)
                             .flatMap(savedDevice-> closeOpenSessionsForUsers(savedDevice.getUsers()));
                 })
@@ -547,10 +550,18 @@ public class PulsometerService {
         }
     }
 
-    private String serializeStatusWebSocketDTO (Integer id,String status) {
-        StatusWebSocketDTO statusWebSocketDTO = new StatusWebSocketDTO(id, status);
+    private String serializeStatusSseDTO (Integer id,String status) {
+        StatusSseDTO statusSseDTO = new StatusSseDTO(id, status);
         try {
-            return objectMapper.writeValueAsString(statusWebSocketDTO);
+            return objectMapper.writeValueAsString(statusSseDTO);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize object", e);
+        }
+    }
+
+    private String serializeDataSseDTO (List<DataSseDTO> list) {
+        try {
+            return objectMapper.writeValueAsString(list);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize object", e);
         }

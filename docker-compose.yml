@@ -6,8 +6,6 @@ services:
   backend:
     container_name: pulsometer_backend
     image: hlofiys/pulsometer-backend:master
-    ports:
-      - 8081:8080
     networks:
       - pulsometer_network
     depends_on:
@@ -15,11 +13,13 @@ services:
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`pulse.hlofiys.xyz`) && (PathPrefix(`/api`) || PathPrefix(`/swagger`) || PathPrefix(`/sse`) || PathPrefix(`/webjars`))"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
   frontend:
     container_name: pulsometer_frontend
     image: hlofiys/pulsometer-frontend:master
-    ports:
-      - 8080:80
     networks:
       - pulsometer_network
     depends_on:
@@ -33,6 +33,10 @@ services:
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`pulse.hlofiys.xyz`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
   pulsometer_db:
     container_name: pulsometer_db
     image: postgres:alpine
@@ -46,6 +50,26 @@ services:
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
+  reverse-proxy:
+    # The official v3 Traefik docker image
+    image: traefik:v3.1
+    # Enables the web UI and tells Traefik to listen to docker
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+    ports:
+      # The HTTP port
+      - "8080:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "6000:8080"
+    networks:
+      - pulsometer_network
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
