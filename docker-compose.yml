@@ -14,7 +14,7 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`pulse.hlofiys.xyz`) && (PathPrefix(`/api`) || PathPrefix(`/swagger`) || PathPrefix(`/sse`) || PathPrefix(`webjars`))"
+      - "traefik.http.routers.backend.rule=Host(`pulse.hlofiys.xyz`) && (PathPrefix(`/api`) || PathPrefix(`/swagger`) || PathPrefix(`/sse`) || PathPrefix(`/webjars`))"
       - "traefik.http.routers.backend.entrypoints=web"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
   frontend:
