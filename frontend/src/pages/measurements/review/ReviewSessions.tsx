@@ -46,14 +46,14 @@ const ReviewSessions: FC = () => {
       key: "time",
       label: "Начало",
       type: "text",
-      renderStatic: (date: string) => parseUTCDateAndTime(date).belarusian,
+      renderStatic: (date: string) => date,
     },
     {
       key: "passed",
       label: "Продолжительность",
       type: "text",
       renderStatic: (value) =>
-        convertMilliseconds({ms: value - 3 * 60 * 60 * 1000}).formatNumberTime,
+        convertMilliseconds({ms: value}).formatNumberTime,
     },
     {
       key: "deviceId",

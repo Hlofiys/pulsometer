@@ -37,7 +37,7 @@ const Params: FC<IParamsProps> = (props) => {
             {!!session
               ? convertMilliseconds({
                   ms:
-                    (!!session.passed && session.passed - 3 * 60 * 60 * 1000) ||
+                    (!!session.passed && session.passed) ||
                     0,
                   isLive,
                 }).formatNumberTime

@@ -2,7 +2,6 @@ import { FC, HTMLAttributes, useMemo } from "react";
 import { IDevice } from "../../../services/interfaces/Interfaces";
 import { DeviceCard } from "./card/DeviceCard";
 import styles from "./DevicesList.module.scss";
-// import useWebSocket from "react-use-websocket";
 
 interface IDevicesList extends HTMLAttributes<HTMLUListElement> {
   devices: IDevice[];
@@ -18,14 +17,13 @@ const DevicesList: FC<IDevicesList> = (props) => {
       ),
     [devices]
   );
-  // const {} = useWebSocket("wss://pulse.hlofiys.xyz/ws/status")
 
   return (
     <ul className={styles.listContainer} {...ulProps}>
       {sortingDevices.map((device) => (
         <DeviceCard
-          onClick={onCardClick}
           key={device.deviceId}
+          onClick={onCardClick}
           device={device}
         />
       ))}

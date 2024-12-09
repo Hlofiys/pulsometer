@@ -5,6 +5,7 @@
 // import { useGetDevices } from "./api/hooks/device/useGetDevices";
 // import { useGetUserById } from "./api/hooks/user/useGetUserById";
 // import { useGetUsersByDeviceId } from "./api/hooks/device/useGetUsersByDeviceId";
+// import { SSEProvider } from 'react-hooks-sse';
 import Router from "./router/Router";
 
 function App() {
@@ -30,7 +31,9 @@ function App() {
       }}
     >
       {/* {contextHolder} */}
-      <Router />
+      {/* <SSEProvider endpoint={'https://pulse.hlofiys.xyz/sse/status'}> */}
+        <Router />
+      {/* </SSEProvider> */}
     </div>
   );
 }

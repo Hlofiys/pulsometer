@@ -13,8 +13,8 @@ import Button from "../../../ui/buttons/primary/Button";
 import { convertMilliseconds } from "../../../utils/functions/functions";
 import { useGetSessionById } from "../../../api/hooks/session/useSessionById";
 import { useDeactivateMeasurements } from "../../../api/hooks/device/useDeactivateMeasurements";
-import useWebSocket from "react-use-websocket";
 import { IMeasurements } from "../../../services/interfaces/Interfaces";
+import { useSSEOptions } from "../../../api/hooks/sse/useSSEOptions";
 
 const ProcessSession: FC = () => {
   const { sessionId } = useParams();
@@ -22,7 +22,6 @@ const ProcessSession: FC = () => {
   const [localMeasurements, setLocalMeasurements] = useState<IMeasurements[]>(
     []
   );
-  const [shouldConnect, setShouldConnect] = useState(false);
 
   const { data: measurements, isLoading: isLoadingMeasurements } =
     useGetMeasurementsBySessionId(+sessionId!);
@@ -41,43 +40,25 @@ const ProcessSession: FC = () => {
   const { mutateAsync: deactivate, isLoading: isLoadingDeactivate } =
     useDeactivateMeasurements();
 
-  // Настройка WebSocket
-  const { lastMessage } = useWebSocket(
-    shouldConnect ? "wss://pulse.hlofiys.xyz/ws/data" : null,
-    {
-      shouldReconnect: () => true,
-      onMessage: ({ data }) => {
-        console.log(data);
-      },
-      onOpen: () => {
-        console.log("Open data socket!");
-      },
-      onClose: () => {
-        console.log("Close data socket!");
-      },
-      onError: () => {
-        console.log("Error data status!");
-      },
-      reconnectAttempts: 10,
-      reconnectInterval: 5000,
-    }
-  );
+  const { start } = useSSEOptions("https://pulse.hlofiys.xyz/sse/data", {
+    onMessage: (event: MessageEvent) => {
+      console.log("Новое сообщение:", JSON.parse(event.data));
+      setLocalMeasurements(JSON.parse(event.data));
+    },
+    onError: (error: Event) => {
+      console.error("Ошибка SSE:", error);
+    },
+    onOpen: () => {
+      console.log("Соединение установлено");
+    },
+  });
 
-  // Обработка данных WebSocket
   useEffect(() => {
-    if (!!lastMessage?.data && lastMessage.data !== "ping") {
-      if (Array.isArray(JSON.parse(lastMessage.data))) {
-        setLocalMeasurements(JSON.parse(lastMessage.data) as IMeasurements[]);
-      }
-    }
-  }, [lastMessage]);
+    console.log("start sse");
+    start();
+  }, []);
 
   useEffect(() => setLocalMeasurements(measurements || []), [measurements]);
-
-  // Управление подключением WebSocket
-  useEffect(() => {
-    setShouldConnect(activeSession?.data.sessionStatus === "Open");
-  }, [activeSession?.data.sessionStatus]);
 
   const dashboardData = useMemo(() => {
     if (!!activeSession?.data && isLoadingActiveSession) {
@@ -116,7 +97,7 @@ const ProcessSession: FC = () => {
       const measurementTime = new Date(date).getTime();
       const secondsDiff = Math.round(measurementTime - startTime);
       return {
-        label: convertMilliseconds({ms: secondsDiff}).totalSeconds,
+        label: convertMilliseconds({ ms: secondsDiff }).totalSeconds,
         value: bpm,
       };
     });

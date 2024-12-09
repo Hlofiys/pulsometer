@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import pulsometerDefault from "../../../../assets/photos/defaultPulsometer.webp";
 import TopArrow from "../../../icons/TopArrow";
 import styles from "./DeviceCard.module.scss";
@@ -7,7 +7,7 @@ import {
   TDeviceStatus,
 } from "../../../../services/interfaces/Interfaces";
 import { DeviceStatus } from "../../../../services/device/Device.service";
-import useWebSocket from "react-use-websocket";
+import { useSSEOptions } from "../../../../api/hooks/sse/useSSEOptions";
 
 interface IDeviceCard {
   device: IDevice;
@@ -22,27 +22,24 @@ export const DeviceCard: FC<IDeviceCard> = (props) => {
     device.status || "off"
   );
 
-  const {} = useWebSocket("wss://pulse.hlofiys.xyz/ws/status", {
-    shouldReconnect: () => true, // Попытки переподключения
-    onMessage: (data) => {
-      if (data.data !== "ping") {
-        if (JSON.parse(data.data).id === device.deviceId) {
-          setDeviceStatus(JSON.parse(data.data).status);
-        }
-      }
+  const { start } = useSSEOptions("https://pulse.hlofiys.xyz/sse/status", {
+    onMessage: (event: MessageEvent) => {
+      console.log("Новое сообщение:", JSON.parse(event.data));
+      device.deviceId === (JSON.parse(event.data) as IDevice).deviceId &&
+        setDeviceStatus((JSON.parse(event.data) as IDevice).status);
+    },
+    onError: (error: Event) => {
+      console.error("Ошибка SSE:", error);
     },
     onOpen: () => {
-      console.log("Open status socket!");
+      console.log("Соединение установлено");
     },
-    onClose: () => {
-      console.log("Close status socket!");
-    },
-    onError: () => {
-      console.log("Error connecting status!");
-    },
-    reconnectAttempts: 10,
-    reconnectInterval: 5000, // Интервал между попытками
   });
+
+  useEffect(() => {
+    console.log("start sse");
+    start();
+  }, []);
 
   return (
     <li
