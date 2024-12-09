@@ -22,7 +22,8 @@ public class SseController {
     }
 
     @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamStatusUpdates() {
+    public Flux<String> streamStatusUpdates(ServerHttpResponse response) {
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
         Sinks.Many<String> clientSink = Sinks.many().multicast().onBackpressureBuffer();
         sseBroadcastService.registerClient("status", clientSink);
         return sseBroadcastService.getStatusMessage(clientSink)
@@ -30,9 +31,10 @@ public class SseController {
     }
 
     @GetMapping(path = "/data", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamDataUpdates() {
+    public Flux<String> streamDataUpdates(ServerHttpResponse response) {
+        response.getHeaders().add("Access-Control-Allow-Origin", "*");
         Sinks.Many<String> clientSink = Sinks.many().multicast().onBackpressureBuffer();
-        sseBroadcastService.registerClient("data", clientSink); 
+        sseBroadcastService.registerClient("data", clientSink);
         return sseBroadcastService.getDataMessage(clientSink)
                 .doFinally(signalType -> sseBroadcastService.unregisterClient("data", clientSink));
     }
