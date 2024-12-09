@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 import ru.zan.Pulsometer.services.SseBroadcastService;
 
 @RestController
@@ -21,14 +22,18 @@ public class SseController {
     }
 
     @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamStatusUpdates(ServerHttpResponse response) {
-        response.getHeaders().add("Access-Control-Allow-Origin", "*");
-        return sseBroadcastService.getStatusMessage();
+    public Flux<String> streamStatusUpdates() {
+        Sinks.Many<String> clientSink = Sinks.many().multicast().onBackpressureBuffer();
+        sseBroadcastService.registerClient("status", clientSink);
+        return sseBroadcastService.getStatusMessage(clientSink)
+                .doFinally(signalType -> sseBroadcastService.unregisterClient("status", clientSink));
     }
 
     @GetMapping(path = "/data", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamDataUpdates(ServerHttpResponse response) {
-        response.getHeaders().add("Access-Control-Allow-Origin", "*");
-        return sseBroadcastService.getDataMessage();
+    public Flux<String> streamDataUpdates() {
+        Sinks.Many<String> clientSink = Sinks.many().multicast().onBackpressureBuffer();
+        sseBroadcastService.registerClient("data", clientSink); 
+        return sseBroadcastService.getDataMessage(clientSink)
+                .doFinally(signalType -> sseBroadcastService.unregisterClient("data", clientSink));
     }
 }
