@@ -216,7 +216,6 @@ public class PulsometerService {
                                                 }
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
                                                 receivedSession.setPassed(elapsedMillis);
-                                                receivedSession.setTime(measurementTime);
                                                 return sessionRepository.save(receivedSession);
                                             })
                                             .then(Mono.just(pulseMeasurement));
