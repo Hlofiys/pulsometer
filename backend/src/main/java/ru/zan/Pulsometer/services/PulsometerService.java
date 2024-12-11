@@ -216,7 +216,6 @@ public class PulsometerService {
                                                 }
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
                                                 receivedSession.setPassed(elapsedMillis);
-                                                receivedSession.setTime(measurementTime);
                                                 return sessionRepository.save(receivedSession);
                                             })
                                             .then(Mono.just(pulseMeasurement));
@@ -255,7 +254,7 @@ public class PulsometerService {
                     }else {
                         Session session = new Session();
                         session.setUserId(userId);
-                        session.setTime(LocalDateTime.now());
+                        session.setTime(LocalDateTime.now().plusHours(3));
                         session.setTypeActivity(typeActivity);
 
                         return sessionRepository.save(session)
@@ -510,14 +509,14 @@ public class PulsometerService {
     }
 
 
-    @Scheduled(fixedRate = 120000)
+    @Scheduled(fixedRate = 60000)
     public void updateDeviceStatus() {
-        LocalDateTime twoMinutesAgo = Instant.now()
-                .minus(110, ChronoUnit.SECONDS)
+        LocalDateTime oneMinuteAgo = Instant.now()
+                .minus(1, ChronoUnit.MINUTES)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
         deviceRepository.findAll()
-                .filter(device -> device.getLastContact().isBefore(twoMinutesAgo))
+                .filter(device -> device.getLastContact().isBefore(oneMinuteAgo))
                 .flatMap(device -> {
                     device.setStatus("off");
                     sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(),"off"));
