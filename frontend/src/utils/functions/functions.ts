@@ -69,7 +69,7 @@ export const convertMilliseconds = (
 
   // Общее время в формате часы:минуты:секунды:миллисекунды
   const formatNumberTime = isLive 
-  ? `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}''` // Формат для режима реального времени "чч:мм''"
+  ? `${hours.toString().padStart(2, "0")}:${(minutes + 1).toString().padStart(2, "0")}''` // Формат для режима реального времени "чч:мм''"
   : [
       hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
       minutes.toString().padStart(2, "0"), // Всегда отображаем минуты

@@ -63,6 +63,20 @@ const StartMeasurements: FC = () => {
     [devices, deviceId]
   );
 
+  const userOptions = useMemo(
+    () =>
+      (!!deviceId &&
+        !!users &&
+        users.data
+          .filter((user) => user.deviceId === +deviceId)
+          .map((user) => ({
+            label: user.fio,
+            value: user.userId,
+          }))) ||
+      [],
+    [deviceId, users]
+  );
+
   return (
     <div className={styles.startContainer}>
       {(isLoadingDevices && <Spin />) || (
@@ -91,11 +105,7 @@ const StartMeasurements: FC = () => {
                     isLoading: isLoadingUsers,
                     containersStyles: { width: "50%" },
                     isDropDown: true,
-                    options:
-                      users?.data.map((user) => ({
-                        label: user.fio,
-                        value: user.userId,
-                      })) || [],
+                    options: userOptions,
                   }}
                   ariaDescription={"Список всех пользователей"}
                 />

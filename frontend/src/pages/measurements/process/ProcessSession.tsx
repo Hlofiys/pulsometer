@@ -54,9 +54,11 @@ const ProcessSession: FC = () => {
   });
 
   useEffect(() => {
-    console.log("start sse");
-    start();
-  }, []);
+    if (activeSession?.data.sessionStatus === "Open") {
+      console.log("start sse");
+      start();
+    }
+  }, [activeSession?.data]);
 
   useEffect(() => setLocalMeasurements(measurements || []), [measurements]);
 
@@ -129,6 +131,23 @@ const ProcessSession: FC = () => {
     ];
   }, [dashboardData]);
 
+  const activeTime = useMemo(() => {
+    if (
+      activeSession?.data.sessionStatus === "Open" &&
+      localMeasurements.length !== 0
+    ) {
+      const timeStartMeasurements = new Date(
+        activeSession?.data.time || ""
+      ).getTime();
+      const timeLastMeasurement = new Date(
+        localMeasurements[localMeasurements.length-1].date
+      ).getTime();
+      return timeLastMeasurement - timeStartMeasurements;
+    } else {
+      return;
+    }
+  }, [localMeasurements, activeSession?.data]);
+
   return (
     <div className={styles.mainProcessContainer}>
       <div className={styles.processMeasurementsContainer}>
@@ -139,6 +158,7 @@ const ProcessSession: FC = () => {
             fio={userData?.data.fio || ""}
             deviceId={userData?.data.deviceId || 0}
             session={activeSession?.data}
+            time={activeTime}
           />
         )}
         <Statistic

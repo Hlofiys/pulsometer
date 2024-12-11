@@ -7,9 +7,10 @@ interface IParamsProps {
   fio: string;
   deviceId: number;
   session?: ISession;
+  time?: number;
 }
 const Params: FC<IParamsProps> = (props) => {
-  const { fio, deviceId, session } = props;
+  const { fio, deviceId, session, time } = props;
 
   const isLive = useMemo(() => {
     return session?.sessionStatus === "Open";
@@ -37,7 +38,7 @@ const Params: FC<IParamsProps> = (props) => {
             {!!session
               ? convertMilliseconds({
                   ms:
-                    (!!session.passed && session.passed) ||
+                    (!!time ? time : session.passed && session.passed) ||
                     0,
                   isLive,
                 }).formatNumberTime
