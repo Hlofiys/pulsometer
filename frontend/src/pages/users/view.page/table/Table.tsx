@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import styles from "./Table.module.scss";
 import TableRow, { FieldConfig } from "./row/Row";
+import { AnimatePresence } from "framer-motion";
 
 interface TableProps<T> {
   data: T[];
@@ -9,7 +10,7 @@ interface TableProps<T> {
   getKey: (row: T) => number;
   getIndex?: (row: T) => number;
   children?: ReactNode;
-  isEdit?:boolean
+  isEdit?: boolean;
 }
 
 const Table = <T,>(props: TableProps<T>): JSX.Element => {
@@ -26,16 +27,18 @@ const Table = <T,>(props: TableProps<T>): JSX.Element => {
         </tr>
       </thead>
       <tbody>
-        {data.map((row) => (
-          <TableRow
-            fields={fields}
-            key={getKey(row)}
-            rowData={row}
-            isEdit={isEdit}
-            index={getIndex ? getIndex(row) : getKey(row)}
-            onClick={onClick}
-          />
-        ))}
+        <AnimatePresence>
+          {data.map((row) => (
+            <TableRow
+              key={getKey(row)}
+              fields={fields}
+              rowData={row}
+              isEdit={isEdit}
+              index={getIndex ? getIndex(row) : getKey(row)}
+              onClick={onClick}
+            />
+          ))}
+        </AnimatePresence>
       </tbody>
     </table>
   );

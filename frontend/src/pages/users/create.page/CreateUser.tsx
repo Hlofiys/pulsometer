@@ -19,6 +19,8 @@ import { TCreateUser } from "../../../services/interfaces/Interfaces";
 import { useCreateUser } from "../../../api/hooks/user/useCreateUser";
 import { RouterPath } from "../../../router/Router";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
+import Lottie from "lottie-react";
+import CreateUserAnimation from '../../../assets/animation/createUser/CreateUser.json';
 
 interface INewUser {
   surname: string;
@@ -143,7 +145,9 @@ const CreateUser: FC = () => {
           Все пользователи <ArrowRight stroke="#23E70A" />
         </Link>
       </form>
-      <section className={styles.section}></section>
+      
+      <Lottie animationData={CreateUserAnimation} loop={true} className={styles.section}/>
+
     </main>
   );
 };

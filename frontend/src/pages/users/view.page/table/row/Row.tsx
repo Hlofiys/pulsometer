@@ -13,6 +13,7 @@ import Dropdown from "../../../../../ui/input/dropdown/Dropdown";
 import { useParams } from "react-router-dom";
 import { capitalizeFirstLetter } from "../../../../../utils/functions/functions";
 import { useGetDeviceOptions } from "../../../../../api/hooks/device/useGetDeviceOptions";
+import { motion } from "framer-motion";
 
 interface TableRowProps<T> {
   index: number;
@@ -91,8 +92,100 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
     onClick && onClick(rowData);
   };
 
+  const createParticles = (
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    const particles = [];
+    const numParticles = 50; // Количество частиц
+
+    for (let i = 0; i < numParticles; i++) {
+      const size = Math.random() * 5 + 5; // Размер частицы
+      const posX = x + Math.random() * width - width / 2; // Позиция по X
+      const posY = y + Math.random() * height - height / 2; // Позиция по Y
+      const angle = Math.random() * 360; // Угол движения
+      const speed = Math.random() * 10 + 5; // Скорость движения
+
+      particles.push({
+        size,
+        x: posX,
+        y: posY,
+        vx: speed * Math.cos((angle * Math.PI) / 180), // Скорость по X
+        vy: speed * Math.sin((angle * Math.PI) / 180), // Скорость по Y
+      });
+    }
+
+    return particles;
+  };
+
+  const handleDelete = async (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement; // Type assertion to HTMLElement
+
+    if (target) {
+      // Check if target is not null or undefined
+      const rowElement = target.closest("tr"); // Now safe to use closest
+
+      if (rowElement) {
+        // Check if rowElement is found
+        const { offsetTop, offsetLeft, offsetWidth, offsetHeight } = rowElement;
+
+        const particles = createParticles(
+          offsetLeft,
+          offsetTop,
+          offsetWidth,
+          offsetHeight
+        );
+
+        // Запускаем анимацию частиц
+        particles.forEach((particle, index) => {
+          setTimeout(() => {
+            const particleElement = document.createElement("div");
+            particleElement.style.cssText = `
+                        position: absolute;
+                        width: ${particle.size}px;
+                        height: ${particle.size}px;
+                        background-color: #FF1A43; /* Цвет частиц */
+                        left: ${particle.x}px;
+                        top: ${particle.y}px;
+                        transform: translate(${particle.vx * 10}px, ${
+              particle.vy * 10
+            }px); /* Смещение */
+                        opacity: 0;
+                        transition: transform 0.5s ease-out, opacity 0.5s ease-out; /* Анимация */
+                    `;
+            rowElement.appendChild(particleElement); // Используем rowElement
+
+            // Удаляем частицу после анимации
+            setTimeout(() => {
+              particleElement.remove();
+            }, 500);
+          }, index * 20); // Задержка между запуском анимации частиц
+        });
+
+        try {
+          await delete_user(rowData.userId); // Удаляем пользователя после анимации
+        } catch (error) {
+          console.error("Error deleting user:", error);
+          // Обработка ошибки удаления пользователя
+        }
+      } else {
+        console.error("Could not find table row element.");
+      }
+    } else {
+      console.error("Event target is null.");
+    }
+  };
+
   return (
-    <tr className={styles.tableRow} onClick={handleRowClick}>
+    <motion.tr
+      className={styles.tableRow}
+      onClick={handleRowClick}
+      initial={{ opacity: 1, scale: 1 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0, transition: { duration: 0.5 } }}
+    >
       <td>
         <div className={styles.tableIndex}>{index}</div>
       </td>
@@ -172,15 +265,15 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
               <Basket
                 stroke="#FF1A43"
                 onClick={(e) => {
-                  delete_user(rowData.userId);
                   e.stopPropagation();
+                  handleDelete(e);
                 }}
               />
             )}
           </td>
         </>
       )}
-    </tr>
+    </motion.tr>
   );
 };
 
