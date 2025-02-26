@@ -11,3 +11,33 @@
     color: #fbfaf8;
   }
 }
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .scopeInputcontainer {
+    label {
+      font-size: 13px; /* Уменьшаем размер шрифта метки */
+      line-height: 15.6px; /* Уменьшаем высоту строки метки */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .scopeInputcontainer {
+    label {
+      font-size: 12px; /* Еще уменьшаем размер шрифта метки */
+      line-height: 14.4px; /* Еще уменьшаем высоту строки метки */
+    }
+  }
+}
+
+/* Добавим адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .scopeInputcontainer {
+    label {
+      font-size: 11px;
+      line-height: 13.2px;
+    }
+  }
+}

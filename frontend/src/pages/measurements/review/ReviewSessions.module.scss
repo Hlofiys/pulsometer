@@ -1,8 +1,15 @@
 .reviewContainer {
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
-  padding: 21px 0 110px;
+  padding: 21px 5px 110px;
   gap: 40px;
+
+  .form {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
 
   h1 {
     font-family: "Lora-SemiBold";
@@ -12,14 +19,6 @@
     color: #fbfaf8;
     margin: 0;
     padding: 0;
-  }
-
-  .emptyParagraph{
-    font-family: "Lora-Regular";
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 26.4px;
-    color: #fbfaf8;
   }
 
   .search {
@@ -41,5 +40,68 @@
     border-radius: 10px;
     color: #fbfaf8;
     cursor: pointer;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .reviewContainer {
+    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
+    gap: 30px; /* Уменьшаем отступ между элементами */
+
+    .form {
+      button {
+        height: 45px;
+      }
+    }
+
+    h1 {
+      font-size: 20px; /* Уменьшаем размер заголовка */
+      line-height: 24px; /* Уменьшаем высоту строки заголовка */
+    }
+
+    .search {
+      p {
+        font-size: 14px; /* Уменьшаем размер параграфа */
+        line-height: 21px; /* Уменьшаем высоту строки параграфа */
+        margin-bottom: 10px; /* Уменьшаем нижний отступ параграфа */
+      }
+    }
+
+    .deviceButton {
+      font-size: 14px; /* Уменьшаем размер шрифта кнопки */
+      padding: 6px; /* Уменьшаем отступы кнопки */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .reviewContainer {
+    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
+    gap: 20px; /* Еще уменьшаем отступ между элементами */
+    .form {
+      button {
+        height: 41px;
+      }
+    }
+
+    h1 {
+      font-size: 18px; /* Еще уменьшаем размер заголовка */
+      line-height: 22px; /* Еще уменьшаем высоту строки заголовка */
+    }
+
+    .search {
+      p {
+        font-size: 13px; /* Еще уменьшаем размер параграфа */
+        line-height: 19.5px; /* Еще уменьшаем высоту строки параграфа */
+        margin-bottom: 8px; /* Еще уменьшаем нижний отступ параграфа */
+      }
+    }
+
+    .deviceButton {
+      font-size: 13px; /* Еще уменьшаем размер шрифта кнопки */
+      padding: 5px; /* Еще уменьшаем отступы кнопки */
+    }
   }
 }

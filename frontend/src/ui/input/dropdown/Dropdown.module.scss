@@ -14,12 +14,12 @@
   border: 1px solid #fbfaf8;
   overflow: hidden;
   transition: border-color 0.3s;
-  
+
   &.horizontal {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px; // Расстояние между стрелками и текстом
+    gap: 10px;
 
     .optionWrapper {
       flex: 1;
@@ -31,7 +31,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .optionText {
       position: absolute;
       top: 0;
@@ -45,36 +45,36 @@
       opacity: 1;
       transform: translateX(0) scale(1);
     }
-    
+
     .optionText.exit-left {
       opacity: 0;
       transform: translateX(-100%) scale(0.8);
     }
-    
+
     .optionText.exit-right {
       opacity: 0;
       transform: translateX(100%) scale(0.8);
     }
-    
+
     .optionText.enter-left {
       opacity: 0;
       transform: translateX(-100%) scale(1.2);
       animation: enterFromLeft 0.4s forwards;
     }
-    
+
     .optionText.enter-right {
       opacity: 0;
       transform: translateX(100%) scale(1.2);
       animation: enterFromRight 0.4s forwards;
     }
-    
+
     @keyframes enterFromLeft {
       to {
         opacity: 1;
         transform: translateX(0) scale(1);
       }
     }
-    
+
     @keyframes enterFromRight {
       to {
         opacity: 1;
@@ -82,11 +82,9 @@
       }
     }
   }
-  
-  
 
   &:focus-within {
-    border-color: #23e70a; // Подсветка при фокусе на input или списке
+    border-color: #23e70a;
   }
 
   .inputField {
@@ -96,7 +94,6 @@
     background-color: transparent;
     border: none;
     outline: none;
-    // text-align: center;
     font-size: 16px;
     font-weight: bold;
     transition: all 0.3s ease;
@@ -111,7 +108,7 @@
     }
 
     &:not(.transitioning) {
-      transform: translateX(0); // Возврат к нормальному состоянию
+      transform: translateX(0);
       opacity: 1;
     }
   }
@@ -127,31 +124,28 @@
     background-color: transparent;
     z-index: 1000;
 
-    /* Для браузеров на базе WebKit (Chrome, Edge, Safari, Opera) */
     &::-webkit-scrollbar {
-      width: 10px; /* Ширина вертикального скроллбара */
-      height: 10px; /* Высота горизонтального скроллбара */
+      width: 10px;
+      height: 10px;
     }
 
     &::-webkit-scrollbar-track {
-      background: transparent; /* Фон трека */
+      background: transparent;
     }
 
     &::-webkit-scrollbar-thumb {
-      background-color: #23e70a; /* Цвет ползунка */
-      border-radius: 5px; /* Скругление */
-      border: 10px solid transparent; /* Отступ между ползунком и треком */
+      background-color: #23e70a;
+      border-radius: 5px;
+      border: 10px solid transparent;
     }
 
-    /* Для Firefox */
     & {
-      scrollbar-width: thin; /* Узкий ползунок */
-      scrollbar-color: #23e70a transparent; /* Цвет: ползунок и фон */
+      scrollbar-width: thin;
+      scrollbar-color: #23e70a transparent;
     }
 
-    /* Для обеспечения единообразного результата */
     &::-webkit-scrollbar-corner {
-      background-color: transparent; /* Углы для скроллбара (в случае двух осей) */
+      background-color: transparent;
     }
 
     .option {
@@ -160,6 +154,7 @@
       color: #fff;
       cursor: pointer;
       transition: all 0.3s ease;
+
       &:hover:not(.emptyItem),
       &.optionActive {
         border-radius: 5px;
@@ -183,5 +178,62 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .dropdownContainer {
+    font-size: 13px;
+    padding: 8px 12px;
+    line-height: 15.6px;
+    .inputField {
+      font-size: 15px;
+      min-height: 30px;
+    }
+
+    .dropdownList {
+      .option {
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .dropdownContainer {
+    font-size: 12px;
+    padding: 6px 10px;
+    line-height: 14.4px;
+    .inputField {
+      font-size: 14px;
+      min-height: 28px;
+    }
+
+    .dropdownList {
+      .option {
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+/* Добавим адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .dropdownContainer {
+    font-size: 11px;
+    padding: 5px 8px;
+    line-height: 13.2px;
+    .inputField {
+      font-size: 13px;
+      min-height: 26px;
+    }
+
+    .dropdownList {
+      .option {
+        font-size: 13px;
+      }
+    }
   }
 }

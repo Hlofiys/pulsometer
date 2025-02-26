@@ -3,7 +3,7 @@ import styles from "./Button.module.scss";
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = (props) => {
   return (
-    <button className={styles.primaryContainer} {...props}>
+    <button className={styles.additionButton} {...props}>
       {props.children}
     </button>
   );

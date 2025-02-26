@@ -1,8 +1,18 @@
 .viewContainer {
-  padding: 21px 0 110px ;
   display: flex;
+  min-height: 100svh;
   flex-direction: column;
-  gap: 35px;
+  align-items: flex-start;
+  // justify-content: space-between;
+  gap: 30px;
+  padding: 0 10px;
+  // margin: 50px 0 40px;
+
+  .form {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
 
   h1 {
     font-family: "Lora-SemiBold";
@@ -14,7 +24,7 @@
     padding: 0;
   }
 
-  .emptyParagraph{
+  .emptyParagraph {
     font-family: "Lora-Regular";
     font-size: 16px;
     font-weight: 600;
@@ -25,5 +35,53 @@
   .icon {
     padding: 0 !important;
     text-align: center;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .viewContainer {
+    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
+    gap: 25px; /* Уменьшаем отступ между элементами */
+
+    .form {
+      button {
+        height: 45px;
+      }
+    }
+
+    h1 {
+      font-size: 20px; /* Уменьшаем размер заголовка */
+      line-height: 24px; /* Уменьшаем высоту строки заголовка */
+    }
+
+    .emptyParagraph {
+      font-size: 14px; /* Уменьшаем размер параграфа */
+      line-height: 21px; /* Уменьшаем высоту строки параграфа */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .viewContainer {
+    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
+    gap: 20px; /* Еще уменьшаем отступ между элементами */
+
+    .form {
+      button {
+        height: 41px;
+      }
+    }
+
+    h1 {
+      font-size: 18px; /* Еще уменьшаем размер заголовка */
+      line-height: 22px; /* Еще уменьшаем высоту строки заголовка */
+    }
+
+    .emptyParagraph {
+      font-size: 13px; /* Еще уменьшаем размер параграфа */
+      line-height: 19.5px; /* Еще уменьшаем высоту строки параграфа */
+    }
   }
 }

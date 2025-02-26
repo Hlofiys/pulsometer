@@ -1,11 +1,11 @@
 .tableRow {
-  border-bottom: 1px solid #444; // Нижняя граница строки
-  transition: .5s all ease;
+  border-bottom: 1px solid #444;
+  transition: 0.5s all ease;
   cursor: pointer;
   z-index: 0;
 
   &:last-child {
-    border-bottom: none; // Убираем последнюю границу
+    border-bottom: none;
   }
 
   &:hover {
@@ -31,6 +31,65 @@
       border-radius: 10px;
       border: 1px solid #fbfaf8;
       color: #fbfaf8;
+    }
+
+    &.icon {
+      padding: 10px;
+    }
+
+    input{
+      width: 100px;
+    }
+  }
+}
+
+/* Адаптивные стили (только размеры шрифта) */
+
+@media (max-width: 768px) {
+  .tableRow {
+    font-size: 14px; /* Уменьшаем общий размер шрифта */
+    td {
+      .tableIndex {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 14px; /* Уменьшаем размер шрифта индекса */
+      }
+      &.icon {
+        padding: 10px 5px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tableRow {
+    font-size: 10px; /* Уменьшаем общий размер шрифта */
+    td {
+      .tableIndex {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        font-size: 10px; /* Уменьшаем размер шрифта индекса */
+      }
+
+      &.icon {
+        padding: 10px 1.5px;
+      }
+    }
+  }
+}
+
+/* Добавим адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .tableRow {
+    font-size: 10px; /* Уменьшаем общий размер шрифта */
+    td {
+      .tableIndex {
+        width: 15px;
+        height: 15px;
+        font-size: 14px; /* Уменьшаем размер шрифта индекса */
+      }
     }
   }
 }

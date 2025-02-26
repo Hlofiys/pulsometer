@@ -7,15 +7,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import ArrowRight from "../../../ui/icons/ArrowRight";
 import Pagination from "../../../ui/pagination/Pagination";
 import { useGetUsers } from "../../../api/hooks/user/useGetUsers";
-import { Empty, Spin } from "antd";
+import { Spin } from "antd";
 import { TTableUserRow } from "../../../services/interfaces/Interfaces";
-// import { TableRowFormValues } from "./table/row/Row";
 import { useGetUsersByDeviceId } from "../../../api/hooks/device/useGetUsersByDeviceId";
 import { FieldConfig } from "./table/row/Row";
-// import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
 import { RouterPath } from "../../../router/Router";
 import Button from "../../../ui/buttons/additional/Button";
+import Empty from "../../../ui/empty/Empty";
 
 const ROWS_PER_PAGE = 5; // Максимальное количество строк на одной странице
 
@@ -118,16 +117,15 @@ const ViewUsers: FC = () => {
   );
 
   return (
-    <div className={styles.viewContainer}>
+    <main className={styles.viewContainer}>
       <h1>Все пользователи:</h1>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+      <div className={styles.form}>
         <SearchInput
           searchValueState={[searchValue, setSearchValue]}
           inputProps={{ onChange: onSearch }}
         />
         {!!deviceId && (
           <Button
-            style={{ height: 50 }}
             disabled={isButtonDisabled}
             name={
               isButtonDisabled ? "Устройство выключено" : "Начать измерения"
@@ -150,11 +148,7 @@ const ViewUsers: FC = () => {
           getIndex={(row) => row.index + 1}
         />
       ) : (
-        <Empty
-          description={
-            <p className={styles.emptyParagraph}>Список пользователей пуст</p>
-          }
-        />
+        <Empty description={"Список пользователей пуст"} />
       )}
       <Link onClick={() => nav(RouterPath.CREATE)}>
         Добавить пользователя <ArrowRight stroke="#23E70A" />
@@ -165,7 +159,7 @@ const ViewUsers: FC = () => {
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
-    </div>
+    </main>
   );
 };
 

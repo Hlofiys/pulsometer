@@ -5,6 +5,11 @@
   align-items: center;
   justify-content: start;
 
+  svg{
+    width: 24px;
+    height: 24px;
+  }
+
   input {
     width: 320px;
     height: 28px;
@@ -24,6 +29,53 @@
     &:hover,
     &:focus {
       box-shadow: 0px 20px 45px 0px #21222740;
+    }
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .searchForm {
+    svg{
+      width: 20px;
+      height: 20px;
+    }
+    input {
+      width: 280px; /* Уменьшаем ширину ввода */
+      font-size: 16px; /* Уменьшаем размер шрифта */
+      padding: 8px 12px; /* Уменьшаем отступы */
+      line-height: 20px; /* Уменьшаем высоту строки */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  svg{
+    width: 18px;
+    height: 18px;
+  }
+  .searchForm {
+    input {
+      width: 90%; /* Занимаем 90% ширины экрана */
+      font-size: 14px; /* Еще уменьшаем размер шрифта */
+      padding: 6px 10px; /* Еще уменьшаем отступы */
+      line-height: 18px; /* Еще уменьшаем высоту строки */
+    }
+  }
+}
+
+/* Добавим адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .searchForm {
+    svg{
+      width: 16px;
+      height: 16px;
+    }
+    input {
+      font-size: 13px;
+      padding: 5px 8px;
+      line-height: 16px;
     }
   }
 }

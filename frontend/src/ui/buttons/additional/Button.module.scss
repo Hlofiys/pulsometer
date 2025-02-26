@@ -1,4 +1,4 @@
-.primaryContainer {
+.additionButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,7 +10,7 @@
   color: #fbfaf8;
   box-shadow: 0px 20px 45px 0px #21222740;
   border-radius: 10px;
-  padding: 10px 15px;
+  padding: 15px 20px;
   outline: none !important;
   border: 1px solid #fbfaf8;
   transition: 0.3s all ease-in;
@@ -29,5 +29,31 @@
     border: 1px solid #cccccc82;
     background-color: #cccccc82;
     color: #3f3f3f;
+  }
+}
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .additionButton {
+    font-size: 15px;
+    padding: 8px 12px;
+    min-height: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .additionButton {
+    font-size: 14px;
+    padding: 12.5px 10px;
+    min-height: 10px;
+  }
+}
+
+/* Адаптивность для очень больших экранов */
+@media (min-width: 1600px) {
+  .additionButton {
+    font-size: 18px;
+    padding: 14px 20px;
+    min-height: 36px;
   }
 }

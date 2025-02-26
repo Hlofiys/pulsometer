@@ -1,5 +1,4 @@
-.listContainer{
-    width: 100%;
+.listContainer {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -7,7 +6,18 @@
     list-style: none;
     margin: 0;
     padding: 0;
-    overflow-x: auto;
+    overflow-x: scroll;
     padding-bottom: 10px;
-    // flex-shrink: 0;
-}
+  }
+  
+  /* Адаптивные стили */
+  
+  @media (max-width: 768px) {
+    .listContainer {
+      flex-direction: column; /* Изменяем направление на колонку */
+      align-items: stretch; /* Растягиваем элементы на всю ширину */
+      overflow-x: hidden; /* Убираем горизонтальный скролл */
+      gap: 20px; /* Уменьшаем отступ между элементами */
+      padding-bottom: 0; /* Убираем нижний отступ */
+    }
+  }

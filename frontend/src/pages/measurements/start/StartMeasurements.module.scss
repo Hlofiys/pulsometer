@@ -1,8 +1,8 @@
 .startContainer {
-  padding: 21px 0 110px;
+  padding: 21px 5px 110px;
   display: flex;
   flex-direction: row;
-  align-items: start;
+  align-items: flex-start;
   gap: 20px;
 
   section {
@@ -19,10 +19,65 @@
       margin: 0;
       padding: 0;
     }
+
     .measurementsFormProps {
       display: flex;
       flex-direction: column;
       gap: 20px;
+
+
+    }
+
+    button {
+        height: 52px;
+    }
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .startContainer {
+    flex-direction: column; /* Изменяем направление на колонку */
+    align-items: center; /* Растягиваем элементы на всю ширину */
+    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
+    gap: 15px; /* Уменьшаем отступ между элементами */
+
+    section {
+      gap: 30px; /* Уменьшаем отступ между элементами секции */
+      h1 {
+        font-size: 20px; /* Уменьшаем размер заголовка */
+        line-height: 24px; /* Уменьшаем высоту строки заголовка */
+      }
+
+      .measurementsFormProps {
+        gap: 15px; /* Уменьшаем отступ между элементами формы */
+      }
+    }
+    button {
+      height: 46px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .startContainer {
+    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
+    
+    section {
+      gap: 20px; /* Еще уменьшаем отступ между элементами секции */
+      h1 {
+        font-size: 18px; /* Еще уменьшаем размер заголовка */
+        line-height: 22px; /* Еще уменьшаем высоту строки заголовка */
+      }
+
+      .measurementsFormProps {
+        gap: 10px; /* Еще уменьшаем отступ между элементами формы */
+      }
+
+      button{
+        height: 40px;
+      }
     }
   }
 }

@@ -23,13 +23,13 @@ const Main: FC = () => {
       </p>
       <section>
         <Button
-          style={{ width: 304, height: 52 }}
+          // style={{ width: 304, height: 52 }}
           onClick={() => nav(RouterPath.CREATE)}
         >
           Добавить пользователя
         </Button>
         <AdditionalButton
-          style={{ width: 304, height: 52 }}
+          // style={{ width: 304, height: 52 }}
           onClick={() => nav(RouterPath.VIEW)}
         >
           Все пользователи

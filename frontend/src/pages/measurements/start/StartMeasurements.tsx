@@ -86,7 +86,6 @@ const StartMeasurements: FC = () => {
       <section>
         <h1>Для запуска измерений выберите пользователя и вид активности:</h1>
         <form
-          action=""
           className={styles.measurementsFormProps}
           onSubmit={handleSubmit(onSubmit)}
         >
@@ -103,7 +102,7 @@ const StartMeasurements: FC = () => {
                     ...dropdownField,
                     onChange: (option) => onChange(option.value),
                     isLoading: isLoadingUsers,
-                    containersStyles: { width: "50%" },
+                    // containersStyles: { width: "100%" },
                     isDropDown: true,
                     options: userOptions,
                   }}
@@ -123,7 +122,7 @@ const StartMeasurements: FC = () => {
                   inputProps={{
                     ...inputField,
                     onChange,
-                    style: { width: "50%" },
+                    // style: { width: "100%" },
                   }}
                   ariaDescription={"Вид активности"}
                 />
@@ -132,7 +131,7 @@ const StartMeasurements: FC = () => {
           />
         </form>
         <Button
-          style={{ width: 300, height: 52 }}
+          // style={{ width: 300, height: 52 }}
           onClick={handleSubmit(onSubmit)}
           disabled={isDisabled}
           isLoading={isLoadingActivate}

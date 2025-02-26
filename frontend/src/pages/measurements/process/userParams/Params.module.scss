@@ -46,7 +46,7 @@
       &.greenBorder {
         border-color: #23e70a;
         color: #23e70a;
-      }   
+      }
     }
   }
 
@@ -73,12 +73,12 @@
       color: #23e70a;
       margin: 0;
       border-radius: 10px;
-    
+
       &.greenBorder {
         border-color: #23e70a;
         color: #23e70a;
       }
-    
+
       .liveIndicator {
         position: absolute;
         display: flex;
@@ -87,28 +87,28 @@
         font-size: 14pt;
         top: 0;
         left: 20px;
-        color: red; // Цвет текста для live индикатора
-    
+        color: red;
+
         &::before {
           content: '';
           display: inline-block;
           width: 5px;
           height: 5px;
           border-radius: 50%;
-          background: red; // Цвет круга для live индикатора
+          background: red;
         }
       }
-    
+
       .liveStatus {
-        --color: #23e70a; // Цвет по умолчанию (зелёный для времени)
+        --color: #23e70a;
         animation: pulseLive 1.5s infinite ease-in-out;
       }
-    
+
       .liveIndicator.liveStatus {
-        --color: red; // Устанавливаем красный цвет для индикатора live
+        --color: red;
         animation: pulseLive 1.5s infinite ease-in-out;
       }
-    
+
       @keyframes pulseLive {
         0%, 100% {
           opacity: 1;
@@ -119,6 +119,48 @@
           text-shadow: 0 0 30px var(--color);
         }
       }
-    }    
+    }
+  }
+}
+
+/* Адаптивные стили (только размеры шрифта) */
+
+@media (max-width: 768px) {
+  .userParamsContainer h1 {
+    font-size: 18px; /* Уменьшаем размер заголовка */
+    line-height: 24px; /* Уменьшаем высоту строки заголовка */
+  }
+
+  .userParamsContainer .rowOption span {
+    font-size: 14px; /* Уменьшаем размер шрифта элемента строки */
+  }
+
+  .userParamsContainer .columnOption p {
+    font-size: 40px; /* Уменьшаем размер числа */
+    line-height: 48px; /* Уменьшаем высоту строки числа */
+  }
+
+  .userParamsContainer .columnOption p .liveIndicator {
+    font-size: 12pt; /* Уменьшаем размер индикатора */
+  }
+}
+
+@media (max-width: 480px) {
+  .userParamsContainer h1 {
+    font-size: 16px; /* Еще уменьшаем размер заголовка */
+    line-height: 20px; /* Еще уменьшаем высоту строки заголовка */
+  }
+
+  .userParamsContainer .rowOption span {
+    font-size: 13px; /* Еще уменьшаем размер шрифта элемента строки */
+  }
+
+  .userParamsContainer .columnOption p {
+    font-size: 30px; /* Еще уменьшаем размер числа */
+    line-height: 36px; /* Еще уменьшаем высоту строки числа */
+  }
+
+  .userParamsContainer .columnOption p .liveIndicator {
+    font-size: 10pt; /* Еще уменьшаем размер индикатора */
   }
 }

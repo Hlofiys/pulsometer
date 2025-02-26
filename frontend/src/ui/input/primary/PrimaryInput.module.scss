@@ -12,11 +12,41 @@
   font-weight: 300;
   line-height: 16.8px;
 
-  &::-webkit-calendar-picker-indicator{
+  &::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
 
   &:focus {
     outline: 2px solid #23e70a;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .primaryInput {
+    font-size: 13px; /* Уменьшаем размер шрифта */
+    padding: 8px 12px; /* Уменьшаем отступы */
+    min-height: 30px; /* Уменьшаем минимальную высоту */
+    line-height: 15.6px; /* Уменьшаем высоту строки */
+  }
+}
+
+@media (max-width: 480px) {
+  .primaryInput {
+    font-size: 12px; /* Еще уменьшаем размер шрифта */
+    padding: 6px 10px; /* Еще уменьшаем отступы */
+    min-height: 28px; /* Еще уменьшаем минимальную высоту */
+    line-height: 14.4px; /* Еще уменьшаем высоту строки */
+  }
+}
+
+/* Добавим адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .primaryInput {
+    font-size: 11px;
+    padding: 5px 8px;
+    min-height: 26px;
+    line-height: 13.2px;
   }
 }

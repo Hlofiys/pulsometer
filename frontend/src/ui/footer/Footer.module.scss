@@ -3,7 +3,7 @@
   padding: 40px 10px;
   display: flex;
   flex-direction: row;
-  align-items: start;
+  align-items: flex-start;
   justify-content: space-between;
   border-top: 1px solid #5B5D63;
 
@@ -14,7 +14,7 @@
     color: #fbfaf8;
     line-height: 14.4px;
 
-    img{
+    img {
       width: 50px;
       height: 50px;
       cursor: default;
@@ -27,10 +27,40 @@
       padding: 0 0 10px;
     }
 
-    ul{
-        margin: 0;
-        padding: 0;
-        list-style: none;
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  }
+
+  /* Адаптивные стили */
+  @media (max-width: 768px) {
+    flex-direction: column; // Изменяем направление на колонку
+    align-items: center; // Центрируем элементы по горизонтали
+    padding: 20px 10px; // Уменьшаем отступы
+
+    article {
+      text-align: center; // Центрируем текст внутри article
+      margin-bottom: 20px; // Добавляем отступ между article
+
+      img {
+        margin: 0 auto 10px; // Центрируем изображение
+      }
+
+      &:last-child {
+        margin-bottom: 0; // Убираем отступ у последнего article
+      }
+    }
+  }
+
+  @media (max-width: 480px){
+    article{
+      font-size: 10px;
+      img{
+        width: 40px;
+        height: 40px;
+      }
     }
   }
 }

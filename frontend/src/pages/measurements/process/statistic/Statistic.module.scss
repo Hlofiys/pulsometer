@@ -1,49 +1,87 @@
 .statisticContainer {
   flex: .9;
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   gap: 20px;
 
   .paramSet {
     width: 100%;
-    display: flex;
-    flex-direction: row;
+    display: flex; /* По умолчанию flex */
+    flex-direction: row; /* По умолчанию row */
     align-items: center;
     list-style: none;
     margin: 0;
     padding: 0;
     gap: 20px;
+  }
 
-    .paramCard {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      border-radius: 20px;
-      background: #212227;
-      border: 1px solid #fbfaf8;
-      gap: 10px;
+  .paramSet .paramCard {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 20px;
+    background: #212227;
+    border: 1px solid #fbfaf8;
+    gap: 10px;
+  }
 
-      .paramLabel {
-        font-family: "Lora-Regular";
-        font-size: 16px;
-        font-weight: 400;
-        line-height: 19.2px;
-        color: #fbfaf8;
-        margin: 0;
-        padding: 0;
-      }
+  .paramSet .paramCard .paramLabel {
+    font-family: "Lora-Regular";
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 19.2px;
+    color: #fbfaf8;
+    margin: 0;
+    padding: 0;
+  }
 
-      .paramValue {
-        display: block;
-        color: #23e70a;
-        font-family: "Lora-Regular";
-        font-size: 16px;
-        font-weight: 600;
-        line-height: 19.2px;
-        margin: 0;
-        padding: 0;
-      }
-    }
+  .paramSet .paramCard .paramValue {
+    display: block;
+    color: #23e70a;
+    font-family: "Lora-Regular";
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 19.2px;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .statisticContainer .paramSet {
+    display: grid; /* Используем CSS Grid */
+    grid-template-columns: 1fr 1fr; /* 2 колонки */
+    grid-template-rows: 1fr 1fr; /* 2 строки */
+    gap: 15px; /* Уменьшаем отступ между ячейками */
+  }
+
+  .statisticContainer .paramSet .paramCard {
+    padding: 15px; /* Уменьшаем отступы карточки */
+  }
+
+  .statisticContainer .paramSet .paramCard .paramLabel,
+  .statisticContainer .paramSet .paramCard .paramValue {
+    font-size: 14px;
+    line-height: 16.8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statisticContainer .paramSet {
+    gap: 10px; /* Еще уменьшаем отступ между ячейками */
+  }
+
+  .statisticContainer .paramSet .paramCard {
+    padding: 10px; /* Еще уменьшаем отступы карточки */
+  }
+
+  .statisticContainer .paramSet .paramCard .paramLabel,
+  .statisticContainer .paramSet .paramCard .paramValue {
+    font-size: 13px;
+    line-height: 15.6px;
   }
 }

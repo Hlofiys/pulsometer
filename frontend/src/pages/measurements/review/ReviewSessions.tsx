@@ -6,7 +6,7 @@ import {
   convertMilliseconds,
   parseUTCDateAndTime,
 } from "../../../utils/functions/functions";
-import { Empty, Spin } from "antd";
+import { Spin } from "antd";
 import { SearchInput } from "../../../ui/input/search/SearchInput";
 import Pagination from "../../../ui/pagination/Pagination";
 import Table from "../../users/view.page/table/Table";
@@ -16,6 +16,9 @@ import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptio
 import { RouterPath } from "../../../router/Router";
 import Button from "../../../ui/buttons/additional/Button";
 import { useGetUserById } from "../../../api/hooks/user/useGetUserById";
+import Empty from "../../../ui/empty/Empty";
+import Link from '../../../ui/buttons/link/Link';
+import ArrowRight from '../../../ui/icons/ArrowRight';
 
 const ROWS_PER_PAGE = 5;
 
@@ -53,7 +56,7 @@ const ReviewSessions: FC = () => {
       label: "Продолжительность",
       type: "text",
       renderStatic: (value) =>
-        convertMilliseconds({ms: value}).formatNumberTime,
+        convertMilliseconds({ ms: value }).formatNumberTime,
     },
     {
       key: "deviceId",
@@ -156,13 +159,12 @@ const ReviewSessions: FC = () => {
 
       <div className={styles.search}>
         <p>Введите дату или время:</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <div className={styles.form}>
           <SearchInput
             searchValueState={[searchValue, setSearchValue]}
             inputProps={{ onChange: onSearch }}
           />
           <Button
-            style={{ height: 50 }}
             // disabled={isLoadingActiveUser}
             disabled={isButtonDisabled || isLoadingActiveUser}
             name={
@@ -192,12 +194,11 @@ const ReviewSessions: FC = () => {
           // getIndex={(number) => ++number}
         />
       ) : (
-        <Empty
-          description={
-            <p className={styles.emptyParagraph}>Список пользователей пуст</p>
-          }
-        />
+        <Empty description="Список измерений пуст" />
       )}
+      <Link onClick={() => nav(RouterPath.VIEW)}>
+        Перейти к пользователям <ArrowRight stroke="#23E70A" />
+      </Link>
       <Pagination
         containerStyles={{ width: "100%", justifyContent: "center" }}
         totalPages={totalPages}

@@ -1,5 +1,5 @@
 .headerContainer {
-  //   width: 100%;
+  // width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -36,6 +36,10 @@
     line-height: 19.2px;
     color: #fbfaf8;
 
+    span {
+      font-size: 20px;
+    }
+
     p {
       display: flex;
       align-items: center;
@@ -44,10 +48,65 @@
       margin: 0;
       padding: 0;
 
-      svg{
+      svg {
         width: 25px;
         height: 25px;
         cursor: default;
+      }
+    }
+  }
+
+  /* Адаптивные стили */
+  @media (max-width: 768px) {
+    padding: 15px 10px;
+
+    img {
+      width: 40px;
+      height: 40px;
+    }
+
+    h5 {
+      font-size: 12px;
+      flex-basis: 100%;
+      margin-top: 10px;
+    }
+
+    aside {
+      flex-basis: 100%;
+      justify-content: end;
+      margin-top: 10px;
+      font-size: 12px;
+      gap: 10px;
+
+      span {
+        font-size: 18px;
+      }
+
+      p {
+        gap: 10px;
+
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    h5 {
+      font-size: 11px;
+      flex-basis: 100%;
+    }
+
+    aside {
+      flex-basis: 0%;
+      
+      span {
+        font-size: 18px;
+      }
+      p {
+        display: none;
       }
     }
   }

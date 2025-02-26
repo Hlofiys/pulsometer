@@ -1,14 +1,13 @@
 .createuserContainer {
-  width: 100%;
   display: flex;
   flex-direction: row;
-  align-items: start;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 30px;
+  padding: 0 10px;
   margin: 50px 0 40px;
 
   form {
-    // width: 50%;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -24,9 +23,41 @@
     }
   }
 
-  .section{
+  .section {
     width: 50%;
     height: 70%;
     border-radius: 20px;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .createuserContainer {
+    flex-direction: column; /* Изменяем направление на колонку */
+    align-items: stretch; /* Растягиваем элементы на всю ширину */
+    gap: 20px; /* Уменьшаем отступ между элементами */
+    margin: 30px 0 30px; /* Уменьшаем отступы сверху и снизу */
+    
+    form {
+      width: 100%; /* Форма занимает всю ширину */
+    }
+
+    .section {
+      width: 100%; /* Секция занимает всю ширину */
+      height: auto; /* Высота секции автоматически подстраивается */
+      margin-top: 20px; /* Добавляем отступ сверху */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .createuserContainer {
+    form {
+      h1 {
+        font-size: 20px; /* Уменьшаем размер заголовка */
+        line-height: 24px; /* Уменьшаем высоту строки заголовка */
+      }
+    }
   }
 }

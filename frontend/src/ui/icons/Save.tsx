@@ -6,7 +6,7 @@ const Save: FC<SVGProps<SVGSVGElement>> = (props) => {
       {...props}
       width={props.width || 20}
       height={props.height || 20}
-      fill={props.stroke || 'white'}
+      fill={props.stroke || "white"}
       viewBox="0 0 48 48"
     >
       <path

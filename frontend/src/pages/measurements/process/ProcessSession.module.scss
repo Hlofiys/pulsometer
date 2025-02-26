@@ -1,7 +1,8 @@
 .mainProcessContainer {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  padding: 21px 0 110px;
+  padding: 21px 5px 110px;
   gap: 40px;
 
   .processMeasurementsContainer {
@@ -15,8 +16,38 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: end;
-    justify-content: end;
+    align-items: flex-end;
+    justify-content: flex-end;
     gap: 30px;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .mainProcessContainer {
+    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
+    gap: 30px; /* Уменьшаем отступ между элементами */
+  }
+
+  .mainProcessContainer .processMeasurementsContainer {
+    flex-direction: column-reverse; /* Изменяем направление на колонку */
+    gap: 15px; /* Уменьшаем отступ между элементами */
+  }
+
+  .mainProcessContainer .buttons {
+    align-items: stretch; /* Растягиваем кнопки на всю ширину */
+    gap: 20px; /* Уменьшаем отступ между кнопками */
+  }
+}
+
+@media (max-width: 480px) {
+  .mainProcessContainer {
+    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
+    gap: 20px; /* Еще уменьшаем отступ между элементами */
+  }
+
+  .mainProcessContainer .buttons {
+    gap: 15px; /* Еще уменьшаем отступ между кнопками */
   }
 }

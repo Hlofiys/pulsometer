@@ -11,13 +11,48 @@
   }
 
   thead {
-
     th {
       font-family: "Lora-SemiBold";
       font-size: 16px;
       font-weight: 600;
       line-height: 21.6px;
       color: #fbfaf8;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .customTable {
+    display: block; /* Делаем таблицу блочным элементом */
+    overflow-x: auto; /* Добавляем горизонтальный скролл */
+    white-space: nowrap; /* Запрещаем перенос строк в ячейках */
+
+    thead {
+      th {
+        font-size: 10px;
+
+        &:first-child {
+          font-size: 10px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .customTable {
+    display: block; /* Делаем таблицу блочным элементом */
+    overflow-x: auto; /* Добавляем горизонтальный скролл */
+    white-space: nowrap; /* Запрещаем перенос строк в ячейках */
+
+    thead {
+      th {
+        font-size: 8px;
+
+        &:first-child {
+          font-size: 8px;
+        }
+      }
     }
   }
 }

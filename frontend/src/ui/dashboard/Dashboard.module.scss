@@ -1,7 +1,6 @@
 .dashboard {
-  // width: 800px;
-  height: 410px;
-
+  // flex: 1;
+  min-height: 410px;
   background-color: #212227;
   border-radius: 20px;
   padding: 20px;
@@ -16,9 +15,41 @@
   align-items: center;
 
   .chartContainer {
-    width: 100%;
     width: 800px;
     flex: 1;
     position: relative;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 800px) {
+  .dashboard {
+    padding: 15px; /* Уменьшаем отступы */
+    font-size: 12px; /* Уменьшаем размер шрифта */
+    line-height: 18px; /* Уменьшаем высоту строки */
+    height: auto; /* Автоматическая высота */
+
+    .chartContainer {
+      width: 99%; /* Занимаем всю ширину контейнера */
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    flex: 0;
+    min-height: 250px;
+    padding: 10px; /* Еще уменьшаем отступы */
+    font-size: 11px; /* Еще уменьшаем размер шрифта */
+    line-height: 16px; /* Еще уменьшаем высоту строки */
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    min-height: 250px;
+    font-size: 10px; /* Еще уменьшаем размер шрифта */
+    line-height: 14px; /* Еще уменьшаем высоту строки */
   }
 }

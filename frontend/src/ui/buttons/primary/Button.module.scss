@@ -1,5 +1,5 @@
 .primaryContainer {
-  min-height: 32px;
+  // min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,9 +15,8 @@
   border-radius: 10px;
   transition: 0.3s all ease-in;
 
-  &:hover:not(:disabled){
+  &:hover:not(:disabled) {
     color: #626262;
-    // outline: 1px solid #23e70a;
     background: #23e70a;
   }
 
@@ -26,7 +25,42 @@
     background: #23e70a;
   }
 
-  &:disabled{
+  &:disabled {
     background: gray;
+  }
+}
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .primaryContainer {
+    font-size: 15px;
+    padding: 8px 12px;
+    min-height: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .primaryContainer {
+    font-size: 14px;
+    padding: 6px 10px;
+    min-height: 10px;
+  }
+}
+
+/* Адаптивность для больших экранов */
+@media (min-width: 1200px) {
+  .primaryContainer {
+    font-size: 17px;
+    padding: 12px 18px;
+    min-height: 34px;
+  }
+}
+
+/* Адаптивность для очень больших экранов */
+@media (min-width: 1600px) {
+  .primaryContainer {
+    font-size: 18px;
+    padding: 14px 20px;
+    min-height: 36px;
   }
 }

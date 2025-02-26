@@ -48,3 +48,55 @@
     }
   }
 }
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .pagination {
+    gap: 5px; /* Уменьшаем отступ между элементами */
+    .paginationArrow {
+      font-size: 14px; /* Уменьшаем размер шрифта стрелок */
+    }
+
+    .paginationItem {
+      font-size: 14px; /* Уменьшаем размер шрифта элементов */
+      width: 35px; /* Уменьшаем ширину элементов */
+      height: 33px; /* Уменьшаем высоту элементов */
+      padding: 6px 10px; /* Уменьшаем отступы элементов */
+      line-height: 16.8px; /* Уменьшаем высоту строки элементов */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    .paginationArrow {
+      font-size: 13px; /* Еще уменьшаем размер шрифта стрелок */
+    }
+
+    .paginationItem {
+      font-size: 13px; /* Еще уменьшаем размер шрифта элементов */
+      width: 30px; /* Еще уменьшаем ширину элементов */
+      height: 28px; /* Еще уменьшаем высоту элементов */
+      padding: 5px 8px; /* Еще уменьшаем отступы элементов */
+      line-height: 15.6px; /* Еще уменьшаем высоту строки элементов */
+    }
+  }
+}
+
+/* Добавим адаптивность для очень маленьких экранов */
+@media (max-width: 360px) {
+  .pagination {
+    .paginationArrow {
+      font-size: 12px;
+    }
+
+    .paginationItem {
+      font-size: 12px;
+      width: 28px;
+      height: 26px;
+      padding: 4px 6px;
+      line-height: 14.4px;
+    }
+  }
+}

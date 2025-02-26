@@ -1,5 +1,4 @@
 .mainContainer {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -28,5 +27,55 @@
     display: flex;
     flex-direction: row;
     gap: 20px;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .mainContainer {
+    padding: 0 10px;
+    align-items: center;
+    margin: 30px 0 60px; /* Уменьшаем отступы */
+    gap: 20px; /* Уменьшаем отступ между элементами */
+
+    h1 {
+      text-align: center;
+      font-size: 40px; /* Уменьшаем размер заголовка */
+      line-height: 48px; /* Уменьшаем высоту строки заголовка */
+    }
+
+    p {
+      text-align: justify;
+      font-size: 16px; /* Уменьшаем размер параграфа */
+      line-height: 19.2px; /* Уменьшаем высоту строки параграфа */
+    }
+
+    section {
+      width: 100%;
+      flex-direction: row; /* Изменяем направление секции на колонку */
+      gap: 15px; /* Уменьшаем отступ между элементами секции */
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .mainContainer {
+    margin: 20px 0 40px; /* Еще уменьшаем отступы */
+    gap: 15px; /* Еще уменьшаем отступ между элементами */
+
+    h1 {
+      font-size: 20px; /* Еще уменьшаем размер заголовка */
+      line-height: 25px; /* Еще уменьшаем высоту строки заголовка */
+    }
+
+    p {
+      font-size: 12px; /* Еще уменьшаем размер параграфа */
+      line-height: 16.8px; /* Еще уменьшаем высоту строки параграфа */
+    }
   }
 }

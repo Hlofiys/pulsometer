@@ -11,3 +11,19 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Для маленьких экранов (например, мобильные телефоны) */
+@media (max-width: 768px) {
+  .link {
+    font-size: 14px; /* Уменьшаем размер шрифта */
+    line-height: 16.8px; /* Уменьшаем высоту строки */
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 480px) {
+  .link {
+    font-size: 12px; /* Еще уменьшаем размер шрифта */
+    line-height: 14.4px; /* Еще уменьшаем высоту строки */
+  }
+}

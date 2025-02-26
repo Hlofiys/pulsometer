@@ -1,4 +1,4 @@
-import { FC, ReactNode, useState } from "react";
+import { FC, ReactNode, useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import styles from "./Row.module.scss";
 import Save from "../../../../../ui/icons/Save";
@@ -178,13 +178,22 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
     }
   };
 
+  const propsInTR = useMemo(() => {
+    if (isEdit) {
+      return {
+        initial: { opacity: 1, scale: 1 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 0, transition: { duration: 0.5 } },
+      };
+    }
+    return {}; // Возвращаем пустой объект, если isEdit false
+  }, [isEdit]);
+
   return (
     <motion.tr
       className={styles.tableRow}
       onClick={handleRowClick}
-      initial={{ opacity: 1, scale: 1 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0, transition: { duration: 0.5 } }}
+      {...propsInTR}
     >
       <td>
         <div className={styles.tableIndex}>{index}</div>
