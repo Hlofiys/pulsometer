@@ -90,7 +90,7 @@
         color: red;
 
         &::before {
-          content: '';
+          content: "";
           display: inline-block;
           width: 5px;
           height: 5px;
@@ -110,7 +110,8 @@
       }
 
       @keyframes pulseLive {
-        0%, 100% {
+        0%,
+        100% {
           opacity: 1;
           text-shadow: 0 0 30px var(--color), 0 0 20px var(--color);
         }
@@ -129,19 +130,23 @@
   .userParamsContainer h1 {
     font-size: 18px; /* Уменьшаем размер заголовка */
     line-height: 24px; /* Уменьшаем высоту строки заголовка */
-  }
 
-  .userParamsContainer .rowOption span {
-    font-size: 14px; /* Уменьшаем размер шрифта элемента строки */
-  }
+    .rowOption span {
+      font-size: 14px; /* Уменьшаем размер шрифта элемента строки */
+    }
 
-  .userParamsContainer .columnOption p {
-    font-size: 40px; /* Уменьшаем размер числа */
-    line-height: 48px; /* Уменьшаем высоту строки числа */
-  }
+    .columnOption p {
+      font-size: 40px; /* Уменьшаем размер числа */
+      line-height: 48px; /* Уменьшаем высоту строки числа */
+    }
 
-  .userParamsContainer .columnOption p .liveIndicator {
-    font-size: 12pt; /* Уменьшаем размер индикатора */
+    .columnOption {
+      p {
+        .liveIndicator {
+          font-size: 12pt; /* Уменьшаем размер индикатора */
+        }
+      }
+    }
   }
 }
 
@@ -149,18 +154,25 @@
   .userParamsContainer h1 {
     font-size: 16px; /* Еще уменьшаем размер заголовка */
     line-height: 20px; /* Еще уменьшаем высоту строки заголовка */
-  }
+    .rowOption {
+      span {
+        font-size: 13px; /* Еще уменьшаем размер шрифта элемента строки */
+      }
+    }
 
-  .userParamsContainer .rowOption span {
-    font-size: 13px; /* Еще уменьшаем размер шрифта элемента строки */
-  }
+    .columnOption {
+      p {
+        font-size: 30px; /* Еще уменьшаем размер числа */
+        line-height: 36px; /* Еще уменьшаем высоту строки числа */
+      }
+    }
 
-  .userParamsContainer .columnOption p {
-    font-size: 30px; /* Еще уменьшаем размер числа */
-    line-height: 36px; /* Еще уменьшаем высоту строки числа */
-  }
-
-  .userParamsContainer .columnOption p .liveIndicator {
-    font-size: 10pt; /* Еще уменьшаем размер индикатора */
+    .columnOption {
+      p {
+        .liveIndicator {
+          font-size: 10pt; /* Еще уменьшаем размер индикатора */
+        }
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 .statisticContainer {
-  flex: .9;
+  flex: 0.9;
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
@@ -52,36 +52,40 @@
 /* Адаптивные стили */
 
 @media (max-width: 768px) {
-  .statisticContainer .paramSet {
-    display: grid; /* Используем CSS Grid */
-    grid-template-columns: 1fr 1fr; /* 2 колонки */
-    grid-template-rows: 1fr 1fr; /* 2 строки */
-    gap: 15px; /* Уменьшаем отступ между ячейками */
-  }
+  .statisticContainer {
+    .paramSet {
+      display: grid; /* Используем CSS Grid */
+      grid-template-columns: 1fr 1fr; /* 2 колонки */
+      grid-template-rows: 1fr 1fr; /* 2 строки */
+      gap: 15px; /* Уменьшаем отступ между ячейками */
 
-  .statisticContainer .paramSet .paramCard {
-    padding: 15px; /* Уменьшаем отступы карточки */
-  }
+      .paramCard {
+        padding: 15px; /* Уменьшаем отступы карточки */
 
-  .statisticContainer .paramSet .paramCard .paramLabel,
-  .statisticContainer .paramSet .paramCard .paramValue {
-    font-size: 14px;
-    line-height: 16.8px;
+        .paramLabel,
+        .paramValue {
+          font-size: 14px;
+          line-height: 16.8px;
+        }
+      }
+    }
   }
 }
 
 @media (max-width: 480px) {
-  .statisticContainer .paramSet {
-    gap: 10px; /* Еще уменьшаем отступ между ячейками */
-  }
+  .statisticContainer {
+    .paramSet {
+      gap: 10px; /* Еще уменьшаем отступ между ячейками */
 
-  .statisticContainer .paramSet .paramCard {
-    padding: 10px; /* Еще уменьшаем отступы карточки */
-  }
-
-  .statisticContainer .paramSet .paramCard .paramLabel,
-  .statisticContainer .paramSet .paramCard .paramValue {
-    font-size: 13px;
-    line-height: 15.6px;
+      .paramCard {
+        padding: 10px; /* Еще уменьшаем отступы карточки */
+        
+        .paramLabel,
+        .paramValue {
+          font-size: 13px;
+          line-height: 15.6px;
+        }
+      }
+    }
   }
 }

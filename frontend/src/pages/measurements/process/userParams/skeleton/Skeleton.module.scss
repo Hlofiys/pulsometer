@@ -10,32 +10,72 @@
   font-family: "Lora-Regular";
   color: #fbfaf8;
 
-    .skeletonTitle,
-    .skeletonRow {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 4px;
-    }
-
-    .skeletonTitle {
-      width: 70%;
-      height: 24px;
-      margin-bottom: 16px;
-    }
-
-    .skeletonRow {
-      width: 90%;
-      height: 16px;
-      margin-bottom: 12px;
-    }
+  .skeletonTitle,
+  .skeletonRow {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
   }
 
-  @keyframes shimmer {
-    from {
-      background-position: 200% 0;
+  .skeletonTitle {
+    width: 70%;
+    height: 24px;
+    margin-bottom: 16px;
+  }
+
+  .skeletonRow {
+    width: 90%;
+    height: 16px;
+    margin-bottom: 12px;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Адаптивные стили */
+
+@media (max-width: 768px) {
+  .userParamsContainer {
+    padding: 20px; /* Уменьшаем отступы контейнера */
+    gap: 15px; /* Уменьшаем отступ между элементами */
+
+    .skeletonTitle {
+      width: 80%; /* Увеличиваем ширину скелетон-заголовка */
+      height: 20px; /* Уменьшаем высоту скелетон-заголовка */
+      margin-bottom: 12px; /* Уменьшаем нижний отступ */
     }
-    to {
-      background-position: -200% 0;
+
+    .skeletonRow {
+      width: 95%; /* Увеличиваем ширину скелетон-строки */
+      height: 14px; /* Уменьшаем высоту скелетон-строки */
+      margin-bottom: 10px; /* Уменьшаем нижний отступ */
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .userParamsContainer {
+    padding: 15px; /* Еще уменьшаем отступы контейнера */
+    gap: 10px; /* Еще уменьшаем отступ между элементами */
+
+    .skeletonTitle {
+      width: 90%; /* Еще увеличиваем ширину скелетон-заголовка */
+      height: 18px; /* Еще уменьшаем высоту скелетон-заголовка */
+      margin-bottom: 10px; /* Еще уменьшаем нижний отступ */
+    }
+
+    .skeletonRow {
+      width: 100%; /* Еще увеличиваем ширину скелетон-строки */
+      height: 12px; /* Еще уменьшаем высоту скелетон-строки */
+      margin-bottom: 8px; /* Еще уменьшаем нижний отступ */
+    }
+  }
 }
