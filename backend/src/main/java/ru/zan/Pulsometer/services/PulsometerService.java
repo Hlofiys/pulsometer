@@ -64,7 +64,7 @@ public class PulsometerService {
 
     private void initializeMqttClient() throws MqttException {
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
-        mqttAsyncClient = new MqttAsyncClient("tcp://broker.hivemq.com:1883", MqttAsyncClient.generateClientId(), persistence);
+        mqttAsyncClient = new MqttAsyncClient("tcp://45.135.234.114:1883", MqttAsyncClient.generateClientId(), persistence);
 
         mqttAsyncClient.setCallback(new MqttCallback() {
             @Override
