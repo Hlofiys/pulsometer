@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -228,6 +229,7 @@ public class PulsometerService {
                                 .collectList()
                                 .doOnNext(pulseMeasurements -> {
                                     List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
+                                            .sorted(Comparator.comparing(PulseMeasurement::getDate))
                                             .map(mappedPulseMeasurement -> {
                                                 DataSseDTO dto = new DataSseDTO();
                                                 dto.setId(mappedPulseMeasurement.getMeasurementId());
