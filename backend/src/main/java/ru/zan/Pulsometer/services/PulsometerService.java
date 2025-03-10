@@ -426,6 +426,11 @@ public class PulsometerService {
                     if (updatedUserDTO.getFio() != null) {
                         user.setFio(updatedUserDTO.getFio());
                     }
+
+                    if(updatedUserDTO.getGroup() != null) {
+                        user.setGroup(updatedUserDTO.getGroup());
+                    }
+                    
                     if (updatedUserDTO.getDeviceId() != null) {
                         user.setDeviceId(updatedUserDTO.getDeviceId());
                     }

@@ -17,6 +17,10 @@ public class UpdatedUserDTO {
     private String fio;
 
     @Schema(nullable = true)
+    @Size(max = 50)
+    private String group;
+
+    @Schema(nullable = true)
     @Min(value = 0)
     private Integer deviceId;
 }
