@@ -23,6 +23,7 @@ public class User {
 
     private String fio;
 
+    @Column(value = "user_group")
     private String group;
 
     @Column(value = "device_id")
