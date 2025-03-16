@@ -15,6 +15,10 @@ public class UserDTO {
     @Size(max = 255)
     private String fio;
 
+    @NotEmpty
+    @Size(max = 50)
+    private String group;
+
     @NotNull
     @Min(value = 0)
     private Integer deviceId;

@@ -1,0 +1,1 @@
+ALTER TABLE users RENAME COLUMN "group" TO user_group;

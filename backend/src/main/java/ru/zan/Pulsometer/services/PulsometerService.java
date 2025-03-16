@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -63,7 +64,7 @@ public class PulsometerService {
 
     private void initializeMqttClient() throws MqttException {
         MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(persistenceDir);
-        mqttAsyncClient = new MqttAsyncClient("tcp://broker.hivemq.com:1883", MqttAsyncClient.generateClientId(), persistence);
+        mqttAsyncClient = new MqttAsyncClient("tcp://45.135.234.114:1883", MqttAsyncClient.generateClientId(), persistence);
 
         mqttAsyncClient.setCallback(new MqttCallback() {
             @Override
@@ -228,6 +229,7 @@ public class PulsometerService {
                                 .collectList()
                                 .doOnNext(pulseMeasurements -> {
                                     List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
+                                            .sorted(Comparator.comparing(PulseMeasurement::getDate))
                                             .map(mappedPulseMeasurement -> {
                                                 DataSseDTO dto = new DataSseDTO();
                                                 dto.setId(mappedPulseMeasurement.getMeasurementId());
@@ -424,6 +426,11 @@ public class PulsometerService {
                     if (updatedUserDTO.getFio() != null) {
                         user.setFio(updatedUserDTO.getFio());
                     }
+
+                    if(updatedUserDTO.getGroup() != null) {
+                        user.setGroup(updatedUserDTO.getGroup());
+                    }
+
                     if (updatedUserDTO.getDeviceId() != null) {
                         user.setDeviceId(updatedUserDTO.getDeviceId());
                     }
