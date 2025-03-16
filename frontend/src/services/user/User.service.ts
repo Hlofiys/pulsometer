@@ -23,10 +23,11 @@ class UserService {
   }
 
   async update(data: TUpdateUser) {
-    const { userId, deviceId, fio } = data;
+    const { userId, deviceId, fio, group } = data;
     return await instance.patch(`/users/${userId}`, {
       deviceId,
       fio,
+      group
     });
   }
 }

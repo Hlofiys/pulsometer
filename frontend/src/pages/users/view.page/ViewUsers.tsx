@@ -8,7 +8,7 @@ import ArrowRight from "../../../ui/icons/ArrowRight";
 import Pagination from "../../../ui/pagination/Pagination";
 import { useGetUsers } from "../../../api/hooks/user/useGetUsers";
 import { Spin } from "antd";
-import { TTableUserRow } from "../../../services/interfaces/Interfaces";
+import { IUser, TTableUserRow } from "../../../services/interfaces/Interfaces";
 import { useGetUsersByDeviceId } from "../../../api/hooks/device/useGetUsersByDeviceId";
 import { FieldConfig } from "./table/row/Row";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
@@ -18,13 +18,11 @@ import Empty from "../../../ui/empty/Empty";
 
 const ROWS_PER_PAGE = 5; // Максимальное количество строк на одной странице
 
-export interface IAllUsersTableRow {
+export interface IAllUsersTableRow extends Omit<IUser, "fio"> {
   index: number;
   lastName: string;
   middleName: string;
   firstName: string;
-  userId: number;
-  deviceId: number;
 }
 
 const ViewUsers: FC = () => {
@@ -43,6 +41,7 @@ const ViewUsers: FC = () => {
       { key: "lastName", label: "Фамилия", type: "text", isEditable: true },
       { key: "firstName", label: "Имя", type: "text", isEditable: true },
       { key: "middleName", label: "Отчество", type: "text", isEditable: true },
+      { key: "group", label: "Группа", type: "text", isEditable: true },
       {
         key: "deviceId",
         label: "Устройство",
@@ -78,7 +77,7 @@ const ViewUsers: FC = () => {
       (!!filteredData.length ? filteredData : [])
         .sort((userPrev, userNext) => userPrev?.userId - userNext?.userId)
         .map((user, index) => {
-          const { fio, userId, deviceId } = user;
+          const { fio, userId, deviceId, group } = user;
           const [lastName, firstName, middleName] = fio.split(" ");
 
           return {
@@ -87,6 +86,7 @@ const ViewUsers: FC = () => {
             middleName: middleName || "",
             firstName: firstName || "",
             userId,
+            group,
             deviceId,
           };
         })

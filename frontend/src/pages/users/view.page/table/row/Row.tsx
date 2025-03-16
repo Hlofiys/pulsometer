@@ -64,6 +64,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
       const updateUserData: TUpdateUser = {
         fio: `${data.lastName} ${data.firstName} ${data.middleName}`,
         deviceId: data.deviceId,
+        group: data.group,
         userId: rowData.userId,
       };
 

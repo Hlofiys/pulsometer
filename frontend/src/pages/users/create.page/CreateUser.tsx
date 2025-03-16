@@ -20,13 +20,14 @@ import { useCreateUser } from "../../../api/hooks/user/useCreateUser";
 import { RouterPath } from "../../../router/Router";
 import { useGetDeviceOptions } from "../../../api/hooks/device/useGetDeviceOptions";
 import Lottie from "lottie-react";
-import CreateUserAnimation from '../../../assets/animation/createUser/CreateUser.json';
+import CreateUserAnimation from "../../../assets/animation/createUser/CreateUser.json";
 
 interface INewUser {
   surname: string;
   name: string;
   middleName: string;
   deviceId: number;
+  group: string;
 }
 const CreateUser: FC = () => {
   const nav = useNavigate();
@@ -36,17 +37,23 @@ const CreateUser: FC = () => {
       surname: "",
       name: "",
       middleName: "",
+      group: "",
       deviceId: 0,
     },
   });
   const newUser = watch();
 
-  // const { data: devices, isLoading } = useGetDevices();
   const { mutateAsync: create_user, isLoading: isLoadingCreate } =
     useCreateUser();
 
   const isDisabled = useMemo(
-    () => !hasAllValuesForKeys(newUser, ["surname", "name", "middleName", "deviceId"]),
+    () =>
+      !hasAllValuesForKeys(newUser, [
+        "surname",
+        "name",
+        "middleName",
+        "deviceId",
+      ]),
     [newUser]
   );
 
@@ -64,6 +71,7 @@ const CreateUser: FC = () => {
     const formData: TCreateUser = {
       fio: `${data.surname.trim()} ${data.name.trim()} ${data.middleName.trim()}`,
       deviceId: data.deviceId,
+      group: data.group,
     };
 
     create_user(formData, { onSuccess: () => reset() });
@@ -112,6 +120,20 @@ const CreateUser: FC = () => {
             />
           )}
         />
+        
+        <Controller
+          name="group"
+          control={control}
+          render={({ field }) => (
+            <ScopeInput
+              inputProps={{
+                ...field,
+                onChange: (event) => useEnterFio(event, field),
+              }}
+              ariaDescription={"Группа"}
+            />
+          )}
+        />
 
         <Controller
           name="deviceId"
@@ -145,9 +167,12 @@ const CreateUser: FC = () => {
           Все пользователи <ArrowRight stroke="#23E70A" />
         </Link>
       </form>
-      
-      <Lottie animationData={CreateUserAnimation} loop={true} className={styles.section}/>
 
+      <Lottie
+        animationData={CreateUserAnimation}
+        loop={true}
+        className={styles.section}
+      />
     </main>
   );
 };
