@@ -14,5 +14,7 @@ public interface PulseMeasurementRepository extends R2dbcRepository<PulseMeasure
     Flux<PulseMeasurement> findAllBySessionId (Integer sessionId);
 
     Mono<Boolean> existsByDate (LocalDateTime date);
+
+    Flux<PulseMeasurement> findAllBySessionIdOrderByDateAsc (Integer sessionId);
 }
 

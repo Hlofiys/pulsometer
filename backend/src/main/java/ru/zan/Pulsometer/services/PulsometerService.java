@@ -225,11 +225,10 @@ public class PulsometerService {
                     }
                 })
                 .flatMap(savedMeasurement ->
-                        pulseMeasurementRepository.findAllBySessionId(pulseDataDTO.getSessionId())
+                        pulseMeasurementRepository.findAllBySessionIdOrderByDateAsc(pulseDataDTO.getSessionId())
                                 .collectList()
                                 .doOnNext(pulseMeasurements -> {
                                     List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
-                                            .sorted(Comparator.comparing(PulseMeasurement::getDate))
                                             .map(mappedPulseMeasurement -> {
                                                 DataSseDTO dto = new DataSseDTO();
                                                 dto.setId(mappedPulseMeasurement.getMeasurementId());
@@ -376,6 +375,7 @@ public class PulsometerService {
                 .flatMap(device -> {
                     String topic = "device/switch/" + device.getDeviceId();
                     device.setStatus("ready");
+                    device.setActiveUserId(null);
                     sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(),"ready"));
 
                     return createDeactivateMessage(userId)
