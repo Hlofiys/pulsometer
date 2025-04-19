@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 @Repository
 public interface PulseMeasurementRepository extends R2dbcRepository<PulseMeasurement, Integer> {
 
-    Flux<PulseMeasurement> findAllBySessionId (Integer sessionId);
-
     Mono<Boolean> existsByDate (LocalDateTime date);
 
     Flux<PulseMeasurement> findAllBySessionIdOrderByDateAsc (Integer sessionId);
