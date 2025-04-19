@@ -508,7 +508,7 @@ public class PulsometerService {
     }
 
     public Flux<PulseMeasurement> getMeasurementsBySessionId (Integer sessionId) {
-        return pulseMeasurementRepository.findAllBySessionId(sessionId);
+        return pulseMeasurementRepository.findAllBySessionIdOrderByDateAsc(sessionId);
     }
 
     public Mono<Session> getSession(Integer sessionId) {
