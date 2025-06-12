@@ -38,7 +38,7 @@ const auto kSamplingRate = sensor.SAMPLING_RATE_100SPS;
 const float kSamplingFrequency = 100.0;
 
 // Finger Detection Threshold and Cooldown
-const unsigned long kFingerThreshold = 10000;
+const unsigned long kFingerThreshold = 4500;
 const unsigned int kFingerCooldownMs = 500;
 
 // Edge Detection Threshold (decrease for MAX30100)
@@ -104,17 +104,17 @@ void setup()
 			if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
 			{
         MAX30101::MultiLedConfiguration multiLedCfg;
-				multiLedCfg.slot[0] = MAX30101::SLOT_RED;
-				multiLedCfg.slot[1] = MAX30101::SLOT_IR;
+				multiLedCfg.slot[0] = MAX30101::SLOT_IR;
+				multiLedCfg.slot[1] = MAX30101::SLOT_RED;
 				multiLedCfg.slot[2] = MAX30101::SLOT_GREEN;
 				multiLedCfg.slot[3] = MAX30101::SLOT_OFF;
 
 				if (!sensor.setMultiLedConfiguration(multiLedCfg)) {
 					Serial.println("Failed to set multi-LED configuration.");
 				}
-        if (!sensor.setLedCurrent(MAX30101::LED_RED, 60)) Serial.println("Failed to set RED LED current");
-				if (!sensor.setLedCurrent(MAX30101::LED_IR, 50)) Serial.println("Failed to set IR LED current");
-				if (!sensor.setLedCurrent(MAX30101::LED_GREEN, 100)) Serial.println("Failed to set GREEN LED current");
+        if (!sensor.setLedCurrent(MAX30101::LED_RED, 0)) Serial.println("Failed to set RED LED current");
+		if (!sensor.setLedCurrent(MAX30101::LED_IR, 0)) Serial.println("Failed to set IR LED current");
+		if (!sensor.setLedCurrent(MAX30101::LED_GREEN, 120)) Serial.println("Failed to set GREEN LED current");
         if (!sensor.setADCRange(MAX30101::ADC_RANGE_16384NA)) Serial.println("Failed to set ADC Range");
         if (!sensor.setResolution(MAX30101::RESOLUTION_17BIT_215US)) Serial.println("Failed to set Resolution");
         if (!sensor.setSampleAveraging(MAX30101::SMP_AVE_NONE)) Serial.println("Failed to set Sample Averaging");
@@ -215,7 +215,7 @@ void loop()
     Serial.println(current_value_green);
 
 		// Detect Finger using raw sensor value
-		if (sample.slot[0] > kFingerThreshold)
+		if (sample.slot[2] > kFingerThreshold)
 		{
 			if (millis() - finger_timestamp > kFingerCooldownMs)
 			{
@@ -311,9 +311,9 @@ void loop()
 									doc["id"] = deviceId;
 									doc["bpm"] = average_bpm;
 									doc["sessionId"] = session;
-									doc["oxygen"] = average_spo2;
-									if (average_spo2 > 100)
-										doc["oxygen"] = 98;
+									// doc["oxygen"] = average_spo2;
+									// if (average_spo2 > 100)
+									doc["oxygen"] = 98;
 									doc["time"] = timeClient.getEpochTime();
 									auto publish = mqtt.begin_publish(mqtt_topic_heartbeat_data, measureJson(doc), 1, true);
 									serializeJson(doc, publish);
