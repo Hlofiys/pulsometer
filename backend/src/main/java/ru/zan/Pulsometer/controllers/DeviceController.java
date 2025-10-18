@@ -4,7 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +19,10 @@ import ru.zan.Pulsometer.util.*;
 @Tag(name = "Device")
 @RestController
 @RequestMapping("/api/devices")
+@RequiredArgsConstructor
 public class DeviceController {
 
     private final PulsometerService pulsometerService;
-
-    @Autowired
-    public DeviceController(PulsometerService pulsometerService) {
-        this.pulsometerService = pulsometerService;
-    }
 
     @Operation(summary = "Retrieve all devices")
     @ApiResponses(value = {

@@ -4,8 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,18 +22,12 @@ import ru.zan.Pulsometer.services.PulsometerService;
 @Tag(name = "User")
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final PulsometerService pulsometerService;
 
     private final ModelMapper modelMapper;
-
-    @Autowired
-    public UserController(PulsometerService pulsometerService, ModelMapper modelMapper) {
-        this.pulsometerService = pulsometerService;
-        this.modelMapper = modelMapper;
-    }
-
 
     @Operation(summary = "Creating a user")
     @ApiResponses(value = {

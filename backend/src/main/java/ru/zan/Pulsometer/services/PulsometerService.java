@@ -1,6 +1,7 @@
 package ru.zan.Pulsometer.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import org.eclipse.paho.client.mqttv3.*;
@@ -26,7 +27,8 @@ import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -515,6 +517,75 @@ public class PulsometerService {
         return sessionRepository.findById(sessionId);
     }
 
+    public Mono<List<KeyPointDTO>> addKeyPointToSession(Integer sessionId, KeyPointDTO newKeyPoint) {
+        if (newKeyPoint.getStartMeasurementId() > newKeyPoint.getEndMeasurementId()) {
+            Integer temp = newKeyPoint.getStartMeasurementId();
+            newKeyPoint.setStartMeasurementId(newKeyPoint.getEndMeasurementId());
+            newKeyPoint.setEndMeasurementId(temp);
+        }
+
+        Mono<Boolean> startExists = pulseMeasurementRepository.existsByMeasurementIdAndSessionId(
+            newKeyPoint.getStartMeasurementId(),
+            sessionId
+        );
+        Mono<Boolean> endExists = pulseMeasurementRepository.existsByMeasurementIdAndSessionId(
+            newKeyPoint.getEndMeasurementId(),
+            sessionId
+        );
+
+        return Mono.zip(startExists, endExists)
+            .flatMap(tuple -> {
+                boolean sExists = tuple.getT1();
+                boolean eExists = tuple.getT2();
+
+                if (!sExists || !eExists) {
+                    return Mono.error(new ValidationException("One or both Measurement IDs do not exist or do not belong to this session."));
+                }
+
+                return sessionRepository.findById(sessionId)
+                    .switchIfEmpty(Mono.error(new SessionNotFoundException("Session with id " + sessionId + " not found")))
+                    .flatMap(session -> {
+
+                        List<KeyPointDTO> existingKeyPoints;
+                        try {
+                            existingKeyPoints = objectMapper.readValue(session.getKeyPoints(), new TypeReference<>() {});
+                        } catch (JsonProcessingException e) {
+                            existingKeyPoints = new ArrayList<>();
+                        }
+
+                        for (KeyPointDTO existing : existingKeyPoints) {
+                            if (newKeyPoint.getStartMeasurementId() <= existing.getEndMeasurementId() &&
+                                existing.getStartMeasurementId() <= newKeyPoint.getEndMeasurementId()) {
+                                return Mono.error(new ValidationException("The new key point segment overlaps with an existing one."));
+                            }
+                        }
+
+                        existingKeyPoints.add(newKeyPoint);
+
+                        try {
+                            String updatedJson = objectMapper.writeValueAsString(existingKeyPoints);
+                            session.setKeyPoints(updatedJson);
+                        } catch (JsonProcessingException e) {
+                            return Mono.error(new RuntimeException("Error serializing key points", e));
+                        }
+
+                        return sessionRepository.save(session)
+                                                .thenReturn(existingKeyPoints); 
+                    });
+            });
+    }
+
+    public Mono<List<KeyPointDTO>> getKeyPointsForSession(Integer sessionId) {
+        return sessionRepository.findById(sessionId)
+                .switchIfEmpty(Mono.error(new SessionNotFoundException("Session with id " + sessionId + " not found")))
+                .map(session -> {
+                    try {
+                        return objectMapper.readValue(session.getKeyPoints(), new TypeReference<List<KeyPointDTO>>() {});
+                    } catch (JsonProcessingException e) {
+                        return Collections.emptyList();
+                    }
+                });
+    }
 
     @Scheduled(fixedRate = 60000)
     public void updateDeviceStatus() {

@@ -1,0 +1,2 @@
+ALTER TABLE sessions
+ADD COLUMN key_points TEXT NOT NULL DEFAULT '[]';

@@ -9,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.models.Session;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -29,4 +30,7 @@ public interface SessionRepository extends R2dbcRepository<Session, Integer> {
 
     @Query("SELECT s.session_id FROM sessions s WHERE s.user_id = :userId AND s.session_status = 'Open' ORDER BY s.time DESC LIMIT 1")
     Mono<Integer> findOpenSessionIdByUserId(@Param("userId") Integer userId);
+
+    @Query("SELECT * FROM sessions WHERE session_status = 'Open' AND time < :timeThreshold")
+    Flux<Session> findOpenSessionsOlderThan(@Param("timeThreshold") LocalDateTime timeThreshold);
 }
