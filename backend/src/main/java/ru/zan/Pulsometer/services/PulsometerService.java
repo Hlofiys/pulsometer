@@ -9,6 +9,8 @@ import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.DTOs.*;
@@ -602,6 +604,35 @@ public class PulsometerService {
                             .flatMap(savedDevice-> closeOpenSessionsForUsers(savedDevice.getUsers()));
                 })
                 .subscribe();
+    }
+
+    @Scheduled(fixedRate = 90000)
+    public void checkAndCloseExpiredSessions() {
+        LocalDateTime fiftyMinutesAgo = LocalDateTime.now().minusMinutes(50); 
+
+        sessionRepository.findOpenSessionsOlderThan(fiftyMinutesAgo)
+            .flatMap(this::closeSessionAndFreeDevice) 
+            .subscribe(
+                null,
+                error -> System.err.println("Error during scheduled session closing: " + error.getMessage())
+            );
+    }
+
+    @Transactional
+    public Mono<Void> closeSessionAndFreeDevice(Session sessionToClose) {
+        sessionToClose.setSessionStatus("Closed");
+        
+        return sessionRepository.save(sessionToClose)
+            .then(
+                deviceRepository.findByActiveUserId(sessionToClose.getUserId())
+                    .flatMap(device -> {
+                        device.setStatus("ready");
+                        device.setActiveUserId(null);
+                        sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(), "ready"));
+                        return deviceRepository.save(device);
+                    })
+            )
+            .then();
     }
 
     private Mono<Void> closeOpenSessionsForUsers(List<Integer> userIds) {

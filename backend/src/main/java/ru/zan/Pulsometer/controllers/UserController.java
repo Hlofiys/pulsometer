@@ -6,18 +6,25 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.zan.Pulsometer.DTOs.KeyPointDTO;
 import ru.zan.Pulsometer.DTOs.UpdatedUserDTO;
 import ru.zan.Pulsometer.DTOs.UserDTO;
 import ru.zan.Pulsometer.models.PulseMeasurement;
 import ru.zan.Pulsometer.models.Session;
 import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.services.PulsometerService;
+import ru.zan.Pulsometer.util.SessionNotFoundException;
+import ru.zan.Pulsometer.util.ValidationException;
 
 @Tag(name = "User")
 @RestController
@@ -169,6 +176,36 @@ public class UserController {
                     }
                 });
 
+    }
+
+    @Operation(summary = "Add a key point to a session")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Key point added successfully, returns updated list"),
+            @ApiResponse(responseCode = "404", description = "Session not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/{sessionId}/keypoints")
+    public Mono<ResponseEntity<List<KeyPointDTO>>> addKeyPoint(@PathVariable("sessionId") Integer sessionId,
+                                                            @RequestBody KeyPointDTO keyPoint) {
+        return pulsometerService.addKeyPointToSession(sessionId, keyPoint)
+                .map(ResponseEntity::ok)
+                .onErrorMap(SessionNotFoundException.class,
+                        e -> new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e))
+                .onErrorMap(ValidationException.class,
+                        e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e));
+    }
+
+    @Operation(summary = "Get all key points for a session")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of key points"),
+            @ApiResponse(responseCode = "404", description = "Session not found")
+    })
+    @GetMapping("/{sessionId}/keypoints")
+    public Mono<ResponseEntity<List<KeyPointDTO>>> getKeyPoints(@PathVariable("sessionId") Integer sessionId) {
+        return pulsometerService.getKeyPointsForSession(sessionId)
+                .map(keyPoints -> ResponseEntity.ok(keyPoints))
+                .onErrorResume(SessionNotFoundException.class, e ->
+                        Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build()));
     }
 
     private User convertToUser(UserDTO userDTO) {
