@@ -1,12 +1,10 @@
 package ru.zan.Pulsometer.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +13,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.zan.Pulsometer.DTOs.*;
 import ru.zan.Pulsometer.models.Device;
+import ru.zan.Pulsometer.models.KeyPoint;
 import ru.zan.Pulsometer.models.PulseMeasurement;
 import ru.zan.Pulsometer.models.Session;
 import ru.zan.Pulsometer.models.User;
 import ru.zan.Pulsometer.repositories.DeviceRepository;
+import ru.zan.Pulsometer.repositories.KeyPointRepository;
 import ru.zan.Pulsometer.repositories.PulseMeasurementRepository;
 import ru.zan.Pulsometer.repositories.SessionRepository;
 import ru.zan.Pulsometer.repositories.UserRepository;
@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,18 +48,20 @@ public class PulsometerService {
     private static final int RECONNECT_DELAY = 5;
     private static final String persistenceDir = "src/main/resources/persistence";
     private final SseBroadcastService sseBroadcastService;
+    private final KeyPointRepository keyPointRepository;
 
-    @Autowired
     public PulsometerService(UserRepository userRepository,
                              DeviceRepository deviceRepository,
                              PulseMeasurementRepository pulseMeasurementRepository, SessionRepository sessionRepository,
-                             ObjectMapper objectMapper,SseBroadcastService sseBroadcastService) throws MqttException {
+                             ObjectMapper objectMapper,SseBroadcastService sseBroadcastService,
+                             KeyPointRepository keyPointRepository) throws MqttException {
         this.userRepository = userRepository;
         this.deviceRepository = deviceRepository;
         this.pulseMeasurementRepository = pulseMeasurementRepository;
         this.sessionRepository = sessionRepository;
         this.objectMapper = objectMapper;
         this.sseBroadcastService = sseBroadcastService;
+        this.keyPointRepository = keyPointRepository;
 
         initializeMqttClient();
     }
@@ -515,78 +515,76 @@ public class PulsometerService {
         return pulseMeasurementRepository.findAllBySessionIdOrderByDateAsc(sessionId);
     }
 
-    public Mono<Session> getSession(Integer sessionId) {
-        return sessionRepository.findById(sessionId);
+    public Mono<SessionDTO> getSessionWithKeyPoints(Integer sessionId) {
+        return sessionRepository.findById(sessionId)
+                .flatMap(session ->
+                    keyPointRepository.findAllBySessionId(sessionId)
+                        .map(KeyPoint::getKeyPointId)
+                        .collectList()
+                        .map(keyPointIds -> new SessionDTO(
+                                session.getSessionId(),
+                                session.getUserId(),
+                                session.getTypeActivity(),
+                                session.getSessionStatus(),
+                                session.getTime(),
+                                session.getPassed(),
+                                keyPointIds
+                        ))
+                );
     }
 
-    public Mono<List<KeyPointDTO>> addKeyPointToSession(Integer sessionId, KeyPointDTO newKeyPoint) {
-        if (newKeyPoint.getStartMeasurementId() > newKeyPoint.getEndMeasurementId()) {
-            Integer temp = newKeyPoint.getStartMeasurementId();
-            newKeyPoint.setStartMeasurementId(newKeyPoint.getEndMeasurementId());
-            newKeyPoint.setEndMeasurementId(temp);
+    public Mono<KeyPoint> createKeyPoint(Integer sessionId, KeyPointDTO keyPointDTO) {
+       
+        if (keyPointDTO.getStartMeasurementId() > keyPointDTO.getEndMeasurementId()) {
+            Integer temp = keyPointDTO.getStartMeasurementId();
+            keyPointDTO.setStartMeasurementId(keyPointDTO.getEndMeasurementId());
+            keyPointDTO.setEndMeasurementId(temp);
         }
 
-        Mono<Boolean> startExists = pulseMeasurementRepository.existsByMeasurementIdAndSessionId(
-            newKeyPoint.getStartMeasurementId(),
-            sessionId
-        );
-        Mono<Boolean> endExists = pulseMeasurementRepository.existsByMeasurementIdAndSessionId(
-            newKeyPoint.getEndMeasurementId(),
-            sessionId
-        );
+        Mono<Boolean> startExists = pulseMeasurementRepository.existsByMeasurementIdAndSessionId(keyPointDTO.getStartMeasurementId(), sessionId);
+        Mono<Boolean> endExists = pulseMeasurementRepository.existsByMeasurementIdAndSessionId(keyPointDTO.getEndMeasurementId(), sessionId);
 
         return Mono.zip(startExists, endExists)
             .flatMap(tuple -> {
-                boolean sExists = tuple.getT1();
-                boolean eExists = tuple.getT2();
-
-                if (!sExists || !eExists) {
+                if (!tuple.getT1() || !tuple.getT2()) {
                     return Mono.error(new ValidationException("One or both Measurement IDs do not exist or do not belong to this session."));
                 }
-
-                return sessionRepository.findById(sessionId)
-                    .switchIfEmpty(Mono.error(new SessionNotFoundException("Session with id " + sessionId + " not found")))
-                    .flatMap(session -> {
-
-                        List<KeyPointDTO> existingKeyPoints;
-                        try {
-                            existingKeyPoints = objectMapper.readValue(session.getKeyPoints(), new TypeReference<>() {});
-                        } catch (JsonProcessingException e) {
-                            existingKeyPoints = new ArrayList<>();
-                        }
-
-                        for (KeyPointDTO existing : existingKeyPoints) {
-                            if (newKeyPoint.getStartMeasurementId() <= existing.getEndMeasurementId() &&
-                                existing.getStartMeasurementId() <= newKeyPoint.getEndMeasurementId()) {
+                
+                return keyPointRepository.findAllBySessionId(sessionId)
+                    .collectList()
+                    .flatMap(existingKeyPoints -> {
+                        for (KeyPoint existing : existingKeyPoints) {
+                            if (keyPointDTO.getStartMeasurementId() <= existing.getEndMeasurementId() && existing.getStartMeasurementId() <= keyPointDTO.getEndMeasurementId()) {
                                 return Mono.error(new ValidationException("The new key point segment overlaps with an existing one."));
                             }
                         }
-
-                        existingKeyPoints.add(newKeyPoint);
-
-                        try {
-                            String updatedJson = objectMapper.writeValueAsString(existingKeyPoints);
-                            session.setKeyPoints(updatedJson);
-                        } catch (JsonProcessingException e) {
-                            return Mono.error(new RuntimeException("Error serializing key points", e));
-                        }
-
-                        return sessionRepository.save(session)
-                                                .thenReturn(existingKeyPoints); 
+                        
+                        KeyPoint newKeyPoint = new KeyPoint();
+                        newKeyPoint.setSessionId(sessionId);
+                        newKeyPoint.setStartMeasurementId(keyPointDTO.getStartMeasurementId());
+                        newKeyPoint.setEndMeasurementId(keyPointDTO.getEndMeasurementId());
+                        newKeyPoint.setName(keyPointDTO.getName());
+                        newKeyPoint.setSessionId(sessionId);
+                        return keyPointRepository.save(newKeyPoint);
                     });
             });
     }
 
-    public Mono<List<KeyPointDTO>> getKeyPointsForSession(Integer sessionId) {
-        return sessionRepository.findById(sessionId)
-                .switchIfEmpty(Mono.error(new SessionNotFoundException("Session with id " + sessionId + " not found")))
-                .map(session -> {
-                    try {
-                        return objectMapper.readValue(session.getKeyPoints(), new TypeReference<List<KeyPointDTO>>() {});
-                    } catch (JsonProcessingException e) {
-                        return Collections.emptyList();
-                    }
-                });
+    public Flux<KeyPoint> getKeyPointsForSession(Integer sessionId) {
+        return keyPointRepository.findAllBySessionId(sessionId);
+    }
+
+    public Mono<KeyPoint> updateKeyPoint(Integer keyPointId, UpdateKeyPointDTO dto) {
+        return keyPointRepository.findById(keyPointId)
+            .switchIfEmpty(Mono.error(new KeyPointNotFoundException("KeyPoint with id " + keyPointId + " not found.")))
+            .flatMap(existingKeyPoint -> {
+                existingKeyPoint.setName(dto.getName());
+                return keyPointRepository.save(existingKeyPoint);
+            });
+    }
+
+    public Mono<Void> deleteKeyPoint(Integer keyPointId) {
+        return keyPointRepository.deleteById(keyPointId);
     }
 
     @Scheduled(fixedRate = 60000)

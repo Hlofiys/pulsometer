@@ -38,6 +38,4 @@ public class Session {
     @Column(value = "type_activity")
     private String typeActivity;
 
-    @Column(value = "key_points")
-    private String keyPoints;
 }
