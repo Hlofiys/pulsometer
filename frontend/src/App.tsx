@@ -1,3 +1,4 @@
+import { AlertProvider } from "./context/alert/AlertProvider";
 import Router from "./router/Router";
 
 function App() {
@@ -13,7 +14,9 @@ function App() {
         margin: 0,
       }}
     >
-      <Router />
+      <AlertProvider>
+        <Router />
+      </AlertProvider>
     </div>
   );
 }

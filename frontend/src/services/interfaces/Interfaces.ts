@@ -24,13 +24,13 @@ export interface TActivateMeasurements
   extends Pick<ISession, "userId" | "typeActivity"> {}
 
 // export type TDeviceStatus = "activate" | "deactivate";
-
+export type TSessionStatus = "Closed" | "Open";
 export interface ISession {
   sessionId: number;
   userId: number;
   time: string; //"2024-11-26T17:56:10.928611" начало сессии;
   passed: number; //пройдено времени *60
-  sessionStatus: "Closed" | "Open";
+  sessionStatus: TSessionStatus;
   typeActivity: string;
 }
 export interface IMeasurements {
@@ -39,4 +39,12 @@ export interface IMeasurements {
   oxygen: number;
   date: string; //"2024-11-26T18:37:15.777Z";
   sessionId: number;
+}
+
+export interface ISessionPoint {
+  endMeasurementId: number;
+  keyPointId: number;
+  name: string;
+  sessionId: number;
+  startMeasurementId: number;
 }

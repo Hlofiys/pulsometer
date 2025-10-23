@@ -68,16 +68,18 @@ export const convertMilliseconds = (
     .join(" ");
 
   // Общее время в формате часы:минуты:секунды:миллисекунды
-  const formatNumberTime = isLive 
-  ? `${hours.toString().padStart(2, "0")}:${(minutes + 1).toString().padStart(2, "0")}''` // Формат для режима реального времени "чч:мм''"
-  : [
-      hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
-      minutes.toString().padStart(2, "0"), // Всегда отображаем минуты
-      seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
-      milliseconds !== "000" && !withoutMs ? milliseconds : null, // Миллисекунды, если они не равны "000"
-    ]
-    .filter(Boolean) // Убираем пустые значения
-    .join(":"); // Объединяем через ":"
+  const formatNumberTime = isLive
+    ? `${hours.toString().padStart(2, "0")}:${(minutes + 1)
+        .toString()
+        .padStart(2, "0")}''` // Формат для режима реального времени "чч:мм''"
+    : [
+        hours > 0 ? hours.toString().padStart(2, "0") : null, // Часы, если больше 0
+        minutes.toString().padStart(2, "0"), // Всегда отображаем минуты
+        seconds.toString().padStart(2, "0"), // Секунды всегда отображаются
+        milliseconds !== "000" && !withoutMs ? milliseconds : null, // Миллисекунды, если они не равны "000"
+      ]
+        .filter(Boolean) // Убираем пустые значения
+        .join(":"); // Объединяем через ":"
 
   return {
     minutes,
@@ -136,5 +138,123 @@ export const parseUTCDateAndTime = (dateAndTime: string) => {
   return {
     belarusian: `${formatDate}, ${hours}:${minutes}:${seconds}`,
     default: dateAndTime,
+  };
+};
+
+export function formatDateUser(isoString: string): {
+  short: string;
+  long: string;
+} {
+  const date = new Date(isoString);
+
+  if (isNaN(date.getTime())) {
+    return { short: "", long: "" };
+  }
+
+  // Длинный формат: "14 октября 2025 г., 14:09"
+  const longOptions: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  const long = date.toLocaleString("ru-RU", longOptions);
+
+  // Короткий формат: "14.10.2025, 14:09"
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const short = `${day}.${month}.${year}, ${hours}:${minutes}`;
+
+  return { short, long };
+}
+
+export interface IDashboardParam {
+  label: number; // bpm
+  value: number; // время в миллисекундах
+}
+
+export interface IHeartRateZones {
+  introductory: number;
+  preparatory: number;
+  main: number;
+  final: number;
+}
+
+// Доли длительности урока (всего = 1)
+export interface IHeartRateZones {
+  introductory: number;
+  preparatory: number;
+  main: number;
+  final: number;
+}
+export const calculateHeartRateDeltaZones = (
+  data: { label: number; value: number }[]
+) => {
+  if (!data.length) return {};
+
+  const boundaries = [0, 3.6, 12.15, 40.5, 45];
+
+  const getZonePoints = (from: number, to: number) => {
+    const points = data.filter((p) => {
+      const timeMin = p.label / 1000 / 60;
+      return timeMin > from / 1000 / 60 && timeMin <= to / 1000 / 60;
+    });
+    return points;
+  };
+
+  const getAverageBPM = (from: number, to: number) => {
+    const values = getZonePoints(from, to).map((p) => p.value);
+    if (!values.length) return undefined; // <--- возвращаем undefined, если нет данных
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  };
+
+  const delta = (base?: number, current?: number) => {
+    if (base === undefined || current === undefined) return undefined; // <--- обработка undefined
+    if (base === 0) return 0;
+    return Number((((current - base) / base) * 100).toFixed(2));
+  };
+
+  const zones = {
+    introductory: {
+      avg: getAverageBPM(boundaries[0], boundaries[1]),
+      points: getZonePoints(boundaries[0], boundaries[1]),
+    },
+    preparatory: {
+      avg: getAverageBPM(boundaries[1], boundaries[2]),
+      points: getZonePoints(boundaries[1], boundaries[2]),
+    },
+    main: {
+      avg: getAverageBPM(boundaries[2], boundaries[3]),
+      points: getZonePoints(boundaries[2], boundaries[3]),
+    },
+    final: {
+      avg: getAverageBPM(boundaries[3], boundaries[4]),
+      points: getZonePoints(boundaries[3], boundaries[4]),
+    },
+  };
+
+  const base = zones.introductory.avg; // исходный пульс
+
+  return {
+    introductory: {
+      ...zones.introductory,
+      delta: 0,
+    },
+    preparatory: {
+      ...zones.preparatory,
+      delta: delta(base, zones.preparatory.avg),
+    },
+    main: {
+      ...zones.main,
+      delta: delta(base, zones.main.avg),
+    },
+    final: {
+      ...zones.final,
+      delta: delta(base, zones.final.avg),
+    },
   };
 };

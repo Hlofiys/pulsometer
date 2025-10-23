@@ -2,22 +2,26 @@ import { FC, useMemo } from "react";
 import styles from "./Statistic.module.scss";
 import Dashboard, { IDashboardData } from "../../../../ui/dashboard/Dashboard";
 import Skeleton from "../../../../ui/dashboard/skeleton/Skeleton";
+import { TSessionStatus } from "../../../../services/interfaces/Interfaces";
 export interface IParamSet {
   label: string;
   value: string;
+  measurementId: number;
 }
 interface IStatisticProps {
-  paramSet: IParamSet[];
-  dashboardData: { value: number; label: number }[];
+  paramSet: Omit<IParamSet, "measurementId">[];
+  dashboardData: { value: number; label: number; measurementId: number }[];
   isLoading?: boolean;
+  sessionStatus: TSessionStatus;
 }
 const Statistic: FC<IStatisticProps> = (props) => {
-  const { paramSet, dashboardData, isLoading } = props;
+  const { paramSet, dashboardData, isLoading, sessionStatus } = props;
 
   const dashboardParams: IDashboardData = useMemo(
     () => ({
       labels: dashboardData.map((item) => item.label),
       values: dashboardData.map((item) => item.value),
+      measurementIds: dashboardData.map((item) => item.measurementId),
     }),
     [dashboardData]
   );
@@ -40,8 +44,9 @@ const Statistic: FC<IStatisticProps> = (props) => {
       ) : (
         <Dashboard
           dashboardData={dashboardParams}
-          xAxisLabel="Время, секунд"
+          xAxisLabel="Время, минут"
           yAxisLabel="Ударов в мин."
+          sessionStatus={sessionStatus}
         />
       )}
     </section>

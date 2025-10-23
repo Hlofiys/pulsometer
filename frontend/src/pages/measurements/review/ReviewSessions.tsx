@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ISession } from "../../../services/interfaces/Interfaces";
 import {
   convertMilliseconds,
+  formatDateUser,
   parseUTCDateAndTime,
 } from "../../../utils/functions/functions";
 import { Spin } from "antd";
@@ -17,8 +18,8 @@ import { RouterPath } from "../../../router/Router";
 import Button from "../../../ui/buttons/additional/Button";
 import { useGetUserById } from "../../../api/hooks/user/useGetUserById";
 import Empty from "../../../ui/empty/Empty";
-import Link from '../../../ui/buttons/link/Link';
-import ArrowRight from '../../../ui/icons/ArrowRight';
+import Link from "../../../ui/buttons/link/Link";
+import ArrowRight from "../../../ui/icons/ArrowRight";
 
 const ROWS_PER_PAGE = 5;
 
@@ -49,7 +50,7 @@ const ReviewSessions: FC = () => {
       key: "time",
       label: "Начало",
       type: "text",
-      renderStatic: (date: string) => date,
+      renderStatic: (date: string) => formatDateUser(date).short,
     },
     {
       key: "passed",
@@ -76,7 +77,6 @@ const ReviewSessions: FC = () => {
   const { data: sessions, isLoading: isLoadingGetSessions } = useGetSessions(
     +userId!
   );
-  // : { data: [], isLoading: false };
 
   // Отфильтрованные данные на основе поиска
   const filteredData: ISession[] = useMemo(() => {
@@ -165,7 +165,6 @@ const ReviewSessions: FC = () => {
             inputProps={{ onChange: onSearch }}
           />
           <Button
-            // disabled={isLoadingActiveUser}
             disabled={isButtonDisabled || isLoadingActiveUser}
             name={
               isButtonDisabled ? "Устройство выключено" : "Начать измерения"
@@ -191,7 +190,6 @@ const ReviewSessions: FC = () => {
           data={paginatedData}
           fields={fields}
           getKey={(row) => row.sessionIndex}
-          // getIndex={(number) => ++number}
         />
       ) : (
         <Empty description="Список измерений пуст" />
@@ -199,6 +197,7 @@ const ReviewSessions: FC = () => {
       <Link onClick={() => nav(RouterPath.VIEW)}>
         Перейти к пользователям <ArrowRight stroke="#23E70A" />
       </Link>
+      
       <Pagination
         containerStyles={{ width: "100%", justifyContent: "center" }}
         totalPages={totalPages}

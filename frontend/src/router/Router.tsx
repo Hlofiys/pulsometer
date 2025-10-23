@@ -7,6 +7,7 @@ import ViewUsers from "../pages/users/view.page/ViewUsers";
 import StartMeasurements from "../pages/measurements/start/StartMeasurements";
 import ReviewSessions from "../pages/measurements/review/ReviewSessions";
 import ProcessSession from "../pages/measurements/process/ProcessSession";
+import { HoverKeypointProvider } from "../context/hoverKeypoint/HoverKeypointContext";
 
 export enum RouterPath {
   NOT_FOUND = "*",
@@ -49,7 +50,11 @@ const Router: FC = () => {
           />
           <Route
             path={RouterPath.REVIEW_MEASUREMENTS + "/:sessionId"}
-            element={<ProcessSession />}
+            element={
+              <HoverKeypointProvider>
+                <ProcessSession />
+              </HoverKeypointProvider>
+            }
           />
           <Route
             path={RouterPath.REVIEW_SESSION + "/:id"}
@@ -57,7 +62,11 @@ const Router: FC = () => {
           />
           <Route
             path={RouterPath.PROCESS_SESSION + "/:sessionId"}
-            element={<ProcessSession />}
+            element={
+              <HoverKeypointProvider>
+                <ProcessSession />
+              </HoverKeypointProvider>
+            }
           />
         </Route>
       </Routes>

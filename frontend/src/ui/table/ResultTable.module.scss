@@ -1,0 +1,110 @@
+.wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  border: 1px solid #fbfaf8;
+  border-radius: 12px;
+  font-family: "Lora-Regular";
+  overflow-x: auto;
+  background: #212227;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid #fbfaf8;
+  color: #fbfaf8;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 700px; // чтобы не ломалось на очень узких экранах
+
+  th,
+  td {
+    text-align: center;
+    padding: 20px 8px;
+  }
+
+  thead {
+    background: #212227;
+
+    th {
+      font-weight: 600;
+      font-family: "Lora-SemiBold";
+      border: 1px solid #fbfaf8;
+      font-size: 10pt;
+      color: #fbfaf8;
+    }
+  }
+
+  tbody {
+    td {
+      font-size: 14px;
+      color: #23e70a;
+      border: 1px solid #fbfaf8;
+    }
+
+    tr {
+      background: #212227;
+    }
+  }
+}
+
+/* 📱 Адаптивность */
+@media (max-width: 768px) {
+  .wrapper {
+    border: none;
+    box-shadow: none;
+    display: block;
+    overflow-x: visible;
+  }
+
+  .table {
+    border: none;
+    box-shadow: none;
+    display: block;
+    min-width: 100%;
+
+    thead {
+      display: none; // скрываем заголовок таблицы
+    }
+
+    tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      tr {
+        display: flex;
+        flex-direction: column;
+        background: #212227;
+        border: 1px solid #fbfaf8;
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border: none;
+        font-size: 12pt;
+        color: #23e70a;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        /* Псевдо-заголовки */
+        &::before {
+          content: attr(data-label);
+          font-family: "Lora-SemiBold";
+          color: #fbfaf8;
+          font-size: 11pt;
+        }
+      }
+    }
+  }
+}

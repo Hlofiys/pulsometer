@@ -13,6 +13,7 @@ import { useGetDevices } from "../../../api/hooks/device/useGetDevices";
 import { Spin } from "antd";
 import { useActivateMeasurements } from "../../../api/hooks/device/useActivateMeasurements";
 import { RouterPath } from "../../../router/Router";
+import { IOption } from "../../../ui/input/dropdown/Dropdown";
 
 interface IStartMeasurements {
   userId: number;
@@ -77,6 +78,15 @@ const StartMeasurements: FC = () => {
     [deviceId, users]
   );
 
+  const activityTypes: IOption<string>[] = useMemo(() => {
+    return [
+      {
+        label: "Баскетбол",
+        value: "basketball",
+      },
+    ];
+  }, []);
+
   return (
     <div className={styles.startContainer}>
       {(isLoadingDevices && <Spin />) || (
@@ -97,12 +107,10 @@ const StartMeasurements: FC = () => {
               const { ref, onChange, ...dropdownField } = field;
               return (
                 <ScopeInput
-                  // inputProps={}
                   dropdownProps={{
                     ...dropdownField,
                     onChange: (option) => onChange(option.value),
                     isLoading: isLoadingUsers,
-                    // containersStyles: { width: "100%" },
                     isDropDown: true,
                     options: userOptions,
                   }}
@@ -116,13 +124,20 @@ const StartMeasurements: FC = () => {
             key={"typeActivity"}
             control={control}
             render={({ field }) => {
-              const { ref, onChange, ...inputField } = field;
+              const { ref, onChange, ...dropdownField } = field;
               return (
                 <ScopeInput
-                  inputProps={{
-                    ...inputField,
-                    onChange,
-                    // style: { width: "100%" },
+                  // inputProps={{
+                  //   ...inputField,
+                  //   onChange,
+                  //   // style: { width: "100%" },
+                  // }}
+                  dropdownProps={{
+                    ...dropdownField,
+                    onChange: (option) => onChange(option.value),
+                    isLoading: isLoadingUsers,
+                    isDropDown: true,
+                    options: activityTypes,
                   }}
                   ariaDescription={"Вид активности"}
                 />

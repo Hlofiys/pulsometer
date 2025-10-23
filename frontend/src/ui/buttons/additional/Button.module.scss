@@ -14,6 +14,7 @@
   outline: none !important;
   border: 1px solid #fbfaf8;
   transition: 0.3s all ease-in;
+  position: relative;
 
   &:hover {
     border: 1px solid #23e70a;
@@ -25,14 +26,30 @@
     border: 1px solid #fbfaf8;
   }
 
-  &:disabled{
+  &:disabled {
     border: 1px solid #cccccc82;
     background-color: #cccccc82;
     color: #3f3f3f;
   }
-}
-/* Адаптивные стили */
 
+  &.loading {
+    pointer-events: none; // блокируем клики
+    color: #cccccc;
+    gap: 8px;
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  }
+}
+
+/* Адаптивные стили */
 @media (max-width: 768px) {
   .additionButton {
     font-size: 15px;
@@ -49,11 +66,17 @@
   }
 }
 
-/* Адаптивность для очень больших экранов */
 @media (min-width: 1600px) {
   .additionButton {
     font-size: 18px;
     padding: 14px 20px;
     min-height: 36px;
+  }
+}
+
+/* Анимация спиннера */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
