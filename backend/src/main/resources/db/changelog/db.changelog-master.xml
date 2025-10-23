@@ -14,4 +14,6 @@
     <include file="/db/changelog/V6__Add_New_Column_Type_Activity.sql"/>
     <include file="/db/changelog/V7__Add_New_Column_Group.sql"/>
     <include file="/db/changelog/V8__Rename_Column_Group.sql"/>
+    <include file="/db/changelog/V9__Add_Key_Points_To_Session.sql"/>
+    <include file="/db/changelog/V10__Create_Key_Points_Table.sql"/>
 </databaseChangeLog>

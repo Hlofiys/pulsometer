@@ -8,8 +8,6 @@
 
 #include <NTPClient.h>
 
-#include <secrets.h>
-
 #include <MAX3010x.h>
 
 #include "filters.h"
@@ -18,9 +16,6 @@
 
 // device id
 const int deviceId = 2;
-
-/******* MQTT Broker Connection Details *******/
-const char *mqtt_server = "mqtt.hlofiys.xyz";
 
 // MQTT topics
 const char *mqtt_topic_device_status = "device/status";
@@ -32,22 +27,22 @@ bool collecting = false;
 int session = 0;
 
 // MQTT client
-PicoMQTT::Client mqtt("broker.hivemq.com");
+PicoMQTT::Client mqtt("45.135.234.114");
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800);
 
 // Sensor (adjust to your sensor type)
-MAX30105 sensor;
-const auto kSamplingRate = sensor.SAMPLING_RATE_400SPS;
-const float kSamplingFrequency = 400.0;
+MAX30101 sensor;
+const auto kSamplingRate = sensor.SAMPLING_RATE_100SPS;
+const float kSamplingFrequency = 100.0;
 
 // Finger Detection Threshold and Cooldown
-const unsigned long kFingerThreshold = 10000;
+const unsigned long kFingerThreshold = 4500;
 const unsigned int kFingerCooldownMs = 500;
 
 // Edge Detection Threshold (decrease for MAX30100)
-const float kEdgeThreshold = -2000.0;
+const float kEdgeThreshold = -400.0;
 
 // Filters
 const float kLowPassCutoff = 5.0;
@@ -108,6 +103,26 @@ void setup()
 			session = int(json["sessionId"]);
 			if (sensor.begin() && sensor.setSamplingRate(kSamplingRate))
 			{
+        MAX30101::MultiLedConfiguration multiLedCfg;
+				multiLedCfg.slot[0] = MAX30101::SLOT_IR;
+				multiLedCfg.slot[1] = MAX30101::SLOT_RED;
+				multiLedCfg.slot[2] = MAX30101::SLOT_GREEN;
+				multiLedCfg.slot[3] = MAX30101::SLOT_OFF;
+
+				if (!sensor.setMultiLedConfiguration(multiLedCfg)) {
+					Serial.println("Failed to set multi-LED configuration.");
+				}
+        if (!sensor.setLedCurrent(MAX30101::LED_RED, 0)) Serial.println("Failed to set RED LED current");
+		if (!sensor.setLedCurrent(MAX30101::LED_IR, 0)) Serial.println("Failed to set IR LED current");
+		if (!sensor.setLedCurrent(MAX30101::LED_GREEN, 120)) Serial.println("Failed to set GREEN LED current");
+        if (!sensor.setADCRange(MAX30101::ADC_RANGE_16384NA)) Serial.println("Failed to set ADC Range");
+        if (!sensor.setResolution(MAX30101::RESOLUTION_17BIT_215US)) Serial.println("Failed to set Resolution");
+        if (!sensor.setSampleAveraging(MAX30101::SMP_AVE_NONE)) Serial.println("Failed to set Sample Averaging");
+        if (!sensor.enableFIFORollover()) Serial.println("Failed to enable FIFO Rollover");
+        if (!sensor.setMode(MAX30101::MODE_MULTI_LED)) {
+					Serial.println("Failed to set multi-LED mode.");
+				}
+        sensor.clearFIFO();
 				Serial.println("Sensor initialized");
 			}
 			else
@@ -147,6 +162,7 @@ void setup()
 HighPassFilter high_pass_filter(kHighPassCutoff, kSamplingFrequency);
 LowPassFilter low_pass_filter_red(kLowPassCutoff, kSamplingFrequency);
 LowPassFilter low_pass_filter_ir(kLowPassCutoff, kSamplingFrequency);
+LowPassFilter low_pass_filter_green(kLowPassCutoff, kSamplingFrequency);
 Differentiator differentiator(kSamplingFrequency);
 MovingAverageFilter<kAveragingSamples> averager_bpm;
 MovingAverageFilter<kAveragingSamples> averager_r;
@@ -185,14 +201,21 @@ void loop()
 {
 	mqtt.loop();
 	timeClient.update();
-	if (collecting && millis() - latestBpmPublish > 50000)
+	if (collecting && millis() - latestBpmPublish > 5000)
 	{
 		auto sample = sensor.readSample(1000);
-		float current_value_red = sample.red;
-		float current_value_ir = sample.ir;
+		float current_value_red = sample.slot[0];
+		float current_value_ir = sample.slot[1];
+    float current_value_green = sample.slot[2];
+    Serial.print("Red: ");
+    Serial.print(current_value_red);
+    Serial.print(" IR: ");
+    Serial.print(current_value_ir);
+    Serial.print(" Green: ");
+    Serial.println(current_value_green);
 
 		// Detect Finger using raw sensor value
-		if (sample.red > kFingerThreshold)
+		if (sample.slot[2] > kFingerThreshold)
 		{
 			if (millis() - finger_timestamp > kFingerCooldownMs)
 			{
@@ -208,6 +231,7 @@ void loop()
 			averager_spo2.reset();
 			low_pass_filter_red.reset();
 			low_pass_filter_ir.reset();
+      low_pass_filter_green.reset();
 			high_pass_filter.reset();
 			stat_red.reset();
 			stat_ir.reset();
@@ -225,9 +249,19 @@ void loop()
 			stat_red.process(current_value_red);
 			stat_ir.process(current_value_ir);
 
-			// Heart beat detection using value for red LED
-			float current_value = high_pass_filter.process(current_value_red);
-			float current_diff = differentiator.process(current_value);
+			// Heart beat detection using value for green LED
+			float lpf_green_for_hr = low_pass_filter_green.process(current_value_green);
+			float hpf_green_for_hr = high_pass_filter.process(lpf_green_for_hr);
+			float current_diff = differentiator.process(hpf_green_for_hr);
+      // Log filtered green values
+      Serial.print("Filtered Green: ");
+      Serial.print(lpf_green_for_hr, 2); Serial.print(",");
+      Serial.print("High Pass Green: ");
+      Serial.print(hpf_green_for_hr, 2); Serial.print(",");
+      // Log current difference
+      Serial.print("Current Diff: ");
+      Serial.println(current_diff, 2); Serial.print(",");
+
 
 			// Valid values?
 			if (!isnan(current_diff) && !isnan(last_diff))
@@ -277,9 +311,9 @@ void loop()
 									doc["id"] = deviceId;
 									doc["bpm"] = average_bpm;
 									doc["sessionId"] = session;
-									doc["oxygen"] = average_spo2;
-									if (average_spo2 > 100)
-										doc["oxygen"] = 98;
+									// doc["oxygen"] = average_spo2;
+									// if (average_spo2 > 100)
+									doc["oxygen"] = 98;
 									doc["time"] = timeClient.getEpochTime();
 									auto publish = mqtt.begin_publish(mqtt_topic_heartbeat_data, measureJson(doc), 1, true);
 									serializeJson(doc, publish);

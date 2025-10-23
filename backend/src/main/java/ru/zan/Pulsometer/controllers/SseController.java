@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 import ru.zan.Pulsometer.services.SseBroadcastService;
@@ -12,13 +14,10 @@ import ru.zan.Pulsometer.services.SseBroadcastService;
 @RestController
 @CrossOrigin
 @RequestMapping("/sse")
+@RequiredArgsConstructor
 public class SseController {
 
     private final SseBroadcastService sseBroadcastService;
-
-    public SseController(SseBroadcastService sseBroadcastService) {
-        this.sseBroadcastService = sseBroadcastService;
-    }
 
     @GetMapping(path = "/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamStatusUpdates() {

@@ -37,4 +37,5 @@ public class Session {
 
     @Column(value = "type_activity")
     private String typeActivity;
+
 }
