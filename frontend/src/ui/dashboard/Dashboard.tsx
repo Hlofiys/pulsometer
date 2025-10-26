@@ -71,6 +71,8 @@ const Dashboard: FC<DashboardProps> = ({
   const [isFullView, setIsFullView] = useState<boolean>(false);
   const [pointPeriod, setPointPeriod] = useState<MyChartPoint[]>([]);
 
+  useEffect(() => setIsFullView(sessionStatus === "Closed"), [sessionStatus]);
+
   const { showAlert, hideAlert } = useAlert();
 
   const chartData: ChartData<"line"> = {
@@ -115,7 +117,7 @@ const Dashboard: FC<DashboardProps> = ({
 
   const options: ChartOptions<"line"> = useMemo(() => {
     const xMinMax =
-      (!isFullView && {
+      (isFullView && {
         min: 0, // начало оси X — 0 минут
         max: 50, // конец оси X — 50 минут (фиксировано)
       }) ||
@@ -405,10 +407,10 @@ const Dashboard: FC<DashboardProps> = ({
     const activePlugins: Plugin<"line", any>[] = [crosshairPlugin];
 
     // Горизонтальные линии и сегменты только для полноэкранного графика
-    if (!isFullView) activePlugins.push(quadrantPlugin);
+    if (isFullView) activePlugins.push(quadrantPlugin);
 
     // Подсветка областей только если полноэкранный вид и есть данные
-    if (!isFullView && !isLoadingGetKeypoints && filledAreas.length) {
+    if (isFullView && !isLoadingGetKeypoints && filledAreas.length) {
       activePlugins.push(highlightAreaPlugin);
     }
 

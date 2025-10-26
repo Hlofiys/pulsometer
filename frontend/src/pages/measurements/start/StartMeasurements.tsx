@@ -82,7 +82,7 @@ const StartMeasurements: FC = () => {
     return [
       {
         label: "Баскетбол",
-        value: "basketball",
+        value: "Баскетбол",
       },
     ];
   }, []);

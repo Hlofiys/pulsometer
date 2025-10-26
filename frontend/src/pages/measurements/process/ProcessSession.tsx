@@ -19,6 +19,7 @@ import { useDeactivateMeasurements } from "../../../api/hooks/device/useDeactiva
 import { IMeasurements } from "../../../services/interfaces/Interfaces";
 import { useSSEOptions } from "../../../api/hooks/sse/useSSEOptions";
 import ResultTable, { HeartRateData } from "../../../ui/table/ResultTable";
+// import { ContactsFilled } from "@ant-design/icons";
 
 const ProcessSession: FC = () => {
   const { sessionId } = useParams();
@@ -46,8 +47,13 @@ const ProcessSession: FC = () => {
 
   const { start } = useSSEOptions("https://pulse.hlofiys.xyz/sse/data", {
     onMessage: (event: MessageEvent) => {
+      const measurements = (JSON.parse(event.data) as IMeasurements[]).filter(
+        (el) => !!sessionId && el.sessionId === +sessionId
+      );
       console.log("Новое сообщение:", JSON.parse(event.data));
-      setLocalMeasurements(JSON.parse(event.data));
+      setLocalMeasurements((pre) =>
+        !!measurements.length ? measurements : pre
+      );
     },
     onError: (error: Event) => {
       console.error("Ошибка SSE:", error);
@@ -70,6 +76,8 @@ const ProcessSession: FC = () => {
     const sessionMeasurements = (measurements || [])?.filter(
       (measurement) => measurement.sessionId === +sessionId
     );
+
+    console.log('filtered data: ', sessionMeasurements)
 
     // const additionalMeasurements = [
     //   {
