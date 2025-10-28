@@ -185,7 +185,7 @@ public class PulsometerService {
             return;
         }
 
-        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime()).plusHours(3);
+        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
 
         pulseMeasurementRepository.existsByDate(measurementTime)
             .flatMap(exists -> {
