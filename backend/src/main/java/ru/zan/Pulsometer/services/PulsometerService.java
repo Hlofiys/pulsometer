@@ -177,7 +177,6 @@ public class PulsometerService {
         String payload = new String(mqttMessage.getPayload());
         System.out.println("Message arrived on topic '" + topic + "': " + payload);
 
-        PulseMeasurement pulseMeasurement = new PulseMeasurement();
         PulseDataDTO pulseDataDTO;
         try {
             pulseDataDTO = objectMapper.readValue(payload, PulseDataDTO.class);
@@ -186,65 +185,59 @@ public class PulsometerService {
             return;
         }
 
-        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
+        LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime()).plusHours(3);
+
         pulseMeasurementRepository.existsByDate(measurementTime)
-                .flatMap(exists -> {
-                    if (exists) {
-                        return Mono.empty();
-                    } else {
+            .flatMap(exists -> {
+                if (exists) {
+                    return Mono.empty();
+                }
+
+                return sessionRepository.findById(pulseDataDTO.getSessionId())
+                    .flatMap(session -> {
+                        if (session.getSessionStatus().equalsIgnoreCase("Closed")) {
+                            return Mono.empty(); 
+                        }
+
                         return deviceRepository.findById(pulseDataDTO.getId())
-                                .flatMap(device -> {
-
-                                    if ("off".equalsIgnoreCase(device.getStatus())) {
-                                        device.setStatus("ready");
-                                        device.setLastContact(measurementTime);
-                                    } else {
-                                        device.setStatus("measuring");
-                                    }
-
-                                    sseBroadcastService.sendStatusMessage(
-                                            serializeStatusSseDTO(device.getDeviceId(), device.getStatus())
-                                    );
-
-                                    return deviceRepository.save(device);
-                                })
-                                .flatMap(savedDevice -> {
-                                    pulseMeasurement.setBpm(pulseDataDTO.getBpm());
-                                    pulseMeasurement.setDate(measurementTime);
-                                    pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
-                                    pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
-
-                                    return sessionRepository.findById(pulseDataDTO.getSessionId())
-                                            .flatMap(receivedSession -> {
-                                                if (receivedSession.getSessionStatus().equalsIgnoreCase("Closed")) {
-                                                    return Mono.empty();
-                                                }
-                                                long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
-                                                receivedSession.setPassed(elapsedMillis);
-                                                return sessionRepository.save(receivedSession);
-                                            })
-                                            .then(Mono.just(pulseMeasurement));
-                                })
-                                .flatMap(pulseMeasurementRepository::save);
-                    }
-                })
-                .flatMap(savedMeasurement ->
-                        pulseMeasurementRepository.findAllBySessionIdOrderByDateAsc(pulseDataDTO.getSessionId())
-                                .collectList()
-                                .doOnNext(pulseMeasurements -> {
-                                    List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
-                                            .map(mappedPulseMeasurement -> {
-                                                DataSseDTO dto = new DataSseDTO();
-                                                dto.setId(mappedPulseMeasurement.getMeasurementId());
-                                                dto.setBpm(mappedPulseMeasurement.getBpm());
-                                                dto.setOxygen(mappedPulseMeasurement.getOxygen());
-                                                dto.setSessionId(mappedPulseMeasurement.getSessionId());
-                                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
-                                                return dto;
-                                            })
-                                            .collect(Collectors.toList());
-                                    sseBroadcastService.sendDataMessage(serializeDataSseDTO(dataSseDTOList));
-                                })
+                            .flatMap(device -> {
+                                device.setStatus("measuring");
+                                device.setLastContact(measurementTime);
+                                sseBroadcastService.sendStatusMessage(serializeStatusSseDTO(device.getDeviceId(), "measuring"));
+                                return deviceRepository.save(device);
+                            })
+                            .flatMap(savedDevice -> {
+                                long elapsedMillis = Duration.between(session.getTime(), measurementTime).toMillis();
+                                session.setPassed(elapsedMillis);
+                                return sessionRepository.save(session);
+                            });
+                    })
+                    .flatMap(savedSession -> {
+                        PulseMeasurement pulseMeasurement = new PulseMeasurement();
+                        pulseMeasurement.setBpm(pulseDataDTO.getBpm());
+                        pulseMeasurement.setDate(measurementTime);
+                        pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
+                        pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
+                        return pulseMeasurementRepository.save(pulseMeasurement);
+                    });
+            })
+            .flatMap(savedMeasurement ->
+                pulseMeasurementRepository.findAllBySessionIdOrderByDateAsc(pulseDataDTO.getSessionId())
+                    .collectList()
+                    .doOnNext(pulseMeasurements -> {
+                        List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
+                            .map(mappedPulseMeasurement -> {
+                                DataSseDTO dto = new DataSseDTO();
+                                dto.setId(mappedPulseMeasurement.getMeasurementId());
+                                dto.setBpm(mappedPulseMeasurement.getBpm());
+                                dto.setOxygen(mappedPulseMeasurement.getOxygen());
+                                dto.setSessionId(mappedPulseMeasurement.getSessionId());
+                                dto.setDate(mappedPulseMeasurement.getDate() != null ? mappedPulseMeasurement.getDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
+                                return dto;
+                            })
+                            .collect(Collectors.toList());
+                        sseBroadcastService.sendDataMessage(serializeDataSseDTO(dataSseDTOList));
+                    })
                 )
                 .doOnError(e -> System.err.println("Error occurred while processing pulse measurement: " + e.getMessage()))
                 .subscribe();
