@@ -175,7 +175,7 @@ public class PulsometerService {
 
     private void processMessageData(String topic, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
-        System.out.println("Message arrived on topic '" + topic + "': " + payload);
+        System.out.println(">>> CHECKPOINT 1: Message arrived on topic '" + topic + "': " + payload);
 
         PulseDataDTO pulseDataDTO;
         try {
@@ -184,6 +184,8 @@ public class PulsometerService {
             System.err.println("Failed to parse message payload: " + e.getMessage());
             return;
         }
+
+        System.out.println(">>> CHECKPOINT 2: JSON successfully parsed for session " + pulseDataDTO.getSessionId());
 
         LocalDateTime measurementTime = TimeUtils.convertEpochMillisToUTC(pulseDataDTO.getTime());
 
@@ -198,6 +200,8 @@ public class PulsometerService {
                         if (session.getSessionStatus().equalsIgnoreCase("Closed")) {
                             return Mono.empty(); 
                         }
+
+                        System.out.println(">>> CHECKPOINT 3: Session " + session.getSessionId() + " is valid and open. Proceeding...");
 
                         return deviceRepository.findById(pulseDataDTO.getId())
                             .flatMap(device -> {
@@ -218,6 +222,7 @@ public class PulsometerService {
                         pulseMeasurement.setDate(measurementTime);
                         pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
                         pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
+                        System.out.println(">>> CHECKPOINT 4: Measurement saved with ID: " + savedMeasurement.getMeasurementId());
                         return pulseMeasurementRepository.save(pulseMeasurement);
                     });
             })
@@ -225,6 +230,7 @@ public class PulsometerService {
                 pulseMeasurementRepository.findAllBySessionIdOrderByDateAsc(pulseDataDTO.getSessionId())
                     .collectList()
                     .doOnNext(pulseMeasurements -> {
+                        System.out.println(">>> CHECKPOINT 5: Preparing to send " + pulseMeasurements.size() + " measurements via SSE.");
                         List<DataSseDTO> dataSseDTOList = pulseMeasurements.stream()
                             .map(mappedPulseMeasurement -> {
                                 DataSseDTO dto = new DataSseDTO();
