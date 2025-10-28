@@ -217,7 +217,7 @@ public class PulsometerService {
                                     return sessionRepository.findById(pulseDataDTO.getSessionId())
                                             .flatMap(receivedSession -> {
                                                 if (receivedSession.getSessionStatus().equalsIgnoreCase("Closed")) {
-                                                    receivedSession.setSessionStatus("Open");
+                                                    return Mono.empty();
                                                 }
                                                 long elapsedMillis = Duration.between(receivedSession.getTime(), measurementTime).toMillis();
                                                 receivedSession.setPassed(elapsedMillis);
