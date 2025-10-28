@@ -222,7 +222,6 @@ public class PulsometerService {
                         pulseMeasurement.setDate(measurementTime);
                         pulseMeasurement.setSessionId(pulseDataDTO.getSessionId());
                         pulseMeasurement.setOxygen(pulseDataDTO.getOxygen());
-                        System.out.println(">>> CHECKPOINT 4: Measurement saved with ID: " + savedMeasurement.getMeasurementId());
                         return pulseMeasurementRepository.save(pulseMeasurement);
                     });
             })
