@@ -1,4 +1,12 @@
-import { FC, ReactNode, useMemo, useState } from "react";
+import {
+  FC,
+  MouseEventHandler,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useForm, Controller } from "react-hook-form";
 import styles from "./Row.module.scss";
 import Save from "../../../../../ui/icons/Save";
@@ -14,6 +22,7 @@ import { useParams } from "react-router-dom";
 import { capitalizeFirstLetter } from "../../../../../utils/functions/functions";
 import { useGetDeviceOptions } from "../../../../../api/hooks/device/useGetDeviceOptions";
 import { motion } from "framer-motion";
+import { useAlert } from "../../../../../context/alert/AlertProvider";
 
 interface TableRowProps<T> {
   index: number;
@@ -54,6 +63,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
   const { mutateAsync: update_user, isLoading: isUpdateLoading } =
     useUpdateUser(Number(deviceId));
 
+  const { showAlert, hideAlert, setAlertButtonLoading } = useAlert();
   // Сохранение изменений
   const handleSave = (data: any) => {
     const isChanged = fields.some(
@@ -166,7 +176,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
         });
 
         try {
-          await delete_user(rowData.userId); // Удаляем пользователя после анимации
+          await delete_user(rowData.userId, {onSuccess: hideAlert}); // Удаляем пользователя после анимации
         } catch (error) {
           console.error("Error deleting user:", error);
           // Обработка ошибки удаления пользователя
@@ -189,6 +199,33 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
     }
     return {}; // Возвращаем пустой объект, если isEdit false
   }, [isEdit]);
+
+  useEffect(() => {
+    if (isDeleteLoading) {
+      setAlertButtonLoading("confirm-btn", isDeleteLoading);
+    }
+  }, [setAlertButtonLoading, isDeleteLoading]);
+
+  const deleteBtnHandler = useCallback<MouseEventHandler<SVGSVGElement>>(
+    (e) => {
+      e.stopPropagation();
+      showAlert({
+        title: "Удаление пользователя",
+        children:<div><p>Вы действительно хотите удалить пользователя ?</p> <p>{rowData?.lastName} {rowData?.firstName} {rowData?.middleName}</p></div>,
+        buttons: [
+          {
+            id: "confirm-btn",
+            text: "Да",
+            onClick: () => handleDelete(e),
+            type: "default",
+            style: {height: 35},
+            isLoading: isDeleteLoading
+          },
+        ],
+      });
+    },
+    [showAlert, handleDelete]
+  );
 
   return (
     <motion.tr
@@ -272,13 +309,7 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
             {isDeleteLoading ? (
               <Spin />
             ) : (
-              <Basket
-                stroke="#FF1A43"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(e);
-                }}
-              />
+              <Basket stroke="#FF1A43" onClick={deleteBtnHandler} />
             )}
           </td>
         </>
