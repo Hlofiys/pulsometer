@@ -1,104 +1,96 @@
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  background-color: rgba(26, 28, 33, 0.8); // тёмный полупрозрачный фон
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
-  align-items: start;
+  align-items: flex-start;
   padding-top: 100px;
-  z-index: 1000;
+  z-index: var(--z-modal-backdrop);
 
   &.centered {
     align-items: center;
     padding-top: 0;
   }
+}
 
-  .alertBox {
-    width: 75%;
-    max-width: 500px;
-    background-color: #1a1c21;
-    border: 1px solid #fbfaf8;
+.alertBox {
+  width: min(90%, 520px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-xl);
+  position: fixed;
+  transform: scale(0) translate(0, 0);
+  opacity: 0;
+  transform-origin: top left;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    // background-color: #2e2b3c; // основной фон приложения
-    color: #ffffff; // текст белый
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border-radius: 16px;
-    overflow: hidden;
-    padding: 20px 25px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  &.animate {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transform-origin: center center;
+  }
+}
 
-    position: fixed;
-    transform: scale(0) translate(0, 0);
-    opacity: 0;
-    transform-origin: top left;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.headerContainer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
 
-    &.animate {
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
-      transform-origin: center center;
+  &.onlyCloseIcon {
+    justify-content: flex-end;
+  }
+
+  .titleContent {
+    font-family: var(--font-heading);
+    text-align: start;
+    font-size: var(--text-h4);
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    color: var(--text-primary);
+    line-height: var(--line-height-tight);
+  }
+
+  .closeIcon {
+    cursor: pointer;
+    font-size: var(--text-body-lg);
+    color: var(--text-tertiary);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+    flex-shrink: 0;
+
+    &:hover {
+      color: var(--accent-primary);
+      transform: scale(1.1);
     }
 
-    .headerContainer {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      &.onlyCloseIcon {
-        justify-content: flex-end;
-      }
-
-      .titleContent {
-        font-family: "Lora-Regular";
-        text-align: start;
-        font-size: 14pt;
-        font-weight: 600;
-        margin: 0;
-        padding: 0;
-        color: #ffffff; // основной цвет кнопок в заголовке
-      }
-
-      .closeIcon {
-        cursor: pointer;
-        font-size: 14pt;
-        color: #999;
-        transition: color 0.2s ease;
-
-        &:hover {
-          color: #23e70a; // цвет hover на основной зеленый
-        }
-      }
+    &:active {
+      transform: scale(0.95);
     }
+  }
+}
 
-    .footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
 
-      .alertButton {
-        flex: 1;
-        background-color: #23e70a;
-        color: #1a1c21;
-        border: none;
-        border-radius: 8px;
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-
-        &:hover {
-          background-color: #1fff0a; // светлый оттенок зеленого при hover
-        }
-      }
-    }
+  .alertButton {
+    flex: 1;
   }
 }

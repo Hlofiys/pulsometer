@@ -10,7 +10,7 @@ export const useDeleteKeypoint = () => {
     mutationKey: ["deleteKeypoint"],
     mutationFn: SessionService.deleteKeypoint,
     onSuccess: async () => {
-      await queryClient.invalidateQueries(["getSessionKeypoints"]);
+      await queryClient.invalidateQueries({ queryKey: ["getSessionKeypoints"] });
     },
     onError,
   });

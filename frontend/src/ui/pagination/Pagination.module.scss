@@ -2,69 +2,103 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2);
 
   .paginationArrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
-    border: none;
-    font-size: 16px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    width: 36px;
+    height: 36px;
     cursor: pointer;
-    color: #ccc;
-    transition: color 0.2s;
+    color: var(--text-secondary);
+    transition: background var(--transition-fast),
+      border-color var(--transition-fast),
+      color var(--transition-fast);
 
     &:disabled {
       cursor: not-allowed;
-      color: #555;
+      color: var(--text-muted);
+      opacity: 0.5;
     }
 
     &:hover:not(:disabled) {
-      color: #fff;
+      background: var(--bg-surface-hover);
+      border-color: var(--border-default);
+      color: var(--text-primary);
+    }
+
+    &:active:not(:disabled) {
+      background: var(--bg-surface);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
     }
   }
 
   .paginationItem {
-    font-family: "Lora-Regular";
-    font-size: 16px;
+    font-family: var(--font-ui);
+    font-size: var(--text-body-sm);
     font-weight: 500;
-    line-height: 19.2px;
+    line-height: var(--line-height-snug);
     background: transparent;
-    width: 41px;
-    height: 39px;
-    padding: 10px;
-    border-radius: 10px;
-    padding: 8px 12px;
+    width: 40px;
+    height: 40px;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    color: #fbfaf8;
-    border: 1px solid #fbfaf8;
-    transition: background-color 0.2s, color 0.2s;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: background-color var(--transition-fast),
+      color var(--transition-fast),
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
 
     &.active {
-      border: none;
-      background-color: #23e70a;
-      color: #fbfaf8;
+      background: var(--accent-primary-subtle);
+      color: var(--accent-primary);
+      border-color: var(--accent-primary);
+      font-weight: 600;
+      box-shadow: var(--shadow-glow-sm);
     }
 
     &:hover:not(.active) {
-      background-color: #555;
+      background: var(--bg-surface-hover);
+      color: var(--text-primary);
+      border-color: var(--border-default);
+    }
+
+    &:active:not(.active) {
+      background: var(--bg-surface);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
     }
   }
 }
 
-/* Адаптивные стили */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .pagination {
-    gap: 5px; /* Уменьшаем отступ между элементами */
+    gap: var(--space-1);
+
     .paginationArrow {
-      font-size: 14px; /* Уменьшаем размер шрифта стрелок */
+      width: 32px;
+      height: 32px;
     }
 
     .paginationItem {
-      font-size: 14px; /* Уменьшаем размер шрифта элементов */
-      width: 35px; /* Уменьшаем ширину элементов */
-      height: 33px; /* Уменьшаем высоту элементов */
-      padding: 6px 10px; /* Уменьшаем отступы элементов */
-      line-height: 16.8px; /* Уменьшаем высоту строки элементов */
+      font-size: var(--text-caption);
+      width: 34px;
+      height: 34px;
+      padding: var(--space-1);
     }
   }
 }
@@ -72,32 +106,29 @@
 @media (max-width: 480px) {
   .pagination {
     .paginationArrow {
-      font-size: 13px; /* Еще уменьшаем размер шрифта стрелок */
+      width: 28px;
+      height: 28px;
     }
 
     .paginationItem {
-      font-size: 13px; /* Еще уменьшаем размер шрифта элементов */
-      width: 30px; /* Еще уменьшаем ширину элементов */
-      height: 28px; /* Еще уменьшаем высоту элементов */
-      padding: 5px 8px; /* Еще уменьшаем отступы элементов */
-      line-height: 15.6px; /* Еще уменьшаем высоту строки элементов */
+      font-size: var(--text-xs);
+      width: 30px;
+      height: 30px;
     }
   }
 }
 
-/* Добавим адаптивность для очень маленьких экранов */
 @media (max-width: 360px) {
   .pagination {
     .paginationArrow {
-      font-size: 12px;
+      width: 26px;
+      height: 26px;
     }
 
     .paginationItem {
-      font-size: 12px;
       width: 28px;
-      height: 26px;
-      padding: 4px 6px;
-      line-height: 14.4px;
+      height: 28px;
+      padding: 2px 4px;
     }
   }
 }

@@ -1,13 +1,21 @@
-import { FC } from "react";
+import { FC, lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Main from "../pages/main/Main";
+import { Spin } from "antd";
 import GeneralRoute from "./route/GeneralRoute";
-import CreateUser from "../pages/users/create.page/CreateUser";
-import ViewUsers from "../pages/users/view.page/ViewUsers";
-import StartMeasurements from "../pages/measurements/start/StartMeasurements";
-import ReviewSessions from "../pages/measurements/review/ReviewSessions";
-import ProcessSession from "../pages/measurements/process/ProcessSession";
 import { HoverKeypointProvider } from "../context/hoverKeypoint/HoverKeypointContext";
+
+const Main = lazy(() => import("../pages/main/Main"));
+const CreateUser = lazy(() => import("../pages/users/create.page/CreateUser"));
+const ViewUsers = lazy(() => import("../pages/users/view.page/ViewUsers"));
+const StartMeasurements = lazy(
+  () => import("../pages/measurements/start/StartMeasurements")
+);
+const ReviewSessions = lazy(
+  () => import("../pages/measurements/review/ReviewSessions")
+);
+const ProcessSession = lazy(
+  () => import("../pages/measurements/process/ProcessSession")
+);
 
 export enum RouterPath {
   NOT_FOUND = "*",
@@ -21,12 +29,21 @@ export enum RouterPath {
 }
 const Router: FC = () => {
   return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
+    <BrowserRouter>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "100vh",
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        }
+      >
       <Routes>
         <Route element={<GeneralRoute />}>
           <Route
@@ -70,6 +87,7 @@ const Router: FC = () => {
           />
         </Route>
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

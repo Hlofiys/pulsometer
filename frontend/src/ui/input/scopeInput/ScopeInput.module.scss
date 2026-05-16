@@ -1,24 +1,64 @@
 .scopeInputcontainer {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-1);
 
   label {
-    font-family: "Lora-Regular";
-    font-size: 14px;
-    font-weight: 300;
-    line-height: 16.8px;
-    color: #fbfaf8;
+    font-family: var(--font-body);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
+    opacity: 0.85;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 32px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    outline: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
+    font-weight: 400;
+    line-height: var(--line-height-normal);
+    transition: outline-color var(--transition-fast),
+      box-shadow var(--transition-fast),
+      background var(--transition-fast);
+
+    &:hover {
+      background: var(--bg-surface-hover);
+    }
+
+    &:focus {
+      outline: 2px solid var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-primary-subtle);
+      background: var(--bg-elevated);
+    }
+
+    &::placeholder {
+      color: var(--text-muted);
+    }
   }
 }
 
-/* Адаптивные стили */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .scopeInputcontainer {
     label {
-      font-size: 13px; /* Уменьшаем размер шрифта метки */
-      line-height: 15.6px; /* Уменьшаем высоту строки метки */
+      font-size: var(--text-body-sm);
+    }
+
+    input,
+    select,
+    textarea {
+      font-size: var(--text-caption);
+      padding: var(--space-2);
+      min-height: 30px;
     }
   }
 }
@@ -26,18 +66,14 @@
 @media (max-width: 480px) {
   .scopeInputcontainer {
     label {
-      font-size: 12px; /* Еще уменьшаем размер шрифта метки */
-      line-height: 14.4px; /* Еще уменьшаем высоту строки метки */
+      font-size: var(--text-caption);
     }
-  }
-}
 
-/* Добавим адаптивность для очень маленьких экранов */
-@media (max-width: 360px) {
-  .scopeInputcontainer {
-    label {
-      font-size: 11px;
-      line-height: 13.2px;
+    input,
+    select,
+    textarea {
+      font-size: var(--text-xs);
+      min-height: 28px;
     }
   }
 }

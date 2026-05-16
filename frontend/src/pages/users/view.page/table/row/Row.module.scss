@@ -1,6 +1,6 @@
 .tableRow {
-  border-bottom: 1px solid #444;
-  transition: 0.5s all ease;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast);
   cursor: pointer;
   z-index: 0;
 
@@ -9,14 +9,13 @@
   }
 
   &:hover {
-    background: #5b5d63b8;
-    color: #23e70a;
+    background: var(--bg-surface-hover);
 
     td {
       .tableIndex,
       .deviceButton {
-        color: #23e70a;
-        border-color: #23e70a;
+        color: var(--accent-primary);
+        border-color: var(--accent-primary);
       }
     }
   }
@@ -26,37 +25,43 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 41px;
-      height: 41px;
-      border-radius: 10px;
-      border: 1px solid #fbfaf8;
-      color: #fbfaf8;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      font-family: var(--font-ui);
+      font-size: var(--text-caption);
+      font-weight: 600;
+      transition: border-color var(--transition-fast),
+        color var(--transition-fast);
     }
 
     &.icon {
-      padding: 10px;
+      padding: var(--space-2);
     }
 
-    input{
+    input {
       width: 100px;
     }
   }
 }
 
-/* Адаптивные стили (только размеры шрифта) */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .tableRow {
-    font-size: 14px; /* Уменьшаем общий размер шрифта */
+    font-size: var(--text-caption);
+
     td {
       .tableIndex {
         width: 30px;
         height: 30px;
-        border-radius: 8px;
-        font-size: 14px; /* Уменьшаем размер шрифта индекса */
+        border-radius: var(--radius-sm);
+        font-size: var(--text-caption);
       }
+
       &.icon {
-        padding: 10px 5px;
+        padding: var(--space-2) var(--space-1);
       }
     }
   }
@@ -64,31 +69,18 @@
 
 @media (max-width: 480px) {
   .tableRow {
-    font-size: 10px; /* Уменьшаем общий размер шрифта */
+    font-size: var(--text-xs);
+
     td {
       .tableIndex {
-        width: 20px;
-        height: 20px;
-        border-radius: 6px;
-        font-size: 10px; /* Уменьшаем размер шрифта индекса */
+        width: 24px;
+        height: 24px;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
       }
 
       &.icon {
-        padding: 10px 1.5px;
-      }
-    }
-  }
-}
-
-/* Добавим адаптивность для очень маленьких экранов */
-@media (max-width: 360px) {
-  .tableRow {
-    font-size: 10px; /* Уменьшаем общий размер шрифта */
-    td {
-      .tableIndex {
-        width: 15px;
-        height: 15px;
-        font-size: 14px; /* Уменьшаем размер шрифта индекса */
+        padding: var(--space-1);
       }
     }
   }

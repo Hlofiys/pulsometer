@@ -10,7 +10,7 @@ export const useSetKeypoint = () => {
     mutationKey: ["setKeypoint"],
     mutationFn: SessionService.setKeypoint,
     onSuccess: async () => {
-      await queryClient.invalidateQueries(["getSessionKeypoints"]);
+      await queryClient.invalidateQueries({ queryKey: ["getSessionKeypoints"] });
     },
     onError,
   });

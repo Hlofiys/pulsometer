@@ -1,11 +1,11 @@
-import { AnchorHTMLAttributes, FC, memo } from "react";
+import { ButtonHTMLAttributes, FC, memo } from "react";
 import styles from "./Link.module.scss";
 
-const Link: FC<AnchorHTMLAttributes<HTMLAnchorElement>> = (props) => {
+const Link: FC<ButtonHTMLAttributes<HTMLButtonElement>> = (props) => {
   return (
-    <a {...props} className={styles.link}>
+    <button {...props} className={`${styles.link} ${props.className || ""}`}>
       {props.children}
-    </a>
+    </button>
   );
 };
 

@@ -7,7 +7,7 @@ export const useDeactivateMeasurements = () => {
     return useMutation({
         mutationKey: ['deactivateMeasurements'],
         mutationFn: DeviceService.deactivateMeasurements,
-        onSuccess:()=>console.log('Success deactivate!'),
+        onSuccess:()=>{},
         onError
     })
 }

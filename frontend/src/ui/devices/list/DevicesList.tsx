@@ -12,7 +12,7 @@ const DevicesList: FC<IDevicesList> = (props) => {
 
   const sortingDevices = useMemo(
     () =>
-      devices.sort(
+      [...devices].sort(
         (prevDevice, nextDevice) => prevDevice.deviceId - nextDevice.deviceId
       ),
     [devices]

@@ -24,7 +24,7 @@ import { useParams } from "react-router-dom";
 import { useGetSessionKeypoints } from "../../api/hooks/session/useGetSessionPoints";
 import { useHoverKeypont } from "../../context/hoverKeypoint/HoverKeypointContext";
 
-// Регистрация компонентов Chart.js
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -40,13 +40,15 @@ export interface IDashboardData {
   values: number[];
   measurementIds: number[];
 }
+
 interface DashboardProps {
   dashboardData: IDashboardData;
   sessionStatus?: TSessionStatus;
-  containerStyles?: React.CSSProperties; // Стили для контейнера
-  xAxisLabel: string; // Название оси X
-  yAxisLabel: string; // Название оси Y
+  containerStyles?: React.CSSProperties;
+  xAxisLabel: string;
+  yAxisLabel: string;
 }
+
 export interface MyChartPoint {
   x: number;
   y: number;
@@ -61,9 +63,7 @@ const Dashboard: FC<DashboardProps> = ({
   sessionStatus,
 }) => {
   const { sessionId } = useParams();
-
   const { chartRef, hoveredAreasRef } = useHoverKeypont();
-
   const { data: keypoints, isLoading: isLoadingGetKeypoints } =
     useGetSessionKeypoints(sessionId);
 
@@ -85,20 +85,17 @@ const Dashboard: FC<DashboardProps> = ({
           y: value,
           id: dashboardData.measurementIds[index],
         })),
-        borderColor: "#00ff00",
-        backgroundColor: "rgba(0,255,0,0.1)",
-        // backgroundColor: "red",
-
+        borderColor: "#14b8a6",
+        backgroundColor: "rgba(20,184,166,0.12)",
         fill: true,
         pointRadius: 1.5,
-        pointHoverRadius: 4,
+        pointHoverRadius: 5,
         tension: 0.4,
         pointBackgroundColor: dashboardData.values.map((_, index) => {
           const id = dashboardData.measurementIds[index];
-          // Если точка выбрана — красный, иначе зеленый
-          return pointPeriod.find((p) => p.id === id) ? "#ff1a43" : "white";
+          return pointPeriod.find((p) => p.id === id) ? "#ef4444" : "#e5e7eb";
         }),
-        pointBorderColor: "#fff", // можно добавить обводку для контраста
+        pointBorderColor: "#fff",
         pointBorderWidth: 1,
       },
     ],
@@ -118,8 +115,8 @@ const Dashboard: FC<DashboardProps> = ({
   const options: ChartOptions<"line"> = useMemo(() => {
     const xMinMax =
       (isFullView && {
-        min: 0, // начало оси X — 0 минут
-        max: 50, // конец оси X — 50 минут (фиксировано)
+        min: 0,
+        max: 50,
       }) ||
       undefined;
     return {
@@ -131,12 +128,9 @@ const Dashboard: FC<DashboardProps> = ({
       },
       onClick: (event, _, chart) => {
         if (!chart) return;
-
-        // event.native может быть null
         const nativeEvent = event.native;
         if (!nativeEvent) return;
 
-        // получаем элементы под курсором
         const points = chart.getElementsAtEventForMode(
           nativeEvent,
           "nearest",
@@ -157,17 +151,12 @@ const Dashboard: FC<DashboardProps> = ({
 
         setPointPeriod((prev) => {
           const exists = prev.find((p) => p.id === value.id);
-
           let newArray: typeof prev;
 
           if (exists) {
-            // Если точка уже есть — убираем её
             newArray = prev.filter((p) => p.id !== value.id);
           } else {
-            // Если точки ещё нет — добавляем
             newArray = [...prev, value];
-
-            // Сортируем по X и оставляем максимум 2
             newArray.sort((a, b) => a.x - b.x);
             newArray = newArray.slice(0, 2);
           }
@@ -175,35 +164,36 @@ const Dashboard: FC<DashboardProps> = ({
           return newArray;
         });
       },
-
       plugins: {
+        legend: { display: false },
         tooltip: {
           enabled: true,
-          // mode: "nearest",
           intersect: false,
-          dataIndex: 1,
           displayColors: false,
+          padding: 12,
+          cornerRadius: 10,
+          titleFont: { family: "'Lora-SemiBold', serif", size: 13 },
+          bodyFont: { family: "system-ui, sans-serif", size: 12 },
+          footerFont: { family: "system-ui, sans-serif", size: 11 },
+          backgroundColor: "rgba(17,20,25,0.95)",
+          titleColor: "#f0f2f5",
+          bodyColor: "#9ca3af",
+          footerColor: "#ef4444",
+          borderColor: "rgba(255,255,255,0.08)",
+          borderWidth: 1,
           callbacks: {
             title: (context) => {
               const value = context[0].formattedValue;
-
-              return `${value} уд/мин `;
+              return `${value} уд/мин`;
             },
             label: (context) => {
               const value = context.label;
-
-              // Преобразуем в строку, убираем пробелы и заменяем запятую на точку
               const normalized = String(value).trim().replace(",", ".");
-
-              // Проверяем, число ли это
               const isNumber = /^-?\d+(\.\d+)?$/.test(normalized);
-              if (!isNumber) return ""; // Если не число — пропускаем
+              if (!isNumber) return "";
 
-              // Конвертируем минуты → миллисекунды
               const minutes = parseFloat(normalized);
               const ms = minutes * 60 * 1000;
-
-              // Форматируем время
               const time = convertMilliseconds({
                 ms,
                 withoutMs: true,
@@ -211,22 +201,11 @@ const Dashboard: FC<DashboardProps> = ({
 
               return time;
             },
-
             afterTitle: (context) => {
               const value = context[0].formattedValue;
               const isAboveThreshold = +value > 180;
-
-              return `${(isAboveThreshold && "Пульс превышен") || ""}`;
+              return isAboveThreshold ? "Пульс превышен" : "";
             },
-          },
-          position: "nearest",
-          backgroundColor: "#fbfaf8",
-          bodyColor: "black", // Белый фон tooltip
-          titleColor: (context) => {
-            const value = context.tooltip.title[0].split(" ")[0];
-            const isAboveThreshold = +value > 180;
-
-            return !isAboveThreshold ? "#1a1c21" : "#ff1a43";
           },
         },
       },
@@ -235,64 +214,64 @@ const Dashboard: FC<DashboardProps> = ({
           type: "linear",
           title: {
             display: true,
-            text: xAxisLabel, // Название оси X из props
-            color: "#fff",
+            text: xAxisLabel,
+            color: "#9ca3af",
             align: "end",
+            font: { family: "system-ui, sans-serif", size: 11, weight: 500 },
           },
           ticks: {
-            color: "#fff",
+            color: "#6b7280",
             maxRotation: 0,
             minRotation: 0,
-            stepSize: 5, // шаг меток, например, каждые 5 минут
+            stepSize: 5,
+            font: { family: "system-ui, sans-serif", size: 11 },
           },
           grid: {
-            color: "gray",
-            lineWidth: 0.5,
+            color: "rgba(255,255,255,0.04)",
+            lineWidth: 1,
           },
           ...xMinMax,
         },
-
         y: {
           type: "linear",
           title: {
             display: true,
-            text: yAxisLabel, // Используем название оси Y из props
-            color: "#fff",
+            text: yAxisLabel,
+            color: "#9ca3af",
             align: "end",
+            font: { family: "system-ui, sans-serif", size: 11, weight: 500 },
           },
           ticks: {
-            color: "#fff",
+            color: "#6b7280",
             stepSize: 40,
+            font: { family: "system-ui, sans-serif", size: 11 },
           },
           grid: {
-            color: "gray", // Устанавливаем цвет линий сетки
-            lineWidth: 0.5, // Устанавливаем толщину линий сетки
+            color: "rgba(255,255,255,0.04)",
+            lineWidth: 1,
           },
           min: 40,
           max: 240,
         },
       },
     };
-  }, [xAxisLabel, yAxisLabel, isFullView, pointPeriod]);
+  }, [xAxisLabel, yAxisLabel, isFullView, pointPeriod, isPointInArea]);
 
-  // Кастомный плагин для визирных линий
   const crosshairPlugin: Plugin<"line"> = useMemo(
     () => ({
       id: "crosshairPlugin",
       beforeDraw: (chart) => {
         const { ctx, chartArea, scales } = chart;
-        const targetY = scales.y.getPixelForValue(180); // горизонтальная линия на значении 180
+        const targetY = scales.y.getPixelForValue(180);
 
         ctx.save();
-        ctx.strokeStyle = "#b22222";
-        ctx.lineWidth = 2;
-
-        // горизонтальная линия
+        ctx.strokeStyle = "rgba(239,68,68,0.6)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
         ctx.beginPath();
         ctx.moveTo(chartArea.left, targetY);
         ctx.lineTo(chartArea.right, targetY);
         ctx.stroke();
-
         ctx.restore();
       },
     }),
@@ -307,25 +286,22 @@ const Dashboard: FC<DashboardProps> = ({
         const { left, right, top, bottom } = chartArea;
         const totalWidth = right - left;
 
-        const chartDuration = 50; // полная длина графика (0–50 мин)
-        const referenceDuration = 45; // базовая длительность для первых 4 сегментов
+        const chartDuration = 50;
+        const referenceDuration = 45;
 
-        // первые 4 сегмента делятся по 45 минут
         const basePercentages = [0.08, 0.19, 0.63, 0.1];
         const labels = ["Вводная", "Подгот-я", "Основная", "Закл-я", "Заминка"];
 
         ctx.save();
-        ctx.strokeStyle = "#e05252";
-        ctx.lineWidth = 2;
-        ctx.fillStyle = "#fff";
-        ctx.font = "8pt Lora-Regular";
+        ctx.strokeStyle = "rgba(245,158,11,0.5)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.fillStyle = "#9ca3af";
+        ctx.font = "500 10px system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
 
-        // ---------- ВЕРТИКАЛЬНЫЕ ЛИНИИ ----------
         let accumulated = 0;
-
-        // рисуем 4 границы (от 0 до 45 минут)
         for (let i = 0; i < basePercentages.length; i++) {
           accumulated += basePercentages[i];
           const positionMinutes = accumulated * referenceDuration;
@@ -336,21 +312,19 @@ const Dashboard: FC<DashboardProps> = ({
           ctx.stroke();
         }
 
-        // ---------- ПОДПИСИ СЕГМЕНТОВ ----------
         accumulated = 0;
         for (let i = 0; i < basePercentages.length; i++) {
           const startMin = accumulated * referenceDuration;
           const endMin = (accumulated + basePercentages[i]) * referenceDuration;
           const centerMin = startMin + (endMin - startMin) / 2;
           const centerX = left + (centerMin / chartDuration) * totalWidth;
-          ctx.fillText(labels[i], centerX, top + 1);
+          ctx.fillText(labels[i], centerX, top + 14);
           accumulated += basePercentages[i];
         }
 
-        // подпись для последнего (V) сегмента — от 45 до 50 минут
         const centerLast = (45 + 50) / 2;
         const centerXLast = left + (centerLast / chartDuration) * totalWidth;
-        ctx.fillText(labels[4], centerXLast, top + 1);
+        ctx.fillText(labels[4], centerXLast, top + 14);
 
         ctx.restore();
       },
@@ -358,7 +332,6 @@ const Dashboard: FC<DashboardProps> = ({
     []
   );
 
-  // highlightAreaPlugin
   const highlightAreaPlugin: Plugin<"line"> = useMemo(() => {
     return {
       id: "highlightArea",
@@ -372,8 +345,8 @@ const Dashboard: FC<DashboardProps> = ({
         filledAreas.forEach((area) => {
           const isHovered = hoveredAreasRef.current.includes(area.keyPointId);
           ctx.fillStyle = isHovered
-            ? "rgba(255, 140, 0, 0.5)" // MediumPurple с прозрачностью
-            : "rgba(255, 255, 204, 0.2)";
+            ? "rgba(245,158,11,0.25)"
+            : "rgba(20,184,166,0.12)";
 
           const dataset = data.datasets[0];
           const points = dataset.data as MyChartPoint[];
@@ -401,19 +374,14 @@ const Dashboard: FC<DashboardProps> = ({
         ctx.restore();
       },
     };
-  }, [filledAreas]);
+  }, [filledAreas, hoveredAreasRef]);
 
   const plugins = useMemo(() => {
     const activePlugins: Plugin<"line", any>[] = [crosshairPlugin];
-
-    // Горизонтальные линии и сегменты только для полноэкранного графика
     if (isFullView) activePlugins.push(quadrantPlugin);
-
-    // Подсветка областей только если полноэкранный вид и есть данные
     if (isFullView && !isLoadingGetKeypoints && filledAreas.length) {
       activePlugins.push(highlightAreaPlugin);
     }
-
     return activePlugins;
   }, [
     isFullView,
@@ -421,6 +389,7 @@ const Dashboard: FC<DashboardProps> = ({
     quadrantPlugin,
     filledAreas,
     isLoadingGetKeypoints,
+    highlightAreaPlugin,
   ]);
 
   useEffect(() => {
@@ -449,16 +418,16 @@ const Dashboard: FC<DashboardProps> = ({
         ),
       });
     }
-  }, [pointPeriod]);
+  }, [pointPeriod, sessionId, showAlert, hideAlert]);
 
   useEffect(() => {
     return () => {
       if (chartRef.current) {
-        chartRef.current.destroy(); // Уничтожение графика при размонтировании компонента
+        chartRef.current.destroy();
         chartRef.current = null;
       }
     };
-  }, []);
+  }, [chartRef]);
 
   useEffect(() => setFilledArea(keypoints?.data || []), [keypoints?.data]);
 
@@ -471,19 +440,20 @@ const Dashboard: FC<DashboardProps> = ({
   return (
     <div className={styles.dashboard} style={containerStyles}>
       {sessionStatus === "Closed" && (
-        <Switch
-          tooltipLocation="left"
-          onChange={() => setIsFullView((pre) => !pre)}
-          value={!isFullView ? "complete" : "progress"}
-          options={{
-            progress: {
-              label: "Текущий прогресс",
-            },
-            complete: {
-              label: "Полный график",
-            },
-          }}
-        />
+        <div className={styles.controls}>
+          <p className={styles.hint}>
+            Выберите две точки на графике, чтобы задать период
+          </p>
+          <Switch
+            tooltipLocation="left"
+            onChange={() => setIsFullView((pre) => !pre)}
+            value={!isFullView ? "complete" : "progress"}
+            options={{
+              progress: { label: "Текущий прогресс" },
+              complete: { label: "Полный график" },
+            }}
+          />
+        </div>
       )}
       <div className={styles.chartContainer}>
         <Line

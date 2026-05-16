@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { AnimatePresence } from "framer-motion";
-import { IWithChildren } from "../../reduxToolkit/Interfaces";
+import { IWithChildren } from "../../services/interfaces/Interfaces";
 import Alert from "../../ui/alert/Alert";
 
 interface IAlertStyles {

@@ -1,26 +1,28 @@
 .userParamsContainer {
   flex: 0.5;
-  padding: 40px;
+  padding: var(--space-8);
   display: flex;
   flex-direction: column;
-  background: #212227;
-  gap: 20px;
-  border: 1px solid #fbfaf8;
-  border-radius: 20px;
-  font-family: "Lora-Regular";
-  color: #fbfaf8;
+  background: var(--bg-surface);
+  gap: var(--space-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 
   h1 {
     text-align: center;
     flex: 1;
-    font-family: "Lora-SemiBold";
-    font-size: 18px;
+    font-family: var(--font-heading);
+    font-size: var(--text-body-lg);
     font-weight: 600;
-    line-height: 26.4px;
+    line-height: var(--line-height-snug);
     background: transparent;
-    padding: 10px 20px;
-    border: 1px solid #fbfaf8;
-    border-radius: 10px;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    margin: 0;
   }
 
   .rowOption {
@@ -39,13 +41,18 @@
       text-align: center;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding: 10px;
-      border: 1px solid #fbfaf8;
-      border-radius: 10px;
+      padding: var(--space-2);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      font-family: var(--font-ui);
+      font-size: var(--text-caption);
+      color: var(--text-secondary);
+      transition: border-color var(--transition-fast),
+        color var(--transition-fast);
 
       &.greenBorder {
-        border-color: #23e70a;
-        color: #23e70a;
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
       }
     }
   }
@@ -54,7 +61,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-2);
     margin: 0;
     padding: 0;
 
@@ -64,54 +71,63 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      font-family: "Lora-Regular";
-      font-size: 50px;
+      font-family: var(--font-display);
+      font-size: var(--text-display);
       font-weight: 600;
-      line-height: 60px;
-      padding: 10px;
-      border: 1px solid #fbfaf8;
-      color: #23e70a;
+      line-height: var(--line-height-tight);
+      padding: var(--space-2);
+      border: 1px solid var(--border-default);
+      color: var(--accent-primary);
       margin: 0;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
 
       &.greenBorder {
-        border-color: #23e70a;
-        color: #23e70a;
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        box-shadow: var(--shadow-glow-sm);
       }
 
       .liveIndicator {
         position: absolute;
         display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 14pt;
-        top: 0;
-        left: 20px;
-        color: red;
+        gap: var(--space-1);
+        font-size: var(--text-caption);
+        font-family: var(--font-ui);
+        top: var(--space-2);
+        left: var(--space-4);
+        color: var(--danger);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: var(--letter-spacing-wide);
 
         &::before {
           content: "";
           display: inline-block;
-          width: 5px;
-          height: 5px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
-          background: red;
+          background: var(--danger);
+          animation: pulseDot 1.5s infinite ease-in-out;
         }
       }
 
       .liveStatus {
-        --color: #23e70a;
+        --color: var(--accent-primary);
         animation: pulseLive 1.5s infinite ease-in-out;
       }
 
       .liveIndicator.liveStatus {
-        --color: red;
-        animation: pulseLive 1.5s infinite ease-in-out;
+        color: var(--accent-primary);
+
+        &::before {
+          background: var(--accent-primary);
+        }
       }
 
       @keyframes pulseLive {
-        0%,
-        100% {
+        0%, 100% {
           opacity: 1;
           text-shadow: 0 0 30px var(--color), 0 0 20px var(--color);
         }
@@ -120,58 +136,69 @@
           text-shadow: 0 0 30px var(--color);
         }
       }
+
+      @keyframes pulseDot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+      }
     }
   }
 }
 
-/* Адаптивные стили (только размеры шрифта) */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .userParamsContainer h1 {
-    font-size: 18px; /* Уменьшаем размер заголовка */
-    line-height: 24px; /* Уменьшаем высоту строки заголовка */
+  .userParamsContainer {
+    padding: var(--space-5);
+
+    h1 {
+      font-size: var(--text-body);
+      line-height: var(--line-height-normal);
+    }
 
     .rowOption span {
-      font-size: 14px; /* Уменьшаем размер шрифта элемента строки */
+      font-size: var(--text-caption);
     }
 
     .columnOption p {
-      font-size: 40px; /* Уменьшаем размер числа */
-      line-height: 48px; /* Уменьшаем высоту строки числа */
-    }
+      font-size: var(--text-h1);
+      line-height: var(--line-height-tight);
+      min-height: 90px;
 
-    .columnOption {
-      p {
-        .liveIndicator {
-          font-size: 12pt; /* Уменьшаем размер индикатора */
-        }
+      .liveIndicator {
+        font-size: var(--text-xs);
       }
     }
   }
 }
 
 @media (max-width: 480px) {
-  .userParamsContainer h1 {
-    font-size: 16px; /* Еще уменьшаем размер заголовка */
-    line-height: 20px; /* Еще уменьшаем высоту строки заголовка */
+  .userParamsContainer {
+    padding: var(--space-3);
+    gap: var(--space-3);
+
+    h1 {
+      font-size: var(--text-caption);
+      line-height: var(--line-height-normal);
+      padding: var(--space-2);
+    }
+
     .rowOption {
+      height: 44px;
+
       span {
-        font-size: 13px; /* Еще уменьшаем размер шрифта элемента строки */
+        font-size: var(--text-xs);
+        padding: var(--space-1);
       }
     }
 
-    .columnOption {
-      p {
-        font-size: 30px; /* Еще уменьшаем размер числа */
-        line-height: 36px; /* Еще уменьшаем высоту строки числа */
-      }
-    }
+    .columnOption p {
+      font-size: var(--text-h2);
+      line-height: var(--line-height-tight);
+      min-height: 70px;
 
-    .columnOption {
-      p {
-        .liveIndicator {
-          font-size: 10pt; /* Еще уменьшаем размер индикатора */
-        }
+      .liveIndicator {
+        font-size: var(--text-xs);
+        left: var(--space-2);
       }
     }
   }

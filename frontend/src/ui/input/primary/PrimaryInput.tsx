@@ -5,13 +5,14 @@ const Input: FC<InputHTMLAttributes<HTMLInputElement>> = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement>
 >((props, ref) => {
+  const { required, autoComplete, ...rest } = props;
   return (
     <input
-      {...props}
+      {...rest}
       className={styles.primaryInput}
       ref={ref}
-      required
-      autoComplete="off"
+      required={required}
+      autoComplete={autoComplete}
     />
   );
 });

@@ -1,23 +1,45 @@
 import { ButtonHTMLAttributes, FC } from "react";
 import styles from "./Button.module.scss";
 
+export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant = "secondary" | "primary" | "ghost";
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  loading?: boolean; // новое поле
+  loading?: boolean;
+  isLoading?: boolean;
+  size?: ButtonSize;
+  variant?: ButtonVariant;
 }
 
-const Button: FC<ButtonProps> = ({ className, loading = false, ...props }) => {
+const Button: FC<ButtonProps> = ({
+  className = "",
+  loading: loadingProp,
+  isLoading,
+  size = "md",
+  variant = "secondary",
+  disabled,
+  children,
+  ...props
+}) => {
+  const loading = isLoading ?? loadingProp ?? false;
+  const isDisabled = disabled || loading;
+
+  const classes = [
+    styles.button,
+    styles[size],
+    styles[variant],
+    loading && styles.loading,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <button
-      className={`${styles.additionButton} ${className} ${
-        loading ? styles.loading : ""
-      }`}
-      disabled={loading || props.disabled} // блокируем кнопку при загрузке
-      {...props}
-    >
+    <button className={classes} disabled={isDisabled} {...props}>
       {loading ? (
-        <span className={styles.spinner}></span> // спиннер через CSS
+        <span className={styles.spinner} aria-hidden="true" />
       ) : (
-        props.children
+        children
       )}
     </button>
   );

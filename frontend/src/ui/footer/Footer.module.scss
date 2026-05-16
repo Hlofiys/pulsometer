@@ -1,66 +1,126 @@
 .footerContainer {
-  flex: 1;
-  padding: 40px 10px;
+  width: 100%;
+  margin-top: auto;
+  padding: var(--space-10) var(--container-padding);
+  background: linear-gradient(180deg, transparent 0%, var(--bg-elevated) 100%);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.footerInner {
+  max-width: var(--container-max);
+  margin: 0 auto;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  border-top: 1px solid #5B5D63;
+  gap: var(--space-12);
+}
 
-  article {
-    font-family: 'Lora-Regular';
-    font-size: 12px;
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+
+  img {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+  }
+
+  p {
+    font-family: var(--font-body);
+    font-size: var(--text-caption);
     font-weight: 400;
-    color: #fbfaf8;
-    line-height: 14.4px;
-
-    img {
-      width: 50px;
-      height: 50px;
-      cursor: default;
-      margin-bottom: 10px;
-    }
-
-    p {
-      font-family: "Lora-SemiBold";
-      margin: 0;
-      padding: 0 0 10px;
-    }
-
-    ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
+    color: var(--text-secondary);
+    line-height: var(--line-height-normal);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
   }
 
-  /* Адаптивные стили */
-  @media (max-width: 768px) {
-    flex-direction: column; // Изменяем направление на колонку
-    align-items: center; // Центрируем элементы по горизонтали
-    padding: 20px 10px; // Уменьшаем отступы
+  .copyright {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+}
 
-    article {
-      text-align: center; // Центрируем текст внутри article
-      margin-bottom: 20px; // Добавляем отступ между article
+.info,
+.team {
+  h4 {
+    font-family: var(--font-heading);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+    margin: 0 0 var(--space-3);
+  }
+}
 
-      img {
-        margin: 0 auto 10px; // Центрируем изображение
-      }
+.info {
+  address {
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
+    font-style: normal;
+    color: var(--text-secondary);
+    line-height: var(--line-height-normal);
+  }
+}
 
-      &:last-child {
-        margin-bottom: 0; // Убираем отступ у последнего article
-      }
-    }
+.team {
+  ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
   }
 
-  @media (max-width: 480px){
-    article{
-      font-size: 10px;
-      img{
-        width: 40px;
-        height: 40px;
-      }
+  li {
+    font-family: var(--font-ui);
+    font-size: var(--text-body-sm);
+    color: var(--text-secondary);
+    line-height: var(--line-height-normal);
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .footerContainer {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .footerInner {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+    text-align: center;
+  }
+
+  .brand {
+    align-items: center;
+  }
+
+  .info,
+  .team {
+    h4 {
+      margin-bottom: var(--space-2);
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .footerContainer {
+    padding: var(--space-6) var(--space-3);
+  }
+
+  .footerInner {
+    gap: var(--space-6);
+  }
+
+  .team li {
+    font-size: var(--text-xs);
   }
 }

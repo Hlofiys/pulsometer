@@ -1,52 +1,53 @@
 .mainProcessContainer {
+  width: 100%;
+  max-width: var(--container-max);
   display: flex;
   flex-direction: column;
-  padding: 21px 5px 110px;
-  gap: 30px;
+  padding: var(--space-6) var(--container-padding) var(--space-20);
+  gap: var(--space-8);
+}
+
+.processMeasurementsContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-6);
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .mainProcessContainer {
+    padding: var(--space-4) var(--space-4) var(--space-12);
+    gap: var(--space-6);
+  }
 
   .processMeasurementsContainer {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    gap: 20px;
+    flex-direction: column-reverse;
+    gap: var(--space-5);
   }
 
   .buttons {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: flex-end;
-    gap: 30px;
-  }
-}
+    justify-content: stretch;
 
-/* Адаптивные стили */
-
-@media (max-width: 768px) {
-  .mainProcessContainer {
-    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
-    gap: 30px; /* Уменьшаем отступ между элементами */
-
-    .processMeasurementsContainer {
-      flex-direction: column-reverse; /* Изменяем направление на колонку */
-      gap: 15px; /* Уменьшаем отступ между элементами */
-    }
-
-    .buttons {
-      align-items: stretch; /* Растягиваем кнопки на всю ширину */
-      gap: 20px; /* Уменьшаем отступ между кнопками */
+    button {
+      width: 100%;
     }
   }
 }
 
 @media (max-width: 480px) {
   .mainProcessContainer {
-    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
-    gap: 20px; /* Еще уменьшаем отступ между элементами */
-    
-    .buttons {
-      gap: 15px; /* Еще уменьшаем отступ между кнопками */
-    }
+    padding: var(--space-3) var(--space-3) var(--space-10);
+    gap: var(--space-5);
+  }
+
+  .buttons {
+    gap: var(--space-3);
   }
 }

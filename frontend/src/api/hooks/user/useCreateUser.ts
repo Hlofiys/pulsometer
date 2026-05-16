@@ -11,8 +11,7 @@ export const useCreateUser = () => {
         mutationKey: ['createUser'],
         mutationFn: UserService.create,
         onSuccess:async ()=>{
-            await queryClient.invalidateQueries(['getUsers'])
-            console.log('Success create!')
+            await queryClient.invalidateQueries({ queryKey: ['getUsers'] })
         },
         onError
     })

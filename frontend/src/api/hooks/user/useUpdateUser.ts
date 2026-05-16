@@ -11,9 +11,8 @@ export const useUpdateUser = (deviceId?: number) => {
     mutationFn: UserService.update,
     onSuccess: async () => {
       !!deviceId
-        ? await queryClient.invalidateQueries(["getUsersByDeviceId", deviceId])
-        : await queryClient.invalidateQueries(["getUsers"]);
-      console.log("Success update!");
+        ? await queryClient.invalidateQueries({ queryKey: ["getUsersByDeviceId", deviceId] })
+        : await queryClient.invalidateQueries({ queryKey: ["getUsers"] });
     },
     onError,
   });

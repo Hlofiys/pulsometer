@@ -1,14 +1,13 @@
-export const hasAllValuesForKeys = (
-  obj: { [key: string]: any },
-  keys: string[]
-): boolean => {
-  for (let key of keys) {
-    if (obj.hasOwnProperty(key)) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const hasAllValuesForKeys = (obj: any, keys: string[]): boolean => {
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
       if (
-        obj[key] === "" ||
-        obj[key] === null ||
-        obj[key] === undefined ||
-        obj[key] === 0
+        value === "" ||
+        value === null ||
+        value === undefined ||
+        value === 0
       ) {
         return false;
       }
@@ -175,13 +174,6 @@ export function formatDateUser(isoString: string): {
 export interface IDashboardParam {
   label: number; // bpm
   value: number; // время в миллисекундах
-}
-
-export interface IHeartRateZones {
-  introductory: number;
-  preparatory: number;
-  main: number;
-  final: number;
 }
 
 // Доли длительности урока (всего = 1)

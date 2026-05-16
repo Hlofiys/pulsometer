@@ -1,15 +1,14 @@
 .dashboard {
-  // width: 800px;
-  min-height: 410px;
-  background-color: #212227;
-  border-radius: 20px;
-  padding: 20px;
-  color: #fbfaf8;
+  width: 100%;
+  min-height: 420px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  color: var(--text-primary);
   user-select: none;
-  font-family: "Lora-Regular";
-  font-size: 12.91px;
-  font-weight: 400;
-  line-height: 20.28px;
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -18,26 +17,35 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--space-4);
+    padding: var(--space-4);
 
     .skeletonTitle {
       width: 90%;
       height: 60px;
-      background: linear-gradient(90deg, #727272, #a2a1a1, #727272);
-      border-radius: 4px;
+      background: linear-gradient(
+        90deg,
+        var(--bg-surface-hover),
+        var(--border-strong),
+        var(--bg-surface-hover)
+      );
+      border-radius: var(--radius-sm);
       animation: shimmer 1.8s infinite ease-in-out;
     }
 
     .skeletonChart {
       width: 100%;
       height: 300px;
-      background: linear-gradient(90deg, #727272, #a2a1a1, #727272);
-      border-radius: 4px;
+      background: linear-gradient(
+        90deg,
+        var(--bg-surface-hover),
+        var(--border-strong),
+        var(--bg-surface-hover)
+      );
+      border-radius: var(--radius-sm);
       animation: shimmer 1.8s infinite ease-in-out;
     }
 
-    /* Эффект перелива */
     @keyframes shimmer {
       0% {
         background-position: -200%;
@@ -50,12 +58,25 @@
       }
     }
 
-    /* Улучшение визуального эффекта */
     .skeletonTitle,
     .skeletonChart {
       background-size: 400% 100%;
       position: relative;
       overflow: hidden;
+    }
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .dashboard {
+    min-height: 300px;
+    padding: var(--space-3);
+
+    .skeletonContainer {
+      .skeletonChart {
+        height: 200px;
+      }
     }
   }
 }

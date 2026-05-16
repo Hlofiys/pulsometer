@@ -5,18 +5,21 @@ import { useNavigate } from "react-router-dom";
 import { RouterPath } from "../../router/Router";
 import { FundViewOutlined } from "@ant-design/icons";
 
-//Белорусская государственная академия связи
 const Header: FC = () => {
   const nav = useNavigate();
 
   return (
     <header className={styles.headerContainer}>
-      <img src={logo} alt="логотип" onClick={() => nav(RouterPath.MAIN)} />
-      <h5>УО “Белорусская государственная академия связи”</h5>
-      <aside>
-        <FundViewOutlined />
-        <p>Система мониторинга</p>
-      </aside>
+      <div className={styles.headerInner}>
+        <div className={styles.brand} onClick={() => nav(RouterPath.MAIN)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && nav(RouterPath.MAIN)}>
+          <img src={logo} alt="логотип" />
+          <h1>УО "Белорусская государственная академия связи"</h1>
+        </div>
+        <aside className={styles.meta}>
+          <FundViewOutlined aria-hidden="true" />
+          <span>Система мониторинга</span>
+        </aside>
+      </div>
     </header>
   );
 };

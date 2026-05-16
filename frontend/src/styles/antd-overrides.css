@@ -1,0 +1,249 @@
+/**
+ * Ant Design v6 Theme Overrides
+ * Aligns Ant Design components with Pulsometer design tokens.
+ */
+
+/* ── Global Ant overrides ── */
+.ant-spin-dot-item {
+  background-color: var(--accent-primary) !important;
+}
+
+.ant-spin-text {
+  color: var(--text-secondary) !important;
+  font-family: var(--font-ui) !important;
+}
+
+/* ── Dropdown / Select ── */
+.ant-select-dropdown {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.ant-select-item {
+  color: var(--text-secondary) !important;
+  font-family: var(--font-ui) !important;
+  border-radius: var(--radius-sm) !important;
+  transition: background var(--transition-fast), color var(--transition-fast) !important;
+}
+
+.ant-select-item-option-selected,
+.ant-select-item-option-active {
+  background: var(--accent-primary-subtle) !important;
+  color: var(--accent-primary-hover) !important;
+}
+
+.ant-select-item-option-selected .ant-select-item-option-state {
+  color: var(--accent-primary) !important;
+}
+
+/* ── Empty ── */
+.ant-empty-description {
+  color: var(--text-tertiary) !important;
+  font-family: var(--font-body) !important;
+}
+
+/* ── Tooltip ── */
+.ant-tooltip-inner {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-ui) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.ant-tooltip-arrow::before {
+  background: var(--bg-elevated) !important;
+}
+
+/* ── Notification / Message ── */
+.ant-message-notice-content {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  font-family: var(--font-ui) !important;
+}
+
+.ant-message-success .anticon {
+  color: var(--success) !important;
+}
+
+.ant-message-error .anticon {
+  color: var(--danger) !important;
+}
+
+.ant-message-warning .anticon {
+  color: var(--warning) !important;
+}
+
+.ant-message-info .anticon {
+  color: var(--info) !important;
+}
+
+/* ── Modal ── */
+.ant-modal-content {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-xl) !important;
+}
+
+.ant-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.ant-modal-title {
+  color: var(--text-primary) !important;
+  font-family: var(--font-heading) !important;
+}
+
+.ant-modal-close-x {
+  color: var(--text-tertiary) !important;
+  transition: color var(--transition-fast);
+}
+
+.ant-modal-close-x:hover {
+  color: var(--accent-primary) !important;
+}
+
+.ant-modal-body {
+  color: var(--text-secondary) !important;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--border-subtle) !important;
+}
+
+/* ── Popconfirm ── */
+.ant-popover-inner {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.ant-popover-inner-content {
+  color: var(--text-secondary) !important;
+}
+
+/* ── Date Picker ── */
+.ant-picker-panel {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-default) !important;
+}
+
+.ant-picker-cell-inner {
+  color: var(--text-secondary) !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+  background: var(--accent-primary) !important;
+  color: var(--text-on-accent) !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: var(--accent-primary) !important;
+}
+
+.ant-picker-header {
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.ant-picker-header button {
+  color: var(--text-tertiary) !important;
+}
+
+.ant-picker-header button:hover {
+  color: var(--accent-primary) !important;
+}
+
+/* ── Skeleton ── */
+.ant-skeleton-title,
+.ant-skeleton-paragraph > li {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-hover) 25%,
+    var(--border-subtle) 50%,
+    var(--bg-surface-hover) 75%
+  ) !important;
+}
+
+/* ── Pagination ── */
+.ant-pagination-item {
+  background: transparent !important;
+  border-color: var(--border-default) !important;
+}
+
+.ant-pagination-item a {
+  color: var(--text-secondary) !important;
+}
+
+.ant-pagination-item-active {
+  background: var(--accent-primary-subtle) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.ant-pagination-item-active a {
+  color: var(--accent-primary) !important;
+}
+
+.ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination-next .ant-pagination-item-link {
+  background: transparent !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-secondary) !important;
+}
+
+.ant-pagination-disabled .ant-pagination-item-link {
+  color: var(--text-muted) !important;
+}
+
+/* ── Table ── */
+.ant-table {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+.ant-table-thead > tr > th {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-heading) !important;
+  border-bottom: 1px solid var(--border-default) !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--border-subtle) !important;
+  transition: background var(--transition-fast);
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--bg-surface-hover) !important;
+}
+
+/* ── Menu ── */
+.ant-menu {
+  background: transparent !important;
+  border-right: none !important;
+}
+
+.ant-menu-item {
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-md) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.ant-menu-item-selected {
+  background: var(--accent-primary-subtle) !important;
+  color: var(--accent-primary) !important;
+}
+
+.ant-menu-item:hover:not(.ant-menu-item-selected) {
+  background: var(--bg-surface-hover) !important;
+  color: var(--text-primary) !important;
+}

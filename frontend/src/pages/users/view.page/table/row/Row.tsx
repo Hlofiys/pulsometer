@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type JSX,
 } from "react";
 import { useForm, Controller } from "react-hook-form";
 import styles from "./Row.module.scss";
@@ -40,9 +41,11 @@ export interface FieldConfig<T> {
   isEditable?: boolean; // Флаг редактируемости
   dropdownOptions?: { label: string; value: any }[]; // Опции для выпадающего списка
   dropdownLoading?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderStatic?: (value: any) => JSX.Element | string; // Кастомный рендеринг для статичного значения
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TableRow: FC<TableRowProps<any>> = (props) => {
   const { index, rowData, fields, onClick, isEdit } = props;
   const { deviceId } = useParams();
@@ -55,16 +58,16 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
   });
   const rowValues = watch();
 
-  // const { data: devices, isLoading: isLoadingDevices } = useGetDevices();
   const { devicesOptions, isLoadingDevices } = useGetDeviceOptions();
 
-  const { mutateAsync: delete_user, isLoading: isDeleteLoading } =
+  const { mutateAsync: delete_user, isPending: isDeleteLoading } =
     useDeleteUser(Number(deviceId));
-  const { mutateAsync: update_user, isLoading: isUpdateLoading } =
+  const { mutateAsync: update_user, isPending: isUpdateLoading } =
     useUpdateUser(Number(deviceId));
 
   const { showAlert, hideAlert, setAlertButtonLoading } = useAlert();
   // Сохранение изменений
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSave = (data: any) => {
     const isChanged = fields.some(
       (field) => field.isEditable && data[field.key] !== rowData[field.key]
@@ -291,12 +294,12 @@ const TableRow: FC<TableRowProps<any>> = (props) => {
                     e.stopPropagation();
                     handleSubmit(handleSave)();
                   }}
-                  stroke="#23E70A"
+                  stroke="#14b8a6"
                 />
               )
             ) : (
               <Edit
-                stroke="#23E70A"
+                stroke="#14b8a6"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsEditing(true);

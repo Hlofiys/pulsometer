@@ -3,69 +3,77 @@
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
 
   .paramSet {
     width: 100%;
-    display: flex; /* По умолчанию flex */
-    flex-direction: row; /* По умолчанию row */
+    display: flex;
+    flex-direction: row;
     align-items: center;
     list-style: none;
     margin: 0;
     padding: 0;
-    gap: 20px;
+    gap: var(--space-5);
   }
 
   .paramSet .paramCard {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    border-radius: 20px;
-    background: #212227;
-    border: 1px solid #fbfaf8;
-    gap: 10px;
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    gap: var(--space-2);
+    transition: box-shadow var(--transition-base),
+      border-color var(--transition-base);
+
+    &:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+    }
   }
 
   .paramSet .paramCard .paramLabel {
-    font-family: "Lora-Regular";
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 19.2px;
-    color: #fbfaf8;
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    line-height: var(--line-height-normal);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
     margin: 0;
     padding: 0;
   }
 
   .paramSet .paramCard .paramValue {
     display: block;
-    color: #23e70a;
-    font-family: "Lora-Regular";
-    font-size: 16px;
+    color: var(--accent-primary);
+    font-family: var(--font-heading);
+    font-size: var(--text-h4);
     font-weight: 600;
-    line-height: 19.2px;
+    line-height: var(--line-height-snug);
     margin: 0;
     padding: 0;
   }
 }
 
-/* Адаптивные стили */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .statisticContainer {
     .paramSet {
-      display: grid; /* Используем CSS Grid */
-      grid-template-columns: 1fr 1fr; /* 2 колонки */
-      grid-template-rows: 1fr 1fr; /* 2 строки */
-      gap: 15px; /* Уменьшаем отступ между ячейками */
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: var(--space-3);
 
       .paramCard {
-        padding: 15px; /* Уменьшаем отступы карточки */
+        padding: var(--space-3);
 
         .paramLabel,
         .paramValue {
-          font-size: 14px;
-          line-height: 16.8px;
+          font-size: var(--text-caption);
+          line-height: var(--line-height-normal);
         }
       }
     }
@@ -75,15 +83,15 @@
 @media (max-width: 480px) {
   .statisticContainer {
     .paramSet {
-      gap: 10px; /* Еще уменьшаем отступ между ячейками */
+      gap: var(--space-2);
 
       .paramCard {
-        padding: 10px; /* Еще уменьшаем отступы карточки */
-        
+        padding: var(--space-2);
+
         .paramLabel,
         .paramValue {
-          font-size: 13px;
-          line-height: 15.6px;
+          font-size: var(--text-xs);
+          line-height: var(--line-height-normal);
         }
       }
     }

@@ -1,16 +1,47 @@
 import { ButtonHTMLAttributes, FC } from "react";
 import styles from "./Button.module.scss";
-import { Spin } from "antd";
+
+export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant = "primary" | "danger" | "ghost";
 
 interface IPrimaryButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
+  size?: ButtonSize;
+  variant?: ButtonVariant;
 }
-const Button: FC<IPrimaryButton> = (props) => {
-  const { isLoading, ...buttonProps } = props;
-  
+
+const Button: FC<IPrimaryButton> = ({
+  isLoading,
+  size = "md",
+  variant = "primary",
+  className = "",
+  disabled,
+  children,
+  ...buttonProps
+}) => {
+  const isDisabled = disabled || isLoading;
+
+  const classes = [
+    styles.button,
+    styles[size],
+    styles[variant],
+    isLoading && styles.loading,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <button className={styles.primaryContainer} {...buttonProps}>
-      {isLoading ? <Spin /> : props.children}
+    <button className={classes} disabled={isDisabled} {...buttonProps}>
+      {isLoading ? (
+        <span className={styles.skeleton} aria-hidden="true">
+          <span className={styles.skeletonBar} />
+          <span className={styles.skeletonBar} />
+          <span className={styles.skeletonBar} />
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 };

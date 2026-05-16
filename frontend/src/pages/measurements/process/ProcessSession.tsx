@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState, useCallback } from "react";
 import styles from "./ProcessSession.module.scss";
 import Params from "./userParams/Params";
 import Statistic from "./statistic/Statistic";
@@ -19,11 +19,12 @@ import { useDeactivateMeasurements } from "../../../api/hooks/device/useDeactiva
 import { IMeasurements } from "../../../services/interfaces/Interfaces";
 import { useSSEOptions } from "../../../api/hooks/sse/useSSEOptions";
 import ResultTable, { HeartRateData } from "../../../ui/table/ResultTable";
-// import { ContactsFilled } from "@ant-design/icons";
+import { useAlert } from "../../../context/alert/AlertProvider";
 
 const ProcessSession: FC = () => {
   const { sessionId } = useParams();
   const nav = useNavigate();
+  const { showAlert, hideAlert } = useAlert();
   const [localMeasurements, setLocalMeasurements] = useState<IMeasurements[]>(
     []
   );
@@ -42,7 +43,7 @@ const ProcessSession: FC = () => {
     !isLoadingActiveSession
   );
 
-  const { mutateAsync: deactivate, isLoading: isLoadingDeactivate } =
+  const { mutateAsync: deactivate, isPending: isLoadingDeactivate } =
     useDeactivateMeasurements();
 
   const { start } = useSSEOptions("https://pulse.hlofiys.xyz/sse/data", {
@@ -50,7 +51,6 @@ const ProcessSession: FC = () => {
       const measurements = (JSON.parse(event.data) as IMeasurements[]).filter(
         (el) => !!sessionId && el.sessionId === +sessionId
       );
-      console.log("Новое сообщение:", JSON.parse(event.data));
       setLocalMeasurements((pre) =>
         !!measurements.length ? measurements : pre
       );
@@ -65,10 +65,9 @@ const ProcessSession: FC = () => {
 
   useEffect(() => {
     if (activeSession?.data.sessionStatus === "Open") {
-      console.log("start sse");
       start();
     }
-  }, [activeSession?.data]);
+  }, [activeSession?.data, start]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -77,203 +76,7 @@ const ProcessSession: FC = () => {
       (measurement) => measurement.sessionId === +sessionId
     );
 
-    console.log('filtered data: ', sessionMeasurements)
-
-    // const additionalMeasurements = [
-    //   {
-    //     measurementId: 2060,
-    //     bpm: 76,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:31:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2063,
-    //     bpm: 78,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:33:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2067,
-    //     bpm: 81,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:34:40",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2072,
-    //     bpm: 79,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:35:55",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2076,
-    //     bpm: 82,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:36:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2081,
-    //     bpm: 84,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:37:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2087,
-    //     bpm: 83,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:38:40",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2092,
-    //     bpm: 91,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:39:55",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2098,
-    //     bpm: 110,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:40:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2105,
-    //     bpm: 121,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:41:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2110,
-    //     bpm: 130,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:42:40",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2115,
-    //     bpm: 140,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:43:55",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2120,
-    //     bpm: 136,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:44:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2125,
-    //     bpm: 137,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:45:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2130,
-    //     bpm: 138,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:46:40",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2135,
-    //     bpm: 139,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:47:55",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2140,
-    //     bpm: 150,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:48:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2145,
-    //     bpm: 160,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:49:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2150,
-    //     bpm: 180,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:50:40",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2155,
-    //     bpm: 185,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:51:55",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2160,
-    //     bpm: 190,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:52:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2165,
-    //     bpm: 180,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:53:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2170,
-    //     bpm: 170,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:54:40",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2175,
-    //     bpm: 160,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:55:55",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2180,
-    //     bpm: 150,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:56:10",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2185,
-    //     bpm: 140,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:57:25",
-    //     sessionId: 282,
-    //   },
-    //   {
-    //     measurementId: 2185,
-    //     bpm: 140,
-    //     oxygen: 98,
-    //     date: "2025-10-14T14:58:25",
-    //     sessionId: 283,
-    //   },
-    // ];
-
-    setLocalMeasurements([
-      ...sessionMeasurements /*, ...additionalMeasurements*/,
-    ]);
+    setLocalMeasurements([...sessionMeasurements]);
   }, [measurements, sessionId]);
 
   const dashboardData = useMemo(() => {
@@ -360,9 +163,8 @@ const ProcessSession: FC = () => {
         localMeasurements[localMeasurements.length - 1].date
       ).getTime();
       return timeLastMeasurement - timeStartMeasurements;
-    } else {
-      return;
     }
+    return;
   }, [localMeasurements, activeSession?.data]);
 
   const tableData: Partial<HeartRateData> = useMemo(() => {
@@ -382,6 +184,30 @@ const ProcessSession: FC = () => {
     userData?.data.fio,
     calculateHeartRateDeltaZones,
   ]);
+
+  const handleStop = useCallback(() => {
+    showAlert({
+      title: "Остановить измерения?",
+      closableOverlay: true,
+      buttons: [
+        {
+          text: "Отмена",
+          type: "cancel",
+          onClick: hideAlert,
+        },
+        {
+          text: "Остановить",
+          type: "destructive",
+          onClick: async () => {
+            await deactivate(activeSession?.data.userId || 0, {
+              onSuccess: () => refetch(),
+            });
+          },
+        },
+      ],
+    });
+  }, [showAlert, hideAlert, deactivate, activeSession?.data.userId, refetch]);
+
   return (
     <div className={styles.mainProcessContainer}>
       <div className={styles.processMeasurementsContainer}>
@@ -408,11 +234,9 @@ const ProcessSession: FC = () => {
           <Button
             isLoading={isLoadingDeactivate}
             disabled={isLoadingDeactivate}
-            onClick={() =>
-              deactivate(activeSession?.data.userId || 0, {
-                onSuccess: () => refetch(),
-              })
-            }
+            onClick={handleStop}
+            variant="danger"
+            size="lg"
           >
             Остановить измерения
           </Button>
@@ -420,12 +244,13 @@ const ProcessSession: FC = () => {
       </section>
 
       <ResultTable data={tableData} />
+
       <Link
         onClick={() =>
           nav(RouterPath.REVIEW_SESSION + `/${activeSession?.data.userId}`)
         }
       >
-        Смотреть другие результаты <ArrowRight stroke="#23E70A" />
+        Смотреть другие результаты <ArrowRight stroke="#14b8a6" />
       </Link>
     </div>
   );

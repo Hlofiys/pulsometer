@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
 import styles from "./Switch.module.scss";
 import FadeWrapper from "../wrappers/FadeWrapper";
@@ -9,11 +9,12 @@ interface OptionConfig {
 }
 
 interface TypedSwitchProps<T extends string> {
-  options: Record<T, OptionConfig>; // конфиг значений -> иконка + подпись
-  value?: T; // текущий выбранный вариант
-  onChange?: (val: T) => void; // при смене
+  options: Record<T, OptionConfig>;
+  value?: T;
+  onChange?: (val: T) => void;
   tooltipDuration?: number;
   tooltipLocation?: "right" | "left";
+  ariaLabel?: string;
 }
 
 export const Switch = <T extends string>({
@@ -22,10 +23,11 @@ export const Switch = <T extends string>({
   onChange,
   tooltipDuration = 1500,
   tooltipLocation = "right",
+  ariaLabel,
 }: TypedSwitchProps<T>) => {
   const keys = Object.keys(options) as T[];
   if (keys.length !== 2)
-    throw new Error("TypedSwitch поддерживает ровно 2 варианта");
+    throw new Error("TypedSwitch supports exactly 2 options");
 
   const [internalValue, setInternalValue] = useState<T>(
     controlledValue ?? keys[0]
@@ -34,7 +36,6 @@ export const Switch = <T extends string>({
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
-  // синхронизация с контролируемым value
   useEffect(() => {
     if (controlledValue !== undefined) {
       setInternalValue(controlledValue);
@@ -46,7 +47,6 @@ export const Switch = <T extends string>({
     const newValue = internalValue === keys[0] ? keys[1] : keys[0];
 
     if (controlledValue === undefined) setInternalValue(newValue);
-
     onChange?.(newValue);
 
     setTooltipText(options[newValue].label);
@@ -66,14 +66,23 @@ export const Switch = <T extends string>({
     tooltipDuration,
   ]);
 
-  // Очистка таймера при размонтировании
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    },
+    [toggle]
+  );
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
-  const active = internalValue === keys[1]; // правый вариант = active
+  const active = internalValue === keys[1];
 
   return (
     <div className={styles.switchWrapper}>
@@ -83,11 +92,10 @@ export const Switch = <T extends string>({
       >
         <motion.span
           key={tooltipText}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          style={{ display: "inline-block" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           {tooltipText}
         </motion.span>
@@ -96,6 +104,13 @@ export const Switch = <T extends string>({
       <div
         className={`${styles.switch} ${active ? styles.activeSwitch : ""}`}
         onClick={toggle}
+        onKeyDown={handleKeyDown}
+        role="switch"
+        aria-checked={active}
+        aria-label={
+          ariaLabel || `${options[keys[0]].label} / ${options[keys[1]].label}`
+        }
+        tabIndex={0}
       >
         <div className={`${styles.toggle} ${active ? styles.active : ""}`} />
         <div className={styles.iconContainer}>

@@ -19,7 +19,7 @@ const SessionPointList: FC<SessionPointListProps> = ({
   itemsPerPage = 7,
 }) => {
   const { handleMouseEnter, handleMouseLeave } = useHoverKeypont();
-  const { mutateAsync: delete_keypoint, isLoading: isLoadingDeleting } =
+  const { mutateAsync: delete_keypoint, isPending: isLoadingDeleting } =
     useDeleteKeypoint();
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -62,7 +62,7 @@ const SessionPointList: FC<SessionPointListProps> = ({
             >
               <span className={styles.name}>{point.name}</span>
               <Button
-                loading={isLoadingDeleting && point.keyPointId === loadingId}
+                isLoading={isLoadingDeleting && point.keyPointId === loadingId}
                 className={styles.deleteButton}
                 onClick={() => handleDeleteKeypoint(point.keyPointId)}
               >

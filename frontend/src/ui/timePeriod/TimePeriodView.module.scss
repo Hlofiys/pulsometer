@@ -2,52 +2,57 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 16px 0;
-  border-radius: 8px;
-  color: #fff;
-  font-family: Arial, sans-serif;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) 0;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
 }
 
 .periodInfo {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
-  color: #23e70a;
-  font-weight: bold;
+  font-size: var(--text-body-sm);
+  color: var(--accent-primary);
+  font-weight: 600;
 }
 
 .periodLabel {
-  margin-right: 8px;
+  margin-right: var(--space-2);
 }
 
 .periodValue {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .inputWrapper {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .inputLabel {
-  font-size: 12px;
-  color: #ccc;
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
 }
 
 .inputField {
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid #555;
-  background-color: #2a2c32;
-  color: #fff;
-  font-size: 14px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  outline: none;
+  transition: border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 
   &:focus {
-    outline: none;
-    border-color: #23e70a;
-    box-shadow: 0 0 5px #23e70a;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-subtle);
   }
 
+  &::placeholder {
+    color: var(--text-muted);
+  }
 }

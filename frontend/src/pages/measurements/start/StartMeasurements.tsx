@@ -19,16 +19,23 @@ interface IStartMeasurements {
   userId: number;
   typeActivity: string;
 }
+
 const StartMeasurements: FC = () => {
   const nav = useNavigate();
   const { deviceId, userId } = useParams();
 
   const { data: users, isLoading: isLoadingUsers } = useGetUsers();
-  const { mutateAsync: activate, isLoading: isLoadingActivate } =
+  const { mutateAsync: activate, isPending: isLoadingActivate } =
     useActivateMeasurements();
   const { data: devices, isLoading: isLoadingDevices } = useGetDevices();
 
-  const { control, handleSubmit, reset, watch } = useForm<IStartMeasurements>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<IStartMeasurements>({
     mode: "onChange",
     defaultValues: {
       userId: (userId && +userId) || 0,
@@ -89,73 +96,88 @@ const StartMeasurements: FC = () => {
 
   return (
     <div className={styles.startContainer}>
-      {(isLoadingDevices && <Spin />) || (
-        <DeviceCard isShowCard device={activeDevice!} />
-      )}
+      {(isLoadingDevices && (
+        <div className={styles.deviceLoader}>
+          <Spin size="large" />
+        </div>
+      )) || <DeviceCard isShowCard device={activeDevice!} />}
 
-      <section>
+      <section className={styles.formSection}>
         <h1>Для запуска измерений выберите пользователя и вид активности:</h1>
+
         <form
-          className={styles.measurementsFormProps}
+          className={styles.measurementsForm}
           onSubmit={handleSubmit(onSubmit)}
+          noValidate
         >
-          <Controller
-            name="userId"
-            key={"userId"}
-            control={control}
-            render={({ field }) => {
-              const { ref, onChange, ...dropdownField } = field;
-              return (
-                <ScopeInput
-                  dropdownProps={{
-                    ...dropdownField,
-                    onChange: (option) => onChange(option.value),
-                    isLoading: isLoadingUsers,
-                    isDropDown: true,
-                    options: userOptions,
-                  }}
-                  ariaDescription={"Список всех пользователей"}
-                />
-              );
-            }}
-          />
-          <Controller
-            name="typeActivity"
-            key={"typeActivity"}
-            control={control}
-            render={({ field }) => {
-              const { ref, onChange, ...dropdownField } = field;
-              return (
-                <ScopeInput
-                  // inputProps={{
-                  //   ...inputField,
-                  //   onChange,
-                  //   // style: { width: "100%" },
-                  // }}
-                  dropdownProps={{
-                    ...dropdownField,
-                    onChange: (option) => onChange(option.value),
-                    isLoading: isLoadingUsers,
-                    isDropDown: true,
-                    options: activityTypes,
-                  }}
-                  ariaDescription={"Вид активности"}
-                />
-              );
-            }}
-          />
+          <div className={styles.field}>
+            <Controller
+              name="userId"
+              control={control}
+              rules={{ required: "Выберите пользователя" }}
+              render={({ field }) => {
+                const { ref, onChange, ...dropdownField } = field;
+                return (
+                  <ScopeInput
+                    dropdownProps={{
+                      ...dropdownField,
+                      onChange: (option) => onChange(option.value),
+                      isLoading: isLoadingUsers,
+                      isDropDown: true,
+                      options: userOptions,
+                    }}
+                    ariaDescription="Список всех пользователей"
+                  />
+                );
+              }}
+            />
+            {errors.userId && (
+              <span className={styles.error} role="alert">
+                {errors.userId.message}
+              </span>
+            )}
+          </div>
+
+          <div className={styles.field}>
+            <Controller
+              name="typeActivity"
+              control={control}
+              rules={{ required: "Выберите вид активности" }}
+              render={({ field }) => {
+                const { ref, onChange, ...dropdownField } = field;
+                return (
+                  <ScopeInput
+                    dropdownProps={{
+                      ...dropdownField,
+                      onChange: (option) => onChange(option.value),
+                      isLoading: isLoadingUsers,
+                      isDropDown: true,
+                      options: activityTypes,
+                    }}
+                    ariaDescription="Вид активности"
+                  />
+                );
+              }}
+            />
+            {errors.typeActivity && (
+              <span className={styles.error} role="alert">
+                {errors.typeActivity.message}
+              </span>
+            )}
+          </div>
         </form>
+
         <Button
-          // style={{ width: 300, height: 52 }}
           onClick={handleSubmit(onSubmit)}
           disabled={isDisabled}
           isLoading={isLoadingActivate}
+          size="lg"
         >
           Запустить измерения
         </Button>
 
         <Link onClick={() => nav(RouterPath.CREATE)}>
-          Добавить пользователя <ArrowRight stroke="#23E70A" />
+          Добавить пользователя <ArrowRight stroke="#14b8a6" />
         </Link>
       </section>
     </div>

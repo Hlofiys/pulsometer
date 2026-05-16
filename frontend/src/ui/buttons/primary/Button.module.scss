@@ -1,66 +1,164 @@
-.primaryContainer {
-  // min-height: 32px;
-  display: flex;
+.button {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: "Lora-Regular";
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 19.2px;
-  background: var(--primaryButtonColor);
-  color: #181a20;
-  box-shadow: 0px 20px 45px 0px #21222740;
-  padding: 10px 15px;
+  gap: var(--space-2);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  line-height: var(--line-height-snug);
   border: none;
-  border-radius: 10px;
-  transition: 0.3s all ease-in;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+  transition: transform var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast);
 
   &:hover:not(:disabled) {
-    color: #626262;
-    background: #23e70a;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
 
-  &:active {
-    color: #181a20;
-    background: #23e70a;
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+    transition-duration: 80ms;
   }
 
   &:disabled {
-    background: gray;
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
   }
 }
-/* Адаптивные стили */
 
+/* ── Sizes ── */
+.sm {
+  font-size: var(--text-caption);
+  padding: var(--space-1) var(--space-3);
+  min-height: 28px;
+}
+
+.md {
+  font-size: var(--text-body-sm);
+  padding: var(--space-2) var(--space-4);
+  min-height: 36px;
+}
+
+.lg {
+  font-size: var(--text-body);
+  padding: var(--space-3) var(--space-5);
+  min-height: 44px;
+}
+
+/* ── Variants ── */
+.primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover));
+  color: var(--text-on-accent);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--accent-primary-hover), var(--accent-primary));
+    box-shadow: var(--shadow-glow-sm);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--accent-primary-active);
+  }
+}
+
+.danger {
+  background: var(--danger);
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #f87171;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    background: #dc2626;
+  }
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+
+  &:hover:not(:disabled) {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-glow-sm);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--bg-surface);
+    border-color: var(--accent-primary-active);
+    color: var(--accent-primary);
+  }
+}
+
+/* ── Loading Skeleton ── */
+.loading {
+  pointer-events: none;
+}
+
+.skeleton {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 12px;
+}
+
+.skeletonBar {
+  display: inline-block;
+  width: 4px;
+  height: 100%;
+  background: currentColor;
+  border-radius: var(--radius-full);
+  opacity: 0.35;
+  animation: skeletonPulse 1s ease-in-out infinite;
+
+  &:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scaleY(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scaleY(1);
+  }
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .primaryContainer {
-    font-size: 15px;
-    padding: 8px 12px;
-    min-height: 30px;
+  .md {
+    padding: var(--space-2) var(--space-3);
+    min-height: 32px;
   }
-}
 
-@media (max-width: 480px) {
-  .primaryContainer {
-    font-size: 14px;
-    padding: 6px 10px;
-    min-height: 10px;
-  }
-}
-
-/* Адаптивность для больших экранов */
-@media (min-width: 1200px) {
-  .primaryContainer {
-    font-size: 17px;
-    padding: 12px 18px;
-    min-height: 34px;
-  }
-}
-
-/* Адаптивность для очень больших экранов */
-@media (min-width: 1600px) {
-  .primaryContainer {
-    font-size: 18px;
-    padding: 14px 20px;
-    min-height: 36px;
+  .lg {
+    padding: var(--space-2) var(--space-4);
+    min-height: 40px;
   }
 }

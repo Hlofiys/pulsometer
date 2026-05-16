@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import pulsometerDefault from "../../../../assets/photos/defaultPulsometer.webp";
 import TopArrow from "../../../icons/TopArrow";
 import styles from "./DeviceCard.module.scss";
@@ -7,7 +7,7 @@ import {
   TDeviceStatus,
 } from "../../../../services/interfaces/Interfaces";
 import { DeviceStatus } from "../../../../services/device/Device.service";
-import { useSSEOptions } from "../../../../api/hooks/sse/useSSEOptions";
+import { useSSEContext } from "../../../../context/sse/SSEProvider";
 
 interface IDeviceCard {
   device: IDevice;
@@ -17,29 +17,10 @@ interface IDeviceCard {
 
 export const DeviceCard: FC<IDeviceCard> = (props) => {
   const { device, isShowCard, onClick } = props;
+  const { deviceStatuses } = useSSEContext();
 
-  const [deviceStatus, setDeviceStatus] = useState<TDeviceStatus>(
-    device.status || "off"
-  );
-
-  const { start } = useSSEOptions("https://pulse.hlofiys.xyz/sse/status", {
-    onMessage: (event: MessageEvent) => {
-      console.log("Новое сообщение:", JSON.parse(event.data));
-      device.deviceId === (JSON.parse(event.data) as IDevice).deviceId &&
-        setDeviceStatus((JSON.parse(event.data) as IDevice).status);
-    },
-    onError: (error: Event) => {
-      console.error("Ошибка SSE:", error);
-    },
-    onOpen: () => {
-      console.log("Соединение установлено");
-    },
-  });
-
-  useEffect(() => {
-    console.log("start sse");
-    start();
-  }, []);
+  const sseStatus = deviceStatuses[device.deviceId];
+  const deviceStatus: TDeviceStatus = sseStatus || device.status || "off";
 
   return (
     <li

@@ -16,25 +16,21 @@ interface HeartRateTableProps {
 
 const ResultTable: FC<HeartRateTableProps> = ({ data }) => {
   const formatDelta = (num?: number) => {
-    if (num === undefined) return <span>Нет данных</span>;
-    if (num === 0) return <span onClick={() => console.log(num)}>0</span>;
+    if (num === undefined) return <span className={styles.na}>Нет данных</span>;
+    if (num === 0) return <span className={styles.neutral}>0</span>;
     if (num > 0)
-      return <span style={{ color: "#23e70a" }}>+{num.toFixed(2)}%</span>;
-    return <span style={{ color: "red" }}>{num.toFixed(2)}%</span>;
+      return <span className={styles.positive}>+{num.toFixed(2)}%</span>;
+    return <span className={styles.negative}>{num.toFixed(2)}%</span>;
   };
 
   const formatName = (fullName?: string) => {
-    if (!fullName || typeof fullName !== "string") return 'Нет данных'; // если пусто или не строка
-
-    // Убираем лишние пробелы и делим на слова
+    if (!fullName || typeof fullName !== "string") return "Нет данных";
     const parts = fullName.trim().split(/\s+/);
-
-    if (parts.length === 0) return ""; // если строка была только из пробелов
-    if (parts.length === 1) return parts[0]; // если только одно слово (например только фамилия)
-
-    // Берем первые два слова: фамилия и имя
+    if (parts.length === 0) return "";
+    if (parts.length === 1) return parts[0];
     return `${parts[0]} ${parts[1]}`;
   };
+
   return (
     <div className={styles.wrapper}>
       <table className={styles.table}>

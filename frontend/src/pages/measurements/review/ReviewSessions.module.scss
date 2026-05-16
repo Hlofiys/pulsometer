@@ -1,108 +1,107 @@
 .reviewContainer {
+  width: 100%;
+  max-width: var(--container-max);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  padding: 21px 5px 110px;
-  gap: 40px;
+  padding: var(--space-6) var(--container-padding) var(--space-20);
+  gap: var(--space-8);
 
   .form {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: var(--space-5);
+    flex-wrap: wrap;
   }
 
   h1 {
-    font-family: "Lora-SemiBold";
-    font-size: 22px;
+    font-family: var(--font-heading);
+    font-size: var(--text-h2);
     font-weight: 600;
-    line-height: 26.4px;
-    color: #fbfaf8;
+    line-height: var(--line-height-snug);
+    color: var(--text-primary);
     margin: 0;
     padding: 0;
   }
 
   .search {
     p {
-      font-family: "Lora-Regular";
-      font-size: 16px;
+      font-family: var(--font-body);
+      font-size: var(--text-body);
       font-weight: 600;
-      line-height: 26.4px;
-      color: #fbfaf8;
-      margin: 0 0 15px;
+      line-height: var(--line-height-normal);
+      color: var(--text-primary);
+      margin: 0 0 var(--space-3);
       padding: 0;
     }
   }
 
   .deviceButton {
-    border: 1px solid #fbfaf8;
+    border: 1px solid var(--border-default);
     text-align: center;
-    padding: 8px;
-    border-radius: 10px;
-    color: #fbfaf8;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    background: var(--bg-surface);
     cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    transition: border-color var(--transition-fast),
+      color var(--transition-fast),
+      background var(--transition-fast);
+
+    &:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      background: var(--accent-primary-subtle);
+    }
   }
 }
 
-/* Адаптивные стили */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .reviewContainer {
-    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
-    gap: 30px; /* Уменьшаем отступ между элементами */
+    padding: var(--space-4) var(--space-4) var(--space-12);
+    gap: var(--space-6);
 
     .form {
       button {
-        height: 45px;
+        height: 40px;
       }
     }
 
     h1 {
-      font-size: 20px; /* Уменьшаем размер заголовка */
-      line-height: 24px; /* Уменьшаем высоту строки заголовка */
+      font-size: var(--text-h3);
     }
 
-    .search {
-      p {
-        font-size: 14px; /* Уменьшаем размер параграфа */
-        line-height: 21px; /* Уменьшаем высоту строки параграфа */
-        margin-bottom: 10px; /* Уменьшаем нижний отступ параграфа */
-      }
+    .search p {
+      font-size: var(--text-body-sm);
+      margin-bottom: var(--space-2);
     }
 
     .deviceButton {
-      font-size: 14px; /* Уменьшаем размер шрифта кнопки */
-      padding: 6px; /* Уменьшаем отступы кнопки */
+      font-size: var(--text-caption);
+      padding: var(--space-1);
     }
   }
 }
 
 @media (max-width: 480px) {
   .reviewContainer {
-    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
-    gap: 20px; /* Еще уменьшаем отступ между элементами */
-    
-    .form {
-      button {
-        height: 41px;
-      }
-    }
+    padding: var(--space-3) var(--space-3) var(--space-10);
+    gap: var(--space-5);
 
     h1 {
-      font-size: 18px; /* Еще уменьшаем размер заголовка */
-      line-height: 22px; /* Еще уменьшаем высоту строки заголовка */
+      font-size: var(--text-h4);
     }
 
-    .search {
-      p {
-        font-size: 13px; /* Еще уменьшаем размер параграфа */
-        line-height: 19.5px; /* Еще уменьшаем высоту строки параграфа */
-        margin-bottom: 8px; /* Еще уменьшаем нижний отступ параграфа */
-      }
+    .search p {
+      font-size: var(--text-caption);
     }
 
     .deviceButton {
-      font-size: 13px; /* Еще уменьшаем размер шрифта кнопки */
-      padding: 5px; /* Еще уменьшаем отступы кнопки */
+      font-size: var(--text-xs);
     }
   }
 }

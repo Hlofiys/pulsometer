@@ -236,7 +236,7 @@ const Dropdown = <T extends string | number>({
           filteredOptions.map((option, index) => (
             <div
               key={option.value}
-              ref={(el) => (optionRefs.current[index] = el)}
+              ref={(el) => { optionRefs.current[index] = el; }}
               className={`${styles.option} ${
                 index === selectedIndex ? styles.optionActive : ""
               }`}

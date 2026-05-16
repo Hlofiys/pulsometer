@@ -1,5 +1,5 @@
 import { createContext, FC, useContext, useRef } from "react";
-import { IWithChildren } from "../../reduxToolkit/Interfaces";
+import { IWithChildren } from "../../services/interfaces/Interfaces";
 import { Chart as ChartJS } from "chart.js";
 
 export interface IHoverKeypoint {

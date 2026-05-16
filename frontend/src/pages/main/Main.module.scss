@@ -1,81 +1,109 @@
 .mainContainer {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  margin: 50px 0 100px;
+  gap: var(--space-16);
+  padding: var(--space-10) var(--container-padding) var(--space-20);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 800px;
+  margin-bottom: var(--space-4);
 
   h1 {
-    font-family: "Lora-Regular";
-    font-size: 50px;
+    font-family: var(--font-display);
+    font-size: var(--text-h1);
     font-weight: 400;
-    line-height: 60px;
-    letter-spacing: 0.02em;
-    color: #fbfaf8;
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--text-primary);
     margin: 0;
     padding: 0;
+    text-wrap: balance;
   }
 
   p {
-    font-family: "Lora-Regular";
-    font-size: 18px;
-    font-weight: 300;
-    line-height: 21.6px;
-    color: #fbfaf8;
-  }
-
-  section {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
+    font-family: var(--font-ui);
+    font-size: var(--text-body-lg);
+    font-weight: 400;
+    line-height: var(--line-height-relaxed);
+    color: var(--text-secondary);
+    max-width: 760px;
+    margin: 0;
   }
 }
 
-/* Адаптивные стили */
+.actions {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
 
+.devicesSection {
+  width: 100%;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-16) 0;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-body-sm);
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .mainContainer {
-    padding: 0 10px;
+    padding: var(--space-6) var(--space-4) var(--space-12);
+    gap: var(--space-8);
+  }
+
+  .hero {
     align-items: center;
-    margin: 30px 0 60px; /* Уменьшаем отступы */
-    gap: 20px; /* Уменьшаем отступ между элементами */
+    text-align: center;
 
     h1 {
-      text-align: center;
-      font-size: 40px; /* Уменьшаем размер заголовка */
-      line-height: 48px; /* Уменьшаем высоту строки заголовка */
+      font-size: var(--text-h1);
     }
 
     p {
-      text-align: justify;
-      font-size: 16px; /* Уменьшаем размер параграфа */
-      line-height: 19.2px; /* Уменьшаем высоту строки параграфа */
+      font-size: var(--text-body);
     }
+  }
 
-    section {
+  .actions {
+    width: 100%;
+    flex-direction: column;
+
+    button {
       width: 100%;
-      flex-direction: row; /* Изменяем направление секции на колонку */
-      gap: 15px; /* Уменьшаем отступ между элементами секции */
-
-      button {
-        flex: 1;
-      }
     }
   }
 }
 
 @media (max-width: 480px) {
   .mainContainer {
-    margin: 20px 0 40px; /* Еще уменьшаем отступы */
-    gap: 15px; /* Еще уменьшаем отступ между элементами */
+    padding: var(--space-4) var(--space-3) var(--space-10);
+    gap: var(--space-6);
+  }
 
+  .hero {
     h1 {
-      font-size: 20px; /* Еще уменьшаем размер заголовка */
-      line-height: 25px; /* Еще уменьшаем высоту строки заголовка */
+      font-size: var(--text-h2);
     }
 
     p {
-      font-size: 12px; /* Еще уменьшаем размер параграфа */
-      line-height: 16.8px; /* Еще уменьшаем высоту строки параграфа */
+      font-size: var(--text-body-sm);
     }
   }
 }

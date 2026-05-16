@@ -65,21 +65,24 @@ const ReviewSessions: FC = () => {
       type: "dropdown",
       dropdownOptions: devicesOptions,
       dropdownLoading: isLoadingDevices,
-      renderStatic: (value: any) => (
+      renderStatic: (value) => (
         <div className={styles.deviceButton}>Пульсометр #{value}</div>
       ),
     },
   ];
 
+  const userIdNum = +(userId || 0);
   const { data: activeUser, isLoading: isLoadingActiveUser } = useGetUserById(
-    +userId!
+    userIdNum
   );
   const { data: sessions, isLoading: isLoadingGetSessions } = useGetSessions(
-    +userId!
+    userIdNum
   );
 
   // Отфильтрованные данные на основе поиска
   const filteredData: ISession[] = useMemo(() => {
+    if (!searchValue) return sessions || [];
+
     return (
       ((sessions && sessions) || []).filter((session) => {
         const { default: defaultDate, belarusian } = parseUTCDateAndTime(
@@ -103,7 +106,6 @@ const ReviewSessions: FC = () => {
   // Данные для отображения на текущей странице
   const paginatedData: ISessionUserRow[] = useMemo(() => {
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-    // console.log(filteredData)
     return filteredData
       .sort(
         (sessionPrev, sessionNext) =>
@@ -195,7 +197,7 @@ const ReviewSessions: FC = () => {
         <Empty description="Список измерений пуст" />
       )}
       <Link onClick={() => nav(RouterPath.VIEW)}>
-        Перейти к пользователям <ArrowRight stroke="#23E70A" />
+        Перейти к пользователям <ArrowRight stroke="#14b8a6" />
       </Link>
       
       <Pagination

@@ -38,12 +38,9 @@ export const useSSEOptions = (
   const start = useCallback(() => {
     if (eventSourceRef.current) return; // Если уже есть подключение, то выходим
 
-    console.log("🚀 Подключение к SSE...");
-
     const eventSource = new EventSource(url);
 
     eventSource.onopen = (event) => {
-      console.log("✅ SSE подключено");
       setIsConnected(true);
       retryCountRef.current = 0; // Сброс счетчика попыток реконнекта
       currentReconnectInterval.current = reconnectInterval; // Сброс интервала реконнекта
@@ -66,12 +63,7 @@ export const useSSEOptions = (
           currentReconnectInterval.current * 2,
           maxReconnectInterval
         );
-        console.log(
-          `⏳ Попытка реконнекта #${retryCountRef.current} через ${currentReconnectInterval.current / 1000} сек...`
-        );
         reconnectTimeoutRef.current = setTimeout(start, currentReconnectInterval.current);
-      } else {
-        console.warn(`❌ Превышено максимальное количество попыток реконнекта (${maxRetries})`);
       }
     };
 
@@ -81,7 +73,6 @@ export const useSSEOptions = (
   // Остановка SSE
   const stop = useCallback(() => {
     if (!eventSourceRef.current) return;
-    console.log("🛑 Остановка SSE...");
     eventSourceRef.current.close();
     eventSourceRef.current = null;
     setIsConnected(false);

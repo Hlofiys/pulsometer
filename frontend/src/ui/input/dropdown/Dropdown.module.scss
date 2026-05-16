@@ -3,23 +3,24 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 10px 15px;
-  border-radius: 10px;
-  font-family: "Lora-Regular";
-  font-size: 14px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
   font-weight: 500;
-  line-height: 16.8px;
-  color: #fbfaf8;
-  background-color: transparent;
-  border: 1px solid #fbfaf8;
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   overflow: hidden;
-  transition: border-color 0.3s;
+  transition: border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 
   &.horizontal {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-2);
 
     .optionWrapper {
       flex: 1;
@@ -27,17 +28,14 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 16px;
+      font-size: var(--text-body);
       position: relative;
       overflow: hidden;
     }
 
     .optionText {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -84,22 +82,23 @@
   }
 
   &:focus-within {
-    border-color: #23e70a;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-subtle);
   }
 
   .inputField {
     flex: 1;
     min-height: 32px;
-    color: #fbfaf8;
-    background-color: transparent;
+    color: var(--text-primary);
+    background: transparent;
     border: none;
     outline: none;
-    font-size: 16px;
-    font-weight: bold;
-    transition: all 0.3s ease;
+    font-size: var(--text-body);
+    font-weight: 600;
+    transition: all var(--transition-fast);
 
     &::placeholder {
-      color: #888;
+      color: var(--text-muted);
     }
 
     &.transitioning {
@@ -120,13 +119,13 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    background-color: transparent;
-    z-index: 1000;
+    gap: var(--space-1);
+    background: transparent;
+    z-index: var(--z-dropdown);
 
     &::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
+      width: 6px;
+      height: 6px;
     }
 
     &::-webkit-scrollbar-track {
@@ -134,14 +133,13 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background-color: #23e70a;
-      border-radius: 5px;
-      border: 10px solid transparent;
+      background-color: var(--border-strong);
+      border-radius: var(--radius-full);
     }
 
     & {
       scrollbar-width: thin;
-      scrollbar-color: #23e70a transparent;
+      scrollbar-color: var(--border-strong) transparent;
     }
 
     &::-webkit-scrollbar-corner {
@@ -149,22 +147,22 @@
     }
 
     .option {
-      padding: 10px;
-      font-size: 16px;
-      color: #fff;
+      padding: var(--space-2);
+      font-size: var(--text-body-sm);
+      color: var(--text-secondary);
       cursor: pointer;
-      transition: all 0.3s ease;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition-fast), color var(--transition-fast);
 
       &:hover:not(.emptyItem),
       &.optionActive {
-        border-radius: 5px;
-        background-color: #23e70a;
-        color: #fbfaf8;
+        background: var(--accent-primary-subtle);
+        color: var(--accent-primary);
       }
     }
 
     .emptyItem {
-      color: #888;
+      color: var(--text-muted);
       cursor: default;
     }
   }
@@ -181,59 +179,34 @@
   }
 }
 
-/* Адаптивные стили */
-
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .dropdownContainer {
-    font-size: 13px;
-    padding: 8px 12px;
-    line-height: 15.6px;
+    font-size: var(--text-caption);
+    padding: var(--space-2);
+
     .inputField {
-      font-size: 15px;
+      font-size: var(--text-body-sm);
       min-height: 30px;
     }
 
-    .dropdownList {
-      .option {
-        font-size: 15px;
-      }
+    .dropdownList .option {
+      font-size: var(--text-body-sm);
     }
   }
 }
 
 @media (max-width: 480px) {
   .dropdownContainer {
-    font-size: 12px;
-    padding: 6px 10px;
-    line-height: 14.4px;
+    font-size: var(--text-xs);
+
     .inputField {
-      font-size: 14px;
+      font-size: var(--text-caption);
       min-height: 28px;
     }
 
-    .dropdownList {
-      .option {
-        font-size: 14px;
-      }
-    }
-  }
-}
-
-/* Добавим адаптивность для очень маленьких экранов */
-@media (max-width: 360px) {
-  .dropdownContainer {
-    font-size: 11px;
-    padding: 5px 8px;
-    line-height: 13.2px;
-    .inputField {
-      font-size: 13px;
-      min-height: 26px;
-    }
-
-    .dropdownList {
-      .option {
-        font-size: 13px;
-      }
+    .dropdownList .option {
+      font-size: var(--text-caption);
     }
   }
 }

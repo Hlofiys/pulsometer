@@ -64,37 +64,38 @@ const Alert: FC<IAlertProps> = (props) => {
   const variants: Variants = {
     hidden: {
       opacity: 0,
-      scale: 0.3,
+      scale: 0.85,
       x: startX - window.innerWidth / 2,
       y: startY - window.innerHeight / 2,
-      transition: { duration: 0, ease: "easeOut" },
+      transition: { duration: 0.25, ease: "easeOut" },
     },
     visible: {
       opacity: 1,
       scale: 1,
       x: 0,
       y: 0,
-      transition: { duration: 0, ease: "easeOut" },
+      transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
     },
     exit: {
       opacity: 0,
-      scale: 0.3,
+      scale: 0.9,
       x: startX - window.innerWidth / 2,
       y: startY - window.innerHeight / 2,
-      transition: { duration: 0, ease: "easeOut" },
+      transition: { duration: 0.2, ease: "easeIn" },
     },
   };
 
   return (
     <motion.div
       className={`${moduleStyles.overlay} ${
-        (centered && moduleStyles.centered) || ""
+        centered ? moduleStyles.centered : ""
       }`}
       style={styles?.overlay}
       onClick={handleOverlayClick}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { duration: 0, ease: "easeOut" } }}
-      exit={{ opacity: 0, transition: { duration: 0, ease: "easeOut" } }}
+      animate={{ opacity: 1, transition: { duration: 0.25 } }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
+      role="presentation"
     >
       <motion.div
         className={moduleStyles.alertBox}
@@ -109,14 +110,21 @@ const Alert: FC<IAlertProps> = (props) => {
           position: "fixed",
           ...styles?.alertBox,
         }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? "alert-title" : undefined}
       >
         <div
           className={`${moduleStyles.headerContainer} ${
-            (!title && moduleStyles.onlyCloseIcon) || ""
+            !title ? moduleStyles.onlyCloseIcon : ""
           }`}
         >
           {title && (
-            <p className={moduleStyles.titleContent} style={styles?.title}>
+            <p
+              id="alert-title"
+              className={moduleStyles.titleContent}
+              style={styles?.title}
+            >
               {title}
             </p>
           )}
@@ -126,6 +134,7 @@ const Alert: FC<IAlertProps> = (props) => {
               className={moduleStyles.closeIcon}
               role="button"
               tabIndex={0}
+              aria-label="Закрыть"
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") onClose();
               }}
@@ -133,9 +142,7 @@ const Alert: FC<IAlertProps> = (props) => {
           )}
         </div>
 
-        {/* <div className={moduleStyles.content} style={styles?.content}> */}
-          {children}
-        {/* </div> */}
+        {children}
 
         {!!buttons?.length && (
           <footer className={moduleStyles.footer} style={styles?.footer}>
@@ -154,7 +161,8 @@ const Alert: FC<IAlertProps> = (props) => {
                   onClick={() => handleBtnClick(onClick)}
                   isLoading={isLoading}
                   disabled={disabled}
-                  value={type === "cancel" ? "text" : undefined}
+                  variant={type === "destructive" ? "danger" : type === "cancel" ? "ghost" : "primary"}
+                  size="md"
                   className={`${moduleStyles.alertButton} ${
                     moduleStyles[type] || ""
                   }`}

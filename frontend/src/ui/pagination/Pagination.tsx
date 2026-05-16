@@ -16,7 +16,7 @@ const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   onPageChange,
 }) => {
-  if (totalPages <= 1) return null; // Если страниц <= 1, пагинация не отображается
+  if (totalPages <= 1) return null;
 
   const handlePageClick = useCallback(
     (page: number) => {
@@ -29,7 +29,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
   const getPages = useCallback(() => {
     const pages: number[] = [];
-    const range = 2; // Количество видимых страниц слева и справа от текущей
+    const range = 2;
 
     for (
       let i = Math.max(1, currentPage - range);
@@ -43,12 +43,21 @@ const Pagination: React.FC<PaginationProps> = ({
   }, [currentPage, totalPages]);
 
   return (
-    <div className={styles.pagination} style={containerStyles}>
-      <ArrowLeft
+    <nav
+      className={styles.pagination}
+      style={containerStyles}
+      aria-label="Навигация по страницам"
+    >
+      <button
         className={styles.paginationArrow}
         onClick={() => handlePageClick(currentPage - 1)}
-        aria-disabled={currentPage === 1}
-      />
+        disabled={currentPage === 1}
+        aria-label="Предыдущая страница"
+        type="button"
+      >
+        <ArrowLeft stroke={currentPage === 1 ? "#4b5563" : "#9ca3af"} />
+      </button>
+
       {getPages().map((page) => (
         <button
           key={page}
@@ -56,17 +65,24 @@ const Pagination: React.FC<PaginationProps> = ({
             page === currentPage ? styles.active : ""
           }`}
           onClick={() => handlePageClick(page)}
+          aria-current={page === currentPage ? "page" : undefined}
+          aria-label={`Страница ${page}`}
+          type="button"
         >
           {page}
         </button>
       ))}
 
-      <ArrowRight
+      <button
         className={styles.paginationArrow}
         onClick={() => handlePageClick(currentPage + 1)}
-        aria-disabled={currentPage === totalPages}
-      />
-    </div>
+        disabled={currentPage === totalPages}
+        aria-label="Следующая страница"
+        type="button"
+      >
+        <ArrowRight stroke={currentPage === totalPages ? "#4b5563" : "#9ca3af"} />
+      </button>
+    </nav>
   );
 };
 

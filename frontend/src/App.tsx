@@ -1,4 +1,6 @@
 import { AlertProvider } from "./context/alert/AlertProvider";
+import { SSEProvider } from "./context/sse/SSEProvider";
+import ErrorBoundary from "./ui/errorBoundary/ErrorBoundary";
 import Router from "./router/Router";
 
 function App() {
@@ -6,7 +8,6 @@ function App() {
     <div
       style={{
         width: "100%",
-        maxWidth: 1250,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -14,9 +15,13 @@ function App() {
         margin: 0,
       }}
     >
-      <AlertProvider>
-        <Router />
-      </AlertProvider>
+      <ErrorBoundary>
+        <SSEProvider>
+          <AlertProvider>
+            <Router />
+          </AlertProvider>
+        </SSEProvider>
+      </ErrorBoundary>
     </div>
   );
 }

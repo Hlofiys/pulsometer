@@ -16,7 +16,7 @@ import { RouterPath } from "../../../router/Router";
 import Button from "../../../ui/buttons/additional/Button";
 import Empty from "../../../ui/empty/Empty";
 
-const ROWS_PER_PAGE = 5; // Максимальное количество строк на одной странице
+const ROWS_PER_PAGE = 5;
 
 export interface IAllUsersTableRow extends Omit<IUser, "fio"> {
   index: number;
@@ -32,9 +32,12 @@ const ViewUsers: FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   const { devicesOptions, isLoadingDevices, devices } = useGetDeviceOptions();
-  const { data: fetchedUsers, isLoading } = !!deviceId
-    ? useGetUsersByDeviceId(+deviceId)
-    : useGetUsers();
+  const { data: allUsers, isLoading: isLoadingAllUsers } = useGetUsers(!deviceId);
+  const { data: deviceUsers, isLoading: isLoadingDeviceUsers } = useGetUsersByDeviceId(
+    deviceId ? +deviceId : undefined
+  );
+  const fetchedUsers = deviceId ? deviceUsers : allUsers;
+  const isLoading = deviceId ? isLoadingDeviceUsers : isLoadingAllUsers;
 
   const fields: FieldConfig<IAllUsersTableRow>[] = useMemo(
     () => [
@@ -52,10 +55,9 @@ const ViewUsers: FC = () => {
         isEditable: true,
       },
     ],
-    [devicesOptions]
+    [devicesOptions, isLoadingDevices]
   );
 
-  // Отфильтрованные данные на основе поиска
   const filteredData: TTableUserRow[] = useMemo(() => {
     return (
       (fetchedUsers?.data || []).filter((user) => {
@@ -63,14 +65,12 @@ const ViewUsers: FC = () => {
         return fio.includes(searchValue.toLowerCase());
       }) || []
     );
-  }, [searchValue, fetchedUsers?.data, deviceId]);
+  }, [searchValue, fetchedUsers?.data]);
 
-  // Общий подсчет страниц на основе количества строк
   const totalPages = useMemo(() => {
     return Math.ceil(filteredData.length / ROWS_PER_PAGE);
   }, [filteredData]);
 
-  // Данные для отображения на текущей странице
   const paginatedData: IAllUsersTableRow[] = useMemo(() => {
     const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
     return (
@@ -97,7 +97,7 @@ const ViewUsers: FC = () => {
   const onSearch: ChangeEventHandler<HTMLInputElement> = useCallback(
     (event) => {
       setSearchValue(event.target.value);
-      setCurrentPage(1); // Сбрасываем на первую страницу при поиске
+      setCurrentPage(1);
     },
     []
   );
@@ -108,7 +108,7 @@ const ViewUsers: FC = () => {
 
   const activeDevice = useMemo(
     () => devices?.find((device) => device.deviceId === +deviceId!),
-    [devices]
+    [devices, deviceId]
   );
 
   const isButtonDisabled = useMemo(
@@ -118,47 +118,55 @@ const ViewUsers: FC = () => {
 
   return (
     <main className={styles.viewContainer}>
-      <h1>Все пользователи:</h1>
-      <div className={styles.form}>
+      <h1>Все пользователи</h1>
+
+      <div className={styles.toolbar}>
         <SearchInput
           searchValueState={[searchValue, setSearchValue]}
           inputProps={{ onChange: onSearch }}
+          placeholder="Поиск по ФИО..."
         />
         {!!deviceId && (
           <Button
             disabled={isButtonDisabled}
-            name={
-              isButtonDisabled ? "Устройство выключено" : "Начать измерения"
-            }
+            size="md"
             onClick={() => nav(RouterPath.START_MEASUREMENTS + `/${deviceId}`)}
           >
-            Начать измерение
+            {isButtonDisabled ? "Устройство выключено" : "Начать измерения"}
           </Button>
         )}
       </div>
+
       {isLoading ? (
-        <Spin />
+        <div className={styles.loading}>
+          <Spin size="large" />
+          <span>Загрузка пользователей...</span>
+        </div>
       ) : !!paginatedData.length ? (
-        <Table<IAllUsersTableRow>
-          onClick={(row) => nav(`/review-sessions/${row.userId}`)}
-          data={paginatedData}
-          fields={fields}
-          isEdit
-          getKey={(row) => row.userId}
-          getIndex={(row) => row.index + 1}
-        />
+        <div className={styles.tableWrap}>
+          <Table<IAllUsersTableRow>
+            onClick={(row) => nav(`/review-sessions/${row.userId}`)}
+            data={paginatedData}
+            fields={fields}
+            isEdit
+            getKey={(row) => row.userId}
+            getIndex={(row) => row.index + 1}
+          />
+        </div>
       ) : (
-        <Empty description={"Список пользователей пуст"} />
+        <Empty description="Список пользователей пуст" />
       )}
-      <Link onClick={() => nav(RouterPath.CREATE)}>
-        Добавить пользователя <ArrowRight stroke="#23E70A" />
-      </Link>
+
       <Pagination
         containerStyles={{ width: "100%", justifyContent: "center" }}
         totalPages={totalPages}
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
+
+      <Link onClick={() => nav(RouterPath.CREATE)}>
+        Добавить пользователя <ArrowRight stroke="#14b8a6" />
+      </Link>
     </main>
   );
 };

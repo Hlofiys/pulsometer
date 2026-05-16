@@ -11,9 +11,8 @@ export const useDeleteUser = (deviceId?: number) => {
     mutationFn: UserService.delete,
     onSuccess: async () => {
       !!deviceId
-        ? await queryClient.invalidateQueries(["getUsersByDeviceId", deviceId])
-        : await queryClient.invalidateQueries(["getUsers"]);
-      console.log("Success delete!");
+        ? await queryClient.invalidateQueries({ queryKey: ["getUsersByDeviceId", deviceId] })
+        : await queryClient.invalidateQueries({ queryKey: ["getUsers"] });
     },
     onError,
   });

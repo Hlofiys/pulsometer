@@ -11,7 +11,6 @@ export const useActivateMeasurements = () => {
         mutationKey: ['activateMeasurements'],
         mutationFn: DeviceService.activateMeasurements,
         onSuccess:({data})=>{
-            console.log('Success activate!')
             data && nav(RouterPath.PROCESS_SESSION+`/${data}`)
         },
         onError

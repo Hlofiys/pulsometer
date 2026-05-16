@@ -19,7 +19,7 @@ export const TimePeriodView: React.FC<TimePeriodInputProps> = ({
   onChangeName,
   onSetTimePeriod,
 }) => {
-  const { mutateAsync: set_point, isLoading: isLoadingSetPoint } =
+  const { mutateAsync: set_point, isPending: isLoadingSetPoint } =
     useSetKeypoint();
   const [periodName, setPeriodName] = useState("");
   const formatTime = (seconds: number) => {
@@ -58,7 +58,7 @@ export const TimePeriodView: React.FC<TimePeriodInputProps> = ({
       </div>
       <Button
         style={{ height: 30, borderRadius: 8, fontSize: "10pt", marginTop: 10 }}
-        loading={isLoadingSetPoint}
+        isLoading={isLoadingSetPoint}
         disabled={!periodName}
         onClick={() =>
           set_point(

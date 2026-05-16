@@ -1,81 +1,101 @@
 .startContainer {
-  padding: 21px 5px 110px;
+  width: 100%;
+  max-width: var(--container-max);
+  padding: var(--space-6) var(--container-padding) var(--space-20);
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 20px;
+  gap: var(--space-8);
+}
 
-  section {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
+.deviceLoader {
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) 0;
+}
 
-    h1 {
-      font-family: "Lora-SemiBold";
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 26.4px;
-      color: #fbfaf8;
-      margin: 0;
-      padding: 0;
-    }
+.formSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 520px;
 
-    .measurementsFormProps {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    button {
-        height: 52px;
-    }
+  h1 {
+    font-family: var(--font-heading);
+    font-size: var(--text-h3);
+    font-weight: 600;
+    line-height: var(--line-height-snug);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
   }
 }
 
-/* Адаптивные стили */
+.measurementsForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.error {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  color: var(--danger);
+  line-height: var(--line-height-normal);
+  min-height: 18px;
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .startContainer {
-    flex-direction: column; /* Изменяем направление на колонку */
-    align-items: center; /* Растягиваем элементы на всю ширину */
-    padding: 15px 5px 60px; /* Уменьшаем отступы сверху и снизу */
-    gap: 15px; /* Уменьшаем отступ между элементами */
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-4) var(--space-4) var(--space-12);
+    gap: var(--space-6);
+  }
 
-    section {
-      gap: 30px; /* Уменьшаем отступ между элементами секции */
-      h1 {
-        font-size: 20px; /* Уменьшаем размер заголовка */
-        line-height: 24px; /* Уменьшаем высоту строки заголовка */
-      }
+  .deviceLoader {
+    min-width: auto;
+    padding: var(--space-8) 0;
+  }
 
-      .measurementsFormProps {
-        gap: 15px; /* Уменьшаем отступ между элементами формы */
-      }
+  .formSection {
+    max-width: 100%;
+    gap: var(--space-5);
+
+    h1 {
+      font-size: var(--text-h4);
     }
-    button {
-      height: 46px;
-    }
+  }
+
+  .measurementsForm {
+    gap: var(--space-3);
   }
 }
 
 @media (max-width: 480px) {
   .startContainer {
-    padding: 10px 5px 40px; /* Еще уменьшаем отступы */
-    
-    section {
-      gap: 20px; /* Еще уменьшаем отступ между элементами секции */
-      h1 {
-        font-size: 18px; /* Еще уменьшаем размер заголовка */
-        line-height: 22px; /* Еще уменьшаем высоту строки заголовка */
-      }
+    padding: var(--space-3) var(--space-3) var(--space-10);
+  }
 
-      .measurementsFormProps {
-        gap: 10px; /* Еще уменьшаем отступ между элементами формы */
-      }
+  .formSection {
+    gap: var(--space-4);
 
-      button{
-        height: 40px;
-      }
+    h1 {
+      font-size: var(--text-body-lg);
     }
+  }
+
+  .measurementsForm {
+    gap: var(--space-2);
   }
 }
