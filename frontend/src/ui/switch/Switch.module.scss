@@ -7,7 +7,10 @@
 
   .tooltip {
     position: absolute;
-    text-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
     font-family: var(--font-ui);
     font-size: var(--text-xs);
     font-weight: 500;
@@ -40,6 +43,8 @@
     position: relative;
     width: calc(var(--toggle-size) * 2 + var(--padding) * 2);
     height: calc(var(--toggle-size) + var(--padding) * 2);
+    min-width: 44px;
+    min-height: 24px;
     background: var(--bg-surface-hover);
     border-radius: calc((var(--toggle-size) + var(--padding) * 2) / 2);
     border: 1px solid var(--border-default);
@@ -104,6 +109,16 @@
           opacity: 0;
         }
       }
+    }
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .switchWrapper {
+    .tooltip {
+      max-width: 140px;
+      font-size: 0.6875rem;
     }
   }
 }

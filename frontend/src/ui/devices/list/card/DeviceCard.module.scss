@@ -94,6 +94,7 @@
 @media (max-width: 768px) {
   .deviceCardContainer {
     width: 260px;
+    max-width: 100%;
     padding: var(--space-4);
     font-size: var(--text-body-lg);
 
@@ -106,6 +107,8 @@
 
 @media (max-width: 480px) {
   .deviceCardContainer {
+    width: 100%;
+    max-width: 280px;
     padding: var(--space-3);
     font-size: var(--text-body);
 

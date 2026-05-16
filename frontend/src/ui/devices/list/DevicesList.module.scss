@@ -13,10 +13,10 @@
   
   @media (max-width: 768px) {
     .listContainer {
-      flex-direction: column; /* Изменяем направление на колонку */
-      align-items: stretch; /* Растягиваем элементы на всю ширину */
-      overflow-x: hidden; /* Убираем горизонтальный скролл */
-      gap: 20px; /* Уменьшаем отступ между элементами */
-      padding-bottom: 0; /* Убираем нижний отступ */
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      gap: 20px;
+      padding-bottom: 0;
     }
   }
